@@ -1,9 +1,11 @@
 mod obelisk;
-use obelisk as ob;
+
+use obelisk::{LogLevel, create_symlink};
 
 fn main() {
-    ob::log!(ob::LogLevel::Info, "cenas {} {}" ,1,2);
-    ob::log!(ob::LogLevel::Warning, "cenas {} {}" ,1,2);
-    ob::log!(ob::LogLevel::Error, "cenas {} {}" ,1,2);
-    ob::log!(ob::LogLevel::Fatal, "cenas {} {}" ,1,2);
+    log!(LogLevel::Info, "cenas {} {}" ,1,2);
+    log!(LogLevel::Warning, "cenas {} {}" ,1,2);
+    log!(LogLevel::Error, "cenas {} {}" ,1,2);
+    log!(LogLevel::Fatal, "cenas {} {}" ,1,2);
+    
 }
