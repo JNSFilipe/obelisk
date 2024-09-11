@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Delete all empty files
+find . -type f -empty -delete
+
+# Delete all empty directories
+find . -type d -empty -delete

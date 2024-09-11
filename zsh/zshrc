@@ -1,0 +1,85 @@
+# Load Oh My Posh
+# eval "$(oh-my-posh init zsh --config ~/.config/bash_theme.omp.json)"
+
+# Setup zsh history
+HISTFILE=~/.zsh_history
+HISTSIZE=10000000
+SAVEHIST=$HISTSIZE
+HISTDUP=erase # Erase duplicates in history
+setopt appendhistory
+setopt sharehistory # Share history between running sessions
+setopt hist_ignore_all_dups # Ignore all duplicates in history
+setopt hist_save_no_dups # Do not save duplicates in history
+setopt hist_ignore_dups # Ignore duplicates in history
+
+# Load/install znap
+[[ -r ~/.znap/znap/znap.zsh ]] ||
+    git clone --depth 1 -- \
+        https://github.com/marlonrichert/zsh-snap.git ~/.znap/znap
+source ~/.znap/znap/znap.zsh  # Start Znap
+
+# Start compinit
+autoload -Uz compinit # https://unix.stackexchange.com/questions/339954/zsh-command-not-found-compinstall-compinit-compdef
+compinit
+
+# fzf autocompletion
+znap source Aloxaf/fzf-tab
+
+# Fish like gohst autocompletion
+znap source marlonrichert/zsh-autocomplete
+
+# Better zsh autocompletion
+znap source zsh-users/zsh-autosuggestions
+
+# Use pure pormpt if starship not installed; starship otherwise
+if ! type "starship" > /dev/null; then
+    # Starshipt not installed; install and setup pure prompt
+    # Install and setup pure prompt
+    fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
+    znap source sindresorhus/pure # Pull the repository from github
+    autoload -U promptinit; promptinit # Recommended on README
+    zstyle :prompt:pure:prompt:success color green
+    zstyle :prompt:pure:prompt:error color red
+    zstyle :prompt:pure:git:stash show yes
+    prompt pure # Recommended on README
+else
+    # Starshipt installed; Setup starship
+    eval "$(starship init zsh)"
+fi
+
+# fzf integration
+source <(fzf --zsh)
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons $realpath'
+
+# Setup zoxide
+eval "$(zoxide init zsh)"
+
+# Path and Variables
+PATH=$PATH:~/.local/bin
+PATH=$PATH:~/.cargo/bin
+PATH=$PATH:~/Scripts
+
+# If not within tmux, bind ctrl+Space to session starter
+if [ -z "$TMUX" ]; then
+    bindkey -s "^ " "zzz\n"
+    bindkey -s "^a" "ttt\n"
+fi
+
+# Alias
+alias em='emacs -init-directory ~/.vemacs.d -nw'
+alias ls='eza --icons'
+alias la='eza --icons -A'
+alias ll='eza --icons -al'
+alias lsg='eza --icons -D'
+alias lag='eza --icons -AD'
+alias llg='eza --icons -alD'
+alias ww='wget'
+alias vi='nvim'
+alias vim='nvim'
+alias del='sudo rm -r'
+alias comp='sudo make install'
+alias gl='git clone'
+
+# Source OCaml
+# opam configuration
+[[ ! -r ~/.opam/opam-init/init.zsh ]] || source ~/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null

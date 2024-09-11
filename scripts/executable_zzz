@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Function to list git repositories using zoxide
+list_git_repos() {
+	# zoxide query --list | grep "\.git$" | sed 's/\/\.git$//'
+	zoxide query --list
+}
+
+# Use fzf to select a git project
+selected_project=$(list_git_repos | fzf --prompt="Select Path: ")
+
+# Check if a project was selected
+if [ -z "$selected_project" ]; then
+	echo "No project selected. Exiting."
+	exit 1
+fi
+
+# Get the session name from the project path
+session_name=$(basename "$selected_project")
+# Remove white spaces
+session_name="${session_name// /}"
+# Remove dots
+session_name="${session_name/./-}"
+# Delete rest of the name after (, {, [
+session_name=${session_name%%(*}
+session_name=${session_name%%\{*}
+session_name=${session_name%%[*}
+# Escape special characters
+selected_project=$(printf %q "$selected_project")
+
+# Check if tmux is currently running
+tmux_running=$(pgrep tmux)
+
+echo $session_name
+echo $selected_project
+
+# TODO: tmux fails to create sessions with paths that cointain (). FIX IT!
+# Start a new tmux session if tmux is not already running
+if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+	tmux new-session -s $session_name -c $selected_project
+	exit 0
+fi
+
+# Create a new detached session if it does not exist
+if ! tmux has-session -t=$session_name 2>/dev/null; then
+	tmux new-session -ds $session_name -c $selected_project
+fi
+
+if [[ -z $TMUX ]]; then
+	# If not within tmux, attach
+	tmux attach -t $session_name
+else
+	# If within tmux, switch
+	tmux switch-client -t $session_name
+fi
