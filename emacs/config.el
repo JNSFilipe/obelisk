@@ -27,7 +27,7 @@
 ;; (setq doom-font (font-spec :family "JetBrainsMono Nerd Font" :size 14 :weight 'semi-bold)
 ;;       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 14))
 ;; (setq doom-font (font-spec :family "Cascadia Code" :size 14 :weight 'semi-bold))
-(setq doom-font (font-spec :family "Fira Mono" :size 14 :weight 'semi-bold))
+(setq doom-font (font-spec :family "FiraCode Nerd Font" :size 14 :weight 'semi-bold))
 
 ;; Set terminal name for TRAMP agent (useful to disable fancy features when using TRAMP, cause this is going to be the value of $TERM)
 (setq tramp-terminal-type "tramp")
