@@ -33,10 +33,13 @@ in
     pkgs.gh
     pkgs.zsh
     pkgs.fzf
+    pkgs.eza
+    pkgs.htop
     pkgs.tmux
     pkgs.zoxide
     pkgs.lazygit
     pkgs.ripgrep
+    pkgs.starship
     pkgs.editorconfig-core-c
 
     # LSPs / Compilers / Interpreters / Etc
@@ -109,6 +112,7 @@ in
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
     ".tmux.conf".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/tmux/tmux.conf";
+    ".bashrc".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/bash/bashrc";
     ".zshrc".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/zsh/zshrc";
 
     # # You can also set the file content immediately.
@@ -117,7 +121,7 @@ in
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
-  
+
   # Configs in XDG_CONFIG
   xdg.configFile = {
     # Emacs

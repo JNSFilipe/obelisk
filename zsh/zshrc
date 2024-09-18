@@ -65,8 +65,11 @@ if [ -z "$TMUX" ]; then
     bindkey -s "^a" "ttt\n"
 fi
 
+# Source Home-Manager
+. "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+
 # Alias
-alias em='emacs -init-directory ~/.vemacs.d -nw'
+alias em='emacs -nw'
 alias ls='eza --icons'
 alias la='eza --icons -A'
 alias ll='eza --icons -al'
@@ -79,6 +82,8 @@ alias vim='nvim'
 alias del='sudo rm -r'
 alias comp='sudo make install'
 alias gl='git clone'
+alias lg='lazygit'
+alias nixinstall="home-manager switch -b backup"
 
 # Source OCaml
 # opam configuration

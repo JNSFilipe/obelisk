@@ -16,8 +16,7 @@ HISTCONTROL=ignoreboth
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=10000000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -102,8 +101,6 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 alias lg="lazygit"
 alias em="emacs -mw"
 alias vim="nvim"
-alias debupdate="sudo apt update -y && sudo apt upgrade -y"
-alias debinstall="sudo apt install"
 alias nixinstall="home-manager switch -b backup"
 if [ -f ~/.bash_aliases ]; then
   . ~/.bash_aliases
@@ -122,3 +119,8 @@ fi
 
 # Source Home-Manager
 . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+
+# Launch zsh if availabe and in a modern shell
+# if [ -n "$PS1" ] && command -v zsh >/dev/null 2>&1 && [ "$TERM" != "dumb" ] && [ -z "$ZSH_VERSION" ]; then
+#   exec zsh
+# fi
