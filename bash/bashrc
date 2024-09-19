@@ -121,6 +121,6 @@ fi
 . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
 
 Launch zsh if availabe and in a modern shell
-if [ -n "$PS1" ] && command -v zsh >/dev/null 2>&1 && [ "$TERM" != "dumb" ] && [ -z "$ZSH_VERSION" ]; then
+if [ -n "$PS1" ] && command -v zsh >/dev/null 2>&1 && [ "$TERM" != "dumb" ] && [[ "$TERM" != *"eat"* ]] && [ -z "$ZSH_VERSION" ]; then
   exec zsh
 fi
