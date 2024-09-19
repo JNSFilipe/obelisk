@@ -25,59 +25,59 @@ in
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = [
-    # # Adds the 'hello' command to your environment. It prints a friendly
-    # # "Hello, world!" when run.
-    # pkgs.hello
+    # # # Adds the 'hello' command to your environment. It prints a friendly
+    # # # "Hello, world!" when run.
+    # # pkgs.hello
 
-    # Terminal Utils
-    pkgs.gh
-    pkgs.zsh
-    pkgs.fzf
-    pkgs.eza
-    pkgs.htop
-    pkgs.tmux
-    pkgs.zoxide
-    pkgs.lazygit
-    pkgs.ripgrep
-    pkgs.starship
-    pkgs.editorconfig-core-c
+    # # Terminal Utils
+    # pkgs.gh
+    # pkgs.zsh
+    # pkgs.fzf
+    # pkgs.eza
+    # pkgs.htop
+    # pkgs.tmux
+    # pkgs.zoxide
+    # pkgs.lazygit
+    # pkgs.ripgrep
+    # pkgs.starship
+    # pkgs.editorconfig-core-c
 
-    # LSPs / Compilers / Interpreters / Etc
-    pkgs.tree-sitter
-    pkgs.clang-tools
-    pkgs.nodejs
-    pkgs.sbcl
-    pkgs.gopls
-    pkgs.gomodifytags
-    pkgs.gotests
-    pkgs.gore
-    pkgs.rustup
-    pkgs.shellcheck
-    pkgs.shfmt
-    pkgs.zig
-    pkgs.texliveFull
-    pkgs.pipenv
-    (pkgs.python312.withPackages (ppkgs: [
-      ppkgs.nose
-      ppkgs.isort
-      ppkgs.black
-      ppkgs.pytest
-      ppkgs.pyflakes
-    ]))
+    # # LSPs / Compilers / Interpreters / Etc
+    # pkgs.tree-sitter
+    # pkgs.clang-tools
+    # pkgs.nodejs
+    # pkgs.sbcl
+    # pkgs.gopls
+    # pkgs.gomodifytags
+    # pkgs.gotests
+    # pkgs.gore
+    # pkgs.rustup
+    # pkgs.shellcheck
+    # pkgs.shfmt
+    # pkgs.zig
+    # pkgs.texliveFull
+    # pkgs.pipenv
+    # (pkgs.python312.withPackages (ppkgs: [
+    #   ppkgs.nose
+    #   ppkgs.isort
+    #   ppkgs.black
+    #   ppkgs.pytest
+    #   ppkgs.pyflakes
+    # ]))
 
-    # Editors
-    pkgs.emacs
-    pkgs.neovim
+    # # Editors
+    # pkgs.emacs
+    # pkgs.neovim
 
-    # Apps
-    pkgs.github-desktop
-    pkgs.simulide
+    # # Apps
+    # pkgs.github-desktop
+    # pkgs.simulide
 
-    # Emuatores
-    # pkgs.wine-wayland
-    # pkgs.wine-staging
-    pkgs.wineWowPackages.waylandFull
-    pkgs.winetricks
+    # # Emuatores
+    # # pkgs.wine-wayland
+    # # pkgs.wine-staging
+    # pkgs.wineWowPackages.waylandFull
+    # pkgs.winetricks
 
     # # It is sometimes useful to fine-tune packages, for example, by applying
     # # overrides. You can do that directly here, just don't forget the

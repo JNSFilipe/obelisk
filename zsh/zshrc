@@ -83,7 +83,7 @@ alias del='sudo rm -r'
 alias comp='sudo make install'
 alias gl='git clone'
 alias lg='lazygit'
-alias nixinstall="home-manager switch -b backup"
+alias nixinstall='home-manager switch -b backup'
 
 # Source OCaml
 # opam configuration
