@@ -121,10 +121,42 @@
 ;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
 ;; This will open documentation for it, including demos of how they are used.
 ;; Alternatively, use `C-h o' to look up a symbol (functions, variables, faces,
-;; etc).
+;; etc)
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
 ;; Keybinds!
 (load-file "~/.config/doom/keybinds.el")
+
+;; (defun alfred ()
+;;   "Launch an application using fuzzy search."
+;;   (interactive)
+;;   (raise-frame '((minibuffer . only)))
+;;   (let ((app-list (split-string (shell-command-to-string "compgen -c") "\n" t)))
+;;     (ivy-read "Launch application: " app-list
+;;               :action (lambda (app)
+;;                         (shell-command (format "%s >/dev/null 2>&1 & disown" app) nil nil)
+;;                         (kill-emacs))
+;;               :caller 'alfred)))
+
+;; Check emacs mode and act accordingle
+(message "---------------> Emacs mode: ")
+(setq em-mode (getenv "EMACS_MODE"))
+(cond
+ ((eq 'em-mode nil)
+  (message "---------------> Normal"))
+ ((string= em-mode "terminal")
+  (message "---------------> Terminal")
+  (set-frame-name "Terminal")
+  (setq confirm-kill-emacs nil))
+ ((string= em-mode "dired")
+  (message "---------------> Dired")
+  (set-frame-name "Dired")
+  (setq confirm-kill-emacs nil))
+ ((string= em-mode "quake")
+  (message "---------------> Quake")
+  (set-frame-name "Quake"))
+ ((string= em-mode "launcher")
+  ;; (alfred)
+  (message "---------------> Launcher")))
