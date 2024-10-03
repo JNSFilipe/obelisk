@@ -114,6 +114,7 @@ in
     ".tmux.conf".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/tmux/tmux.conf";
     ".bashrc".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/bash/bashrc";
     ".zshrc".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/zsh/zshrc";
+    ".spacemacs".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dots}/semacs/spacemacs.el";
 
     # # You can also set the file content immediately.
     # ".gradle/gradle.properties".text = ''
