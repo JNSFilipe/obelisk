@@ -188,6 +188,7 @@ This function should only modify configuration layer settings."
      emoji
      colors
      helpful
+     copilot
      ibuffer
      prettier
      parinfer
