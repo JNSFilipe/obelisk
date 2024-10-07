@@ -147,7 +147,8 @@ This function should only modify configuration layer settings."
    ;; Base distribution to use. This is a layer contained in the directory
    ;; `+distribution'. For now available distributions are `spacemacs-base'
    ;; or `spacemacs'. (default 'spacemacs)
-   dotspacemacs-distribution 'spacemacs
+   ;; dotspacemacs-distribution 'spacemacs
+   dotspacemacs-distribution 'spacemacs-base
 
    ;; Lazy installation of layers (i.e. layers are installed only when a file
    ;; with a supported type is opened). Possible values are `all', `unused'
@@ -195,6 +196,7 @@ This function should only modify configuration layer settings."
      xclipboard
      tree-sitter
      spell-checking
+     github-copilot
      auto-completion
      better-defaults
      version-control
@@ -210,7 +212,6 @@ This function should only modify configuration layer settings."
      ;; spacemacs-project
      ;; spacemacs-pupose
      ;; spacemacs-visual
-
 
      ;; Langs
      lua
@@ -236,7 +237,7 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '(doom-themes)
+   dotspacemacs-additional-packages '(doom-themes drag-stuff undo-fu)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -424,7 +425,7 @@ It should only modify the values of Spacemacs settings."
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
    dotspacemacs-default-font '("FiraCode Nerd Font"
-                               :size 10.0
+                               :size 10.5
                                :weight normal
                                :width normal)
 
@@ -576,7 +577,7 @@ It should only modify the values of Spacemacs settings."
 
    ;; Show the scroll bar while scrolling. The auto hide time can be configured
    ;; by setting this variable to a number. (default t)
-   dotspacemacs-scroll-bar-while-scrolling t
+   dotspacemacs-scroll-bar-while-scrolling nil
 
    ;; Control line numbers activation.
    ;; If set to `t', `relative' or `visual' then line numbers are enabled in all
@@ -596,7 +597,7 @@ It should only modify the values of Spacemacs settings."
    ;;   :size-limit-kb 1000)
    ;; When used in a plist, `visual' takes precedence over `relative'.
    ;; (default nil)
-   dotspacemacs-line-numbers 'relative
+   dotspacemacs-line-numbers 'visual
 
    ;; Code folding method. Possible values are `evil', `origami' and `vimish'.
    ;; (default 'evil)
@@ -738,9 +739,6 @@ configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
 
-  ;; Setting it to 100mb seems to strike a nice balance between GC pauses and performance.
-  (setq gc-cons-threshold (* 100 1024 1024))
-
   ;; Some functionality uses this to identify you, e.g. GPG configuration, email
   ;; clients, file templates and snippets. It is optional.
   (setq user-full-name "JNSFilipe"
@@ -764,7 +762,6 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
 
-
   ;; Set terminal name for TRAMP agent (useful to disable fancy features when using TRAMP, cause this is going to be the value of $TERM)
   (setq tramp-terminal-type "tramp")
 
@@ -774,6 +771,9 @@ before packages are loaded."
 
   ;; Enable Visual Bell
   ;; TODO
+
+  ;; Force line numbers to show up
+  (global-display-line-numbers-mode t)
 
   ;; Set projectile path
   (setq projectile-project-search-path '("~/Documents/GitHub/" "~/.local/share/"))
@@ -793,7 +793,8 @@ before packages are loaded."
     "w" 'save-buffer
     "a" 'helm-lsp-code-action
     "o" 'dired
-    "f" 'lazy-helm/spacemacs/helm-find-files
+    "F" 'lazy-helm/spacemacs/helm-find-files
+    "f" 'projectile-find-file
     "b" 'helm-buffers-list
     ;; "t" '+eshell/here
     ;; "T" 'projectile-run-eshell
@@ -802,13 +803,14 @@ before packages are loaded."
     "h" 'replace-string
     "r" 'async-shell-command
     ;; "R" 'eshell-command
-    "m" 'compile
+    "m" 'helm-make
+    "M" 'compile
     "s" 'obelisk/auto-split-window
     "x" 'obelisk/toggle-maximize-layout
     ;; "u" 'undo-tree-visualize
     "y" 'consult-yank-pop
     "g" 'magit
-    "SPC" 'lazy-helm/spacemacs/helm-find-files
+    "SPC" 'projectile-find-file
     "p" 'projectile-switch-project
     ;; Disable remaining
     "`" nil
@@ -842,7 +844,11 @@ before packages are loaded."
   ;; Visual mode bindings
   (define-key evil-visual-state-map (kbd "<tab>") 'obelisk/evil-shift-right)
   (define-key evil-visual-state-map (kbd "<backtab>") 'obelisk/evil-shift-left)
+  (define-key evil-visual-state-map (kbd "M-<up>") 'drag-stuff-up)
+  (define-key evil-visual-state-map (kbd "M-<down>") 'drag-stuff-down)
   ;; Normal mode bindings
+  (define-key evil-normal-state-map (kbd "M-<up>") 'drag-stuff-up)
+  (define-key evil-normal-state-map (kbd "M-<down>") 'drag-stuff-down)
   (define-key evil-normal-state-map (kbd "∇") 'consult-global-mark)
   (define-key evil-normal-state-map (kbd "j") "gj")  ;; Easier navigation in wrapped lines
   (define-key evil-normal-state-map (kbd "k") "gk")  ;; Easier navigation in wrapped lines
@@ -854,6 +860,8 @@ before packages are loaded."
   (define-key evil-normal-state-map (kbd "$") "g_")
   (define-key evil-normal-state-map (kbd "w") "viw")
   (define-key evil-normal-state-map (kbd "W") "viW")
+  (define-key evil-normal-state-map (kbd "ç") 'diff-hl-next-hunk)
+  (define-key evil-normal-state-map (kbd "Ç") 'diff-hl-previous-hunk)
 
   ;; Dired mode keybindings
   (with-eval-after-load 'dired
