@@ -198,9 +198,11 @@ This function should only modify configuration layer settings."
      github-copilot
      auto-completion
      better-defaults
-     version-control
      syntax-checking
      multiple-cursors
+     (version-control :variables
+                      version-control-diff-tool 'git-gutter
+                      version-control-diff-side 'left)
 
      ;; spacemacs-defaults
      ;; spacemacs-editing
@@ -866,8 +868,8 @@ before packages are loaded."
   (define-key evil-normal-state-map (kbd "$") "g_")
   (define-key evil-normal-state-map (kbd "w") "viw")
   (define-key evil-normal-state-map (kbd "W") "viW")
-  (define-key evil-normal-state-map (kbd "ç") 'diff-hl-next-hunk)
-  (define-key evil-normal-state-map (kbd "Ç") 'diff-hl-previous-hunk)
+  (define-key evil-normal-state-map (kbd "ç") 'git-gutter:next-hunk)
+  (define-key evil-normal-state-map (kbd "Ç") 'git-gutter:previous-hunk)
 
   ;; Dired mode keybindings
   (with-eval-after-load 'dired
@@ -908,6 +910,16 @@ before packages are loaded."
       (kbd "* /") 'dired-mark-directories
       (kbd "; d") 'epa-dired-do-decrypt
       (kbd "; e") 'epa-dired-do-encrypt))
+
+  ;; Config packages
+  (use-package git-gutter
+    :hook (prog-mode . git-gutter-mode)
+    :config
+    (custom-set-variables
+     '(git-gutter:modified-sign "~")
+     '(git-gutter:added-sign "+")
+     '(git-gutter:deleted-sign "-"))
+    (setq git-gutter:update-interval 0.2))
 
   (use-package elysium
     :custom
