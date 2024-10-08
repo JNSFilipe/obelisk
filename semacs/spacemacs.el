@@ -236,7 +236,7 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '(doom-themes drag-stuff undo-fu)
+   dotspacemacs-additional-packages '(doom-themes gptel elysium)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -781,6 +781,7 @@ before packages are loaded."
   (setq dired-actual-switches "-al --sort=type")
 
   ;; Set Shortcuts
+  (spacemacs/declare-prefix "ç" "Elysium")
   (spacemacs/set-leader-keys
     "x" 'execute-extended-command
     ";" 'eval-expression
@@ -811,6 +812,12 @@ before packages are loaded."
     "g" 'magit
     "SPC" 'projectile-find-file
     "p" 'projectile-switch-project
+    ;; Elysium
+    "çç" 'elysium-toggle-window
+    "çq" 'elysium-query
+    "ça" 'elysium-keep-all-suggested-changes
+    "çd" 'elysium-discard-all-suggested-changes
+
     ;; Disable remaining
     "`" nil
     "/" nil
@@ -901,6 +908,33 @@ before packages are loaded."
       (kbd "* /") 'dired-mark-directories
       (kbd "; d") 'epa-dired-do-decrypt
       (kbd "; e") 'epa-dired-do-encrypt))
+
+  (use-package elysium
+    :custom
+    ;; Below are the default values
+    (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
+    (elysium-window-style 'vertical)) ; Can be customized to horizontal
+
+  (use-package gptel
+    :custom
+    (gptel-model "qwen2.5-coder:latest")
+    :config
+    (defun read-file-contents (file-path)
+      "Read the contents of FILE-PATH and return it as a string."
+      (with-temp-buffer
+        (insert-file-contents file-path)
+        (buffer-string)))
+    ;; (defun gptel-api-key ()
+    ;;   (read-file-contents "~/secrets/claude_key"))
+    (setq gptel-backend
+          (gptel-make-ollama "Ollama"             ;Any name of your choosing
+            :host "localhost:11434"               ;Where it's running
+            :stream t                             ;Stream responses
+            :models '("qwen2.5-coder:latest"))))  ;List of models
+
+  (use-package smerge-mode
+    :hook
+    (prog-mode . smerge-mode))
   )
 
 
