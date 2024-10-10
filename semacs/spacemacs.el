@@ -185,6 +185,7 @@ This function should only modify configuration layer settings."
      lsp
      pdf
      helm
+     toml
      emoji
      colors
      helpful
