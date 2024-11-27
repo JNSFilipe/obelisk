@@ -57,16 +57,13 @@ eval "$(zoxide init zsh)"
 # Path and Variables
 PATH=$PATH:~/.local/bin
 PATH=$PATH:~/.cargo/bin
-PATH=$PATH:~/Scripts
+PATH=$PATH:~/.config/scripts
 
 # If not within tmux, bind ctrl+Space to session starter
 if [ -z "$TMUX" ]; then
     bindkey -s "^ " "zzz\n"
     bindkey -s "^a" "ttt\n"
 fi
-
-# Source Home-Manager
-. "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
 
 # Alias
 alias em='emacs -nw'
@@ -83,7 +80,9 @@ alias del='sudo rm -r'
 alias comp='sudo make install'
 alias gl='git clone'
 alias lg='lazygit'
-alias nixinstall='home-manager switch -b backup'
+alias bbic="brew update &&\
+    brew bundle install --cleanup --file=~/.config/Brewfile --no-lock &&\
+    brew upgrade" # https://matthiasportzel.com/brewfile/
 
 # Source OCaml
 # opam configuration

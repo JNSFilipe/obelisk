@@ -1,0 +1,49 @@
+# Terminal utils
+brew "coreutils"
+brew "moreutils"
+brew "starship"
+brew "ripgrep"
+brew "lazygit"
+brew "zoxide"
+brew "tmux"
+brew "make"
+brew "less"
+brew "stow"
+brew "eza"
+brew "fzf"
+brew "jq"
+
+# Programming Languages
+brew "gcc"
+brew "python@3.13"
+# brew "zig", args: [ "HEAD" ]
+
+# Terms
+cask "wezterm"
+cask "warp"
+
+# Browsers
+cask "zen-browser"
+
+# Editors/Git
+cask "Sublime Text"
+cask "github"
+brew "neovim"
+# brew "emacs"
+cask "zed"
+brew gh
+
+# Fonts
+cask "font-jetbrains-mono-nerd-font"
+cask "font-fira-code-nerd-font"
+cask "font-fira-mono-nerd-font"
+
+# Misc
+cask "google-drive"
+cask "whatsapp"
+cask "raycast"
+cask "spotify"
+cask "notion"
+cask "steam"
+cask "zoom"
+

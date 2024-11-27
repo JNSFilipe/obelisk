@@ -37,8 +37,10 @@ in
     # pkgs.htop
     # pkgs.tmux
     # pkgs.zoxide
+    # pkgs.nushell
     # pkgs.lazygit
     # pkgs.ripgrep
+    # pkgs.carapace
     # pkgs.starship
     # pkgs.editorconfig-core-c
 
