@@ -1,6 +1,3 @@
-# Load Oh My Posh
-# eval "$(oh-my-posh init zsh --config ~/.config/bash_theme.omp.json)"
-
 # Setup zsh history
 HISTFILE=~/.zsh_history
 HISTSIZE=10000000
@@ -11,6 +8,22 @@ setopt sharehistory # Share history between running sessions
 setopt hist_ignore_all_dups # Ignore all duplicates in history
 setopt hist_save_no_dups # Do not save duplicates in history
 setopt hist_ignore_dups # Ignore duplicates in history
+
+# Path and Variables
+PATH=$PATH:~/.local/bin
+PATH=$PATH:~/.cargo/bin
+PATH=$PATH:~/.config/scripts
+PATH=$PATH:/usr/local/bin
+PATH=$PATH:/opt/homebrew/bin
+PATH=$PATH:/opt/homebrew/sbin
+if [[ $(uname) == "Darwin" ]]; then # Check if macOS
+    # In macOS, we have to rebuild almost the entire PATH
+    # https://wezfurlong.org/wezterm/faq.html#im-on-macos-and-wezterm-cannot-find-things-in-my-path
+    PATH=$PATH:/System/Cryptexes/App/usr/bin
+    PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin
+    PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin
+    PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin
+fi
 
 # Load/install znap
 [[ -r ~/.znap/znap/znap.zsh ]] ||
@@ -53,11 +66,6 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons $realpath'
 
 # Setup zoxide
 eval "$(zoxide init zsh)"
-
-# Path and Variables
-PATH=$PATH:~/.local/bin
-PATH=$PATH:~/.cargo/bin
-PATH=$PATH:~/.config/scripts
 
 # If not within tmux, bind ctrl+Space to session starter
 if [ -z "$TMUX" ]; then

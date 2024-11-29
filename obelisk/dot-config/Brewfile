@@ -13,8 +13,14 @@ brew "eza"
 brew "fzf"
 brew "jq"
 
+# Window Management
+cask "nikitabobko/tap/aerospace"
+
 # Programming Languages
+brew "uv"
+brew "go"
 brew "gcc"
+brew "node"
 brew "python@3.13"
 # brew "zig", args: [ "HEAD" ]
 
@@ -26,12 +32,14 @@ cask "warp"
 cask "zen-browser"
 
 # Editors/Git
-cask "Sublime Text"
+cask "sublime-text"
+cask "arduino-ide"
+cask "mplabx-ide"
 cask "github"
 brew "neovim"
 # brew "emacs"
 cask "zed"
-brew gh
+brew "gh"
 
 # Fonts
 cask "font-jetbrains-mono-nerd-font"
@@ -39,7 +47,9 @@ cask "font-fira-code-nerd-font"
 cask "font-fira-mono-nerd-font"
 
 # Misc
+cask "microsoft-office"
 cask "google-drive"
+cask "bitwarden"
 cask "whatsapp"
 cask "raycast"
 cask "spotify"

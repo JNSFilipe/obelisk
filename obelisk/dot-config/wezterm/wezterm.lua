@@ -9,7 +9,7 @@ config.window_background_opacity = 0.9
 
 -- Config Fonts
 config.font = wezterm.font("JetBrainsMono Nerd Font")
-config.font_size = 11
+config.font_size = 12
 
 -- Config UI elements
 config.hide_tab_bar_if_only_one_tab = true
@@ -21,5 +21,12 @@ config.default_prog = { "zsh" }
 
 -- Circunvent bug, reported in https://github.com/wez/wezterm/issues/4483#issuecomment-1835619115
 config.enable_wayland = false
+
+-- Hide titlebar
+config.window_decorations = "RESIZE"
+
+-- Blazingly fast!
+-- https://www.reddit.com/r/neovim/comments/1gthknw/wezterm_max_fps_240_is_crazy/
+config.max_fps = 240
 
 return config
