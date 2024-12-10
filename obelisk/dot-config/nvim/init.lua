@@ -514,8 +514,8 @@ require('lazy').setup({
       -- In linux, the system clipboar is the + register, but in windows it is * TODO: Fix accordingly
       { '<leader>y', '<cmd>Telescope neoclip plus<cr>', desc = 'Yanks' },
 
-      -- Oil
-      { '<leader>o', '<cmd>Oil<cr>',                    desc = 'File Explorer' },
+      -- File Manager - Yazi
+      { '<leader>o', "<cmd>Yazi toggle<cr>",            desc = 'File Explorer' },
 
       -- Split
       {
@@ -558,17 +558,6 @@ require('lazy').setup({
 
   -- Undo tree
   { 'mbbill/undotree' },
-
-  -- File Explorer
-  {
-    'stevearc/oil.nvim',
-    ---@module 'oil'
-    ---@type oil.SetupOpts
-    opts = {},
-    -- Optional dependencies
-    dependencies = { { "echasnovski/mini.icons", opts = {} } },
-    -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
-  },
 
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
@@ -670,6 +659,16 @@ require('lazy').setup({
     -- optional for floating window border decoration
     dependencies = {
       "nvim-lua/plenary.nvim",
+    },
+  },
+
+  -- File management - Yazi
+  {
+    "mikavilpas/yazi.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- if you want to open yazi instead of netrw, see below for more info
+      open_for_directories = false,
     },
   },
 
