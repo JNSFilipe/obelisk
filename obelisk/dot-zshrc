@@ -23,6 +23,7 @@ if [[ $(uname) == "Darwin" ]]; then # Check if macOS
     PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin
     PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin
     PATH=$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin
+    PATH=$PATH:/Library/TeX/texbin
 fi
 
 # Load/install znap
@@ -95,3 +96,23 @@ alias bbic="brew update &&\
 # Source OCaml
 # opam configuration
 [[ ! -r ~/.opam/opam-init/init.zsh ]] || source ~/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null
+
+# Function to find and activate a Python virtual environment
+activate() {
+    # Check for common virtual environment directory names
+    venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
+
+    for dir in "${venv_dirs[@]}"; do
+        # Check if the virtual environment directory exists
+        if [ -d "$dir" ] && [ -f "$dir/bin/activate" ]; then
+            echo "Activating virtual environment in $dir"
+            source "$dir/bin/activate"
+            return 0
+        fi
+    done
+
+    # If no virtual environment is found
+    echo "No Python virtual environment found in the current directory."
+    return 1
+}
+

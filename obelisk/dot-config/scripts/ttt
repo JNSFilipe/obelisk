@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 # Stolen from https://github.com/omerxx/tmux-sessionx/blob/main/scripts/sessionx.sh
 
 CURRENT="$(tmux display-message -p '#S')"
