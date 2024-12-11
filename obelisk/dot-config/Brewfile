@@ -20,7 +20,9 @@ cask "nikitabobko/tap/aerospace"
 brew "uv"
 brew "go"
 brew "gcc"
+brew "rust"
 brew "node"
+cask "mactex"
 brew "python@3.13"
 # brew "zig", args: [ "HEAD" ]
 
@@ -32,6 +34,7 @@ cask "warp"
 cask "zen-browser"
 
 # Editors/Git
+cask "visual-studio-code"
 cask "sublime-text"
 cask "arduino-ide"
 cask "mplabx-ide"
@@ -54,6 +57,10 @@ cask "whatsapp"
 cask "raycast"
 cask "spotify"
 cask "notion"
+cask "shottr"
 cask "steam"
+brew "yazi"
+brew "htop"
 cask "zoom"
+brew "mpv"
 
