@@ -316,7 +316,7 @@ require('lazy').setup({
                     jedi_hover = { enabled = true },
                     -- import sorting
                     isort = { enabled = true },
-                  },
+                  }
                 }
               }
             }
@@ -374,6 +374,18 @@ require('lazy').setup({
         end
       })
     end
+  },
+
+  -- Copilot
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        suggestion = { keymap = { accept = "<C-l>" } },
+      })
+    end,
   },
 
   -- Fuzzy Finder (files, lsp, etc)
