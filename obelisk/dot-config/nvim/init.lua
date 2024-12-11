@@ -545,13 +545,14 @@ require('lazy').setup({
       },
 
       -- Compile
-      { '<leader>m', make_targets,                                           desc = 'Make' },
-      { '<leader>M', '<cmd>Compile<cr>',                                     desc = 'Compile' },
+      { '<leader>m', make_targets,                                                             desc = 'Make' },
+      { '<leader>M', require("compmode").prompt_and_run_command_async,                         desc = 'Compile' },
+      { '<leader>l', function() require("compmode").run_command_async("rg --vimgrep def") end, desc = 'Compile' },
 
       -- Misc
-      { '<leader>w', "<cmd>w<cr>",                                           desc = 'Save Buffer' },
-      { '<leader>h', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], desc = 'Replace Word' },
-      { '<leader>;', ":lua ",                                                desc = 'Eval' },
+      { '<leader>w', "<cmd>w<cr>",                                                             desc = 'Save Buffer' },
+      { '<leader>h', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],                   desc = 'Replace Word' },
+      { '<leader>;', ":lua ",                                                                  desc = 'Eval' },
 
     },
   },
