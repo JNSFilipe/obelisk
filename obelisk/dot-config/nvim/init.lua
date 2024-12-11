@@ -281,8 +281,7 @@ require('lazy').setup({
                     flake8 = { enabled = false, ignore = "E501,C901" },
                     pylint = { enabled = true, args = { "--disable=E501", "-" } }, -- Ignore line too long warning
                     ruff = { enabled = false },
-                    pyflakes = { enabled = false },
-                    pycodestyle = { enabled = false, ignore = { "E501" } }, -- Ignore line too long warning
+                    pycodestyle = { enabled = false, ignore = { "E501" } },        -- Ignore line too long warning
                     -- type checker
                     pylsp_mypy = {
                       enabled = true,
@@ -306,6 +305,7 @@ require('lazy').setup({
                       cache_labels_for = {
                         "torch",
                         "numpy",
+                        "optuna",
                         "pandas",
                         "yfinance",
                         "matplotlib",
@@ -690,6 +690,7 @@ require('lazy').setup({
       ---@type CompileModeOpts
       vim.g.compile_mode = {
         buffer_name = "compilation",
+        -- clear_environment = true,
         -- to add ANSI escape code support, add:
         baleia_setup = true,
       }
