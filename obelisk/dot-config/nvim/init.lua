@@ -11,71 +11,6 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ','
 
 -- [[ Utilities ]] --
--- Function to search for a Makefile in the current directory
-local function find_makefile()
-  local makefile_paths = { "Makefile", "makefile", "Makefile.in" }
-  for _, file in ipairs(makefile_paths) do
-    if vim.fn.filereadable(file) == 1 then
-      return file
-    end
-  end
-  return nil
-end
-
--- Function to parse make targets from the Makefile
-local function parse_make_targets(makefile)
-  local targets = {}
-  -- local handle = io.popen("make -p -f " .. makefile .. " 2>/dev/null | awk '/^([^:]+):/ {print $1}'")
-  local handle = io.popen("cat " .. makefile .. " | grep '^[^#[:space:]].*:' | sed 's/:.*//'")
-  for line in handle:lines() do
-    if line ~= ".PHONY" then
-      table.insert(targets, line)
-    end
-  end
-  handle:close()
-  return targets
-end
-
-local function make_targets(opts)
-  local pickers = require("telescope.pickers")
-  local finders = require("telescope.finders")
-  local conf = require("telescope.config").values
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
-  local compile_mode = require("compile-mode")
-
-  local makefile = find_makefile()
-  if not makefile then
-    print("No Makefile found in the current directory.")
-    return
-  end
-
-  local targets = parse_make_targets(makefile)
-  if #targets == 0 then
-    print("No targets found in the Makefile.")
-    return
-  end
-  vim.inspect(targets)
-
-  opts = opts or {}
-  pickers
-      .new(opts, {
-        prompt_title = "commands",
-        finder = finders.new_table(targets),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr, map)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local command = "make -k " .. selection[1]
-            compile_mode.compile({ args = command, smods = {} })
-          end)
-          return true
-        end,
-      })
-      :find()
-end
-
 local function tmux_move_left()
   if vim.fn.winnr('h') ~= vim.fn.winnr() then
     vim.cmd('wincmd h')
@@ -383,7 +318,11 @@ require('lazy').setup({
     event = "InsertEnter",
     config = function()
       require("copilot").setup({
-        suggestion = { keymap = { accept = "<C-l>" } },
+        suggestion = {
+          enable = true,
+          auto_trigger = true,
+          keymap = { accept = "<C-l>" },
+        },
       })
     end,
   },
@@ -435,20 +374,6 @@ require('lazy').setup({
             n = { q = actions.close },
           },
         },
-        extensions = {
-          project = {
-            base_dirs = {
-              '~/Documents/GitHub',
-            },
-            hidden_files = true, -- default: false
-            order_by = "recent",
-            search_by = "title",
-            on_project_selected = function(prompt_bufnr)
-              -- Do anything you want in here. For example:
-              project_actions.change_working_directory(prompt_bufnr, false)
-            end
-          }
-        }
       }
     end,
   },
@@ -557,14 +482,14 @@ require('lazy').setup({
       },
 
       -- Compile
-      { '<leader>m', make_targets,                                                             desc = 'Make' },
-      { '<leader>M', require("compmode").prompt_and_run_command_async,                         desc = 'Compile' },
-      { '<leader>l', function() require("compmode").run_command_async("rg --vimgrep def") end, desc = 'Compile' },
+      { '<leader>m', require("compmod").make_targets_async,                  desc = 'Make' },
+      { '<leader>M', require("compmod").prompt_and_run_command_async,        desc = 'Compile' },
+      { '<leader>r', require("compmod").grep_async,                          desc = 'Grep' },
 
       -- Misc
-      { '<leader>w', "<cmd>w<cr>",                                                             desc = 'Save Buffer' },
-      { '<leader>h', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],                   desc = 'Replace Word' },
-      { '<leader>;', ":lua ",                                                                  desc = 'Eval' },
+      { '<leader>w', "<cmd>w<cr>",                                           desc = 'Save Buffer' },
+      { '<leader>h', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], desc = 'Replace Word' },
+      { '<leader>;', ":lua ",                                                desc = 'Eval' },
 
     },
   },
@@ -684,39 +609,6 @@ require('lazy').setup({
       open_for_directories = false,
     },
   },
-
-  {
-    "ej-shafran/compile-mode.nvim",
-    -- tag = "v5.*",
-    -- you can just use the latest version:
-    -- branch = "latest",
-    -- or the most up-to-date updates:
-    branch = "nightly",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      -- if you want to enable coloring of ANSI escape codes in
-      -- compilation output, add:
-      { "m00qek/baleia.nvim", tag = "v1.3.0" },
-    },
-    config = function()
-      ---@type CompileModeOpts
-      vim.g.compile_mode = {
-        buffer_name = "compilation",
-        -- clear_environment = true,
-        -- to add ANSI escape code support, add:
-        baleia_setup = true,
-      }
-    end
-  },
-
-  -- -- Overseer, to run tasks assyncronally
-  -- {
-  --   'stevearc/overseer.nvim',
-  --   -- dependencies = { 'stevearc/dressing.nvim', 'rcarriga/nvim-notify' },
-  --   config = function()
-  --     require("overseer").setup()
-  --   end
-  -- },
 
   -- Add indentation guides even on blank lines
   {
