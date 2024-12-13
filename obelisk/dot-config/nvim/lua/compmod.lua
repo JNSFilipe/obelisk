@@ -2,11 +2,7 @@
 -- TODO:
 -- [ ] Make message saying what the program returns colorful
 -- [ ] Make compilation buffer visible in :Telescope buffers
--- [ ] Change higlight color from blue
--- [ ] Change navigation shortcuts from n and N to º and ª
 -- [ ] See why outputs of C programs only appear when writing to stderr
--- [ ] Make a prompt to specifically run ripgrep, cause it is fun
--- [ ] Integrate with make/telescope
 
 local M = {}
 
@@ -139,12 +135,21 @@ function M.run_command_async(command)
   -- Initialize a namespace for highlights
   local ns_id = vim.api.nvim_create_namespace('CompilationHighlights')
 
-  -- Define error link highlight
-  vim.api.nvim_set_hl(0, 'ErrorLink', {
-    fg = 'LightBlue',
-    underline = true,
-    special = 'Blue',
-    ctermfg = 'Blue'
+  -- Define error link highlights for different parts
+  vim.api.nvim_set_hl(0, 'ErrorFile', {
+    -- fg = '#82AAFF', -- Light blue for file
+    link = 'Function',
+    underline = true
+  })
+  vim.api.nvim_set_hl(0, 'ErrorLine', {
+    -- fg = '#C3E88D', -- Light green for line number
+    link = 'String',
+    underline = true
+  })
+  vim.api.nvim_set_hl(0, 'ErrorColumn', {
+    -- fg = '#F07178', -- Light red for column number
+    link = 'Number',
+    underline = true
   })
 
   -- Function to extract error positions from the buffer
@@ -165,22 +170,27 @@ function M.run_command_async(command)
     return positions
   end
 
-  -- Function to highlight error paths in the buffer
+  -- Function to highlight error paths in the buffer with different colors
   local function highlight_error_paths()
     vim.api.nvim_buf_clear_namespace(error_buf, ns_id, 0, -1)
     local lines = vim.api.nvim_buf_get_lines(error_buf, 0, -1, false)
     for i, line in ipairs(lines) do
-      local error_pattern = "([^:]+):(%d+):(%d+):"
-      local file, lnum, col = line:match(error_pattern)
+      local start_pos = 1
+      local file, lnum, col = line:match("([^:]+):(%d+):(%d+):")
       if file and lnum and col then
-        -- Find the full match
-        local full_match = line:match("(.*" .. file .. ":" .. lnum .. ":" .. col .. ":.*)")
-        if full_match then
-          local start, finish = full_match:find(file .. ":" .. lnum .. ":" .. col .. ":")
-          if start and finish then
-            vim.api.nvim_buf_add_highlight(error_buf, ns_id, 'ErrorLink', i - 1, start - 1, finish)
-          end
+        -- Find positions for each part
+        local file_start, file_end = line:find(file, start_pos, true)
+        local line_start = file_end + 2 -- Skip the ":"
+        local line_end = line_start + #lnum - 1
+        local col_start = line_end + 2  -- Skip the ":"
+        local col_end = col_start + #col - 1
+
+        -- Apply different highlights for each part
+        if file_start then
+          vim.api.nvim_buf_add_highlight(error_buf, ns_id, 'ErrorFile', i - 1, file_start - 1, file_end)
         end
+        vim.api.nvim_buf_add_highlight(error_buf, ns_id, 'ErrorLine', i - 1, line_start - 1, line_end)
+        vim.api.nvim_buf_add_highlight(error_buf, ns_id, 'ErrorColumn', i - 1, col_start - 1, col_end)
       end
     end
   end
@@ -191,13 +201,28 @@ function M.run_command_async(command)
       -- Additional check to ensure buffer is still valid
       if not vim.api.nvim_buf_is_valid(error_buf) then return end
 
+      -- Store current window and buffer
+      local current_win = vim.api.nvim_get_current_win()
+      local current_buf = vim.api.nvim_get_current_buf()
+
+      -- Append the new lines
       for _, line in ipairs(lines) do
         if line and line ~= "" then
           pcall(vim.api.nvim_buf_set_lines, error_buf, -1, -1, false, { line })
         end
       end
 
-      pcall(vim.cmd, 'normal! G')
+      -- Always scroll the error window to the bottom
+      local line_count = vim.api.nvim_buf_line_count(error_buf)
+      if vim.api.nvim_win_is_valid(error_win) then
+        vim.api.nvim_win_set_cursor(error_win, { line_count, 0 })
+      end
+
+      -- If we're not in the error buffer, restore the cursor to the original window
+      if current_buf ~= error_buf and vim.api.nvim_win_is_valid(current_win) then
+        vim.api.nvim_set_current_win(current_win)
+      end
+
       pcall(highlight_error_paths)
     end)
   end
@@ -293,8 +318,8 @@ function M.run_command_async(command)
   end
 
   -- Key mappings
-  vim.keymap.set('n', 'n', function() jump_to_error('next') end, { buffer = true })
-  vim.keymap.set('n', 'N', function() jump_to_error('prev') end, { buffer = true })
+  vim.keymap.set('n', 'ç', function() jump_to_error('next') end, { buffer = true })
+  vim.keymap.set('n', 'Ç', function() jump_to_error('prev') end, { buffer = true })
   -- Update Ctrl-C mapping to pass the current buffer
   vim.keymap.set({ 'n', 'i' }, '<C-c>', function() kill_current_process(error_buf) end, { buffer = true })
 
@@ -330,6 +355,82 @@ function M.prompt_and_run_command_async()
   if command and command:match("%S") then
     M.run_command_async(command)
   end
+end
+
+function M.grep_async()
+  local command = vim.fn.input({
+    prompt = 'Grep: ',
+    completion = 'shellcmd' -- Enable shell command completion
+  })
+
+  -- Check if command is not empty (user didn't press Esc or enter empty string)
+  if command and command:match("%S") then
+    M.run_command_async("rg --vimgrep --smart-case " .. command)
+  end
+end
+
+-- Function to search for a Makefile in the current directory
+local function find_makefile()
+  local makefile_paths = { "Makefile", "makefile", "Makefile.in" }
+  for _, file in ipairs(makefile_paths) do
+    if vim.fn.filereadable(file) == 1 then
+      return file
+    end
+  end
+  return nil
+end
+
+-- Function to parse make targets from the Makefile
+local function parse_make_targets(makefile)
+  local targets = {}
+  -- local handle = io.popen("make -p -f " .. makefile .. " 2>/dev/null | awk '/^([^:]+):/ {print $1}'")
+  local handle = io.popen("cat " .. makefile .. " | grep '^[^#[:space:]].*:' | sed 's/:.*//'")
+  for line in handle:lines() do
+    if line ~= ".PHONY" then
+      table.insert(targets, line)
+    end
+  end
+  handle:close()
+  return targets
+end
+
+function M.make_targets_async(opts)
+  local pickers = require("telescope.pickers")
+  local finders = require("telescope.finders")
+  local conf = require("telescope.config").values
+  local actions = require("telescope.actions")
+  local action_state = require("telescope.actions.state")
+
+  local makefile = find_makefile()
+  if not makefile then
+    print("No Makefile found in the current directory.")
+    return
+  end
+
+  local targets = parse_make_targets(makefile)
+  if #targets == 0 then
+    print("No targets found in the Makefile.")
+    return
+  end
+  vim.inspect(targets)
+
+  opts = opts or {}
+  pickers
+      .new(opts, {
+        prompt_title = "commands",
+        finder = finders.new_table(targets),
+        sorter = conf.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr, map)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            local command = "make -k " .. selection[1]
+            M.run_command_async(command)
+          end)
+          return true
+        end,
+      })
+      :find()
 end
 
 return M
