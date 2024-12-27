@@ -31,6 +31,7 @@ session_name=${session_name%%\{*}
 session_name=${session_name%%[*}
 # Escape special characters
 selected_project=$(printf %q "$selected_project")
+selected_project=$(echo "$selected_project" | sed 's/^[^/]*//') # Remove probability number
 
 # Check if tmux is currently running
 tmux_running=$(pgrep tmux)
