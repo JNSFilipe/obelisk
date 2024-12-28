@@ -1,0 +1,32 @@
+# Theme
+# theme = Oxocarbon
+theme = TokyoNight
+background-opacity = 0.9
+
+# Setup alt for macos
+# macos-option-as-alt = true
+
+# Padding
+window-padding-x = 2,2
+window-padding-y = 2,2
+
+# Rquired for cursor configuration to work (see docs)
+shell-integration-features = no-cursor
+
+# Cursor
+cursor-style = block
+cursor-style-blink = false
+
+# Remove the title bar
+# window-decoration = false
+macos-titlebar-style = hidden
+
+# Font
+font-size = 12
+# font-thicken = true
+bold-is-bright = true
+# font-family = "FiraCode Nerd Font Mono"
+font-family = "JetBrainsMono Nerd Font"
+
+# Add shortcut
+keybind = global:unconsumed:ctrl+r=reload_config
