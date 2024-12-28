@@ -33,6 +33,7 @@ brew "python@3.13"
 
 # Terms
 cask "wezterm"
+cask "ghostty"
 cask "warp"
 
 # Browsers
