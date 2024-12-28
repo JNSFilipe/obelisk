@@ -71,7 +71,6 @@ eval "$(zoxide init zsh)"
 # If not within tmux, bind ctrl+Space to session starter
 if [ -z "$TMUX" ]; then
     bindkey -s "^ " "zzz\n"
-    bindkey -s "^a" "ttt\n"
 fi
 
 # Alias
