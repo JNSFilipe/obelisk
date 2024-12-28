@@ -3,6 +3,7 @@ HISTFILE=~/.zsh_history
 HISTSIZE=10000000
 SAVEHIST=$HISTSIZE
 HISTDUP=erase # Erase duplicates in history
+setopt interactive_comments # https://github.com/marlonrichert/zsh-autocomplete/issues/726
 setopt appendhistory
 setopt sharehistory # Share history between running sessions
 setopt hist_ignore_all_dups # Ignore all duplicates in history
