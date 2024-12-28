@@ -1,7 +1,14 @@
 # Files that I don't want to track
-obelisk/dot-config/zed/
-obelisk/dot-config/htop/
-obelisk/dot-config/raycast/
-obelisk/dot-config/lazygit/
-obelisk/dot-config/github-copilot/
+obelisk/dot-config/zed/*
+obelisk/dot-config/htop/*
+obelisk/dot-config/pudb/*
+obelisk/dot-config/emacs/*
+obelisk/dot-config/marimo/*
+obelisk/dot-config/zellij/*
+obelisk/dot-config/raycast/*
+obelisk/dot-config/lazygit/*
+obelisk/dot-config/github-copilot/*
 obelisk/dot-config/nvim/lazy-lock.json
+
+# Exceptions
+!obelisk/dot-config/emacs/init.el
