@@ -1,3 +1,5 @@
+tap "d12frosted/emacs-plus" # emacs-plus
+
 # Terminal utils
 brew "coreutils"
 brew "moreutils"
@@ -41,13 +43,13 @@ cask "warp"
 cask "zen-browser"
 
 # Editors/Git
+brew "emacs-plus@30", args: ["with-native-comp"]
 cask "visual-studio-code"
 cask "sublime-text"
 cask "arduino-ide"
 cask "mplabx-ide"
 cask "github"
 brew "neovim"
-# brew "emacs"
 cask "zed"
 brew "gh"
 
