@@ -1,3 +1,4 @@
+# Taps
 tap "d12frosted/emacs-plus" # emacs-plus
 
 # Terminal utils
@@ -22,22 +23,22 @@ brew "jq"
 cask "nikitabobko/tap/aerospace"
 
 # Programming Languages
-brew "uv"
-brew "go"
-brew "gcc"
-brew "rust"
-brew "node"
-cask "mactex"
-brew "raylib"
-brew "openblas"
-brew "armadillo"
-brew "python@3.13"
 # brew "zig", args: [ "HEAD" ]
+brew "python@3.13"
+brew "armadillo"
+brew "openblas"
+brew "raylib"
+cask "mactex"
+brew "node"
+brew "rust"
+brew "gcc"
+brew "go"
+brew "uv"
 
 # Terms
 cask "wezterm"
 cask "ghostty"
-cask "warp"
+# cask "warp"
 
 # Browsers
 cask "zen-browser"
