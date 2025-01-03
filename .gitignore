@@ -12,3 +12,4 @@ obelisk/dot-config/nvim/lazy-lock.json
 
 # Exceptions
 !obelisk/dot-config/emacs/init.el
+!obelisk/dot-config/emacs/oblsk.el
