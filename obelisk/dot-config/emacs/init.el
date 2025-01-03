@@ -1,3 +1,5 @@
+;;; init.el -*- lexical-binding: t; -*-
+
 ;; Early init performance optimizations
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 1024 1024))
@@ -55,148 +57,156 @@
 ;; #############################################################################
 ;; Helper functions
 ;; #############################################################################
-(defun vemacs/marker-is-point-p (marker)
-  "Test if MARKER is current point"
-  (and (eq (marker-buffer marker) (current-buffer))
-       (= (marker-position marker) (point))))
+(load-file (expand-file-name "oblsk.el" user-emacs-directory))
 
-(defun vemacs/push-mark-maybe ()
-  "Push mark onto `global-mark-ring' if mark head or tail is not current location"
-  (if (not global-mark-ring) (error "global-mark-ring empty")
-    (unless (or (vemacs/marker-is-point-p (car global-mark-ring))
-                (vemacs/marker-is-point-p (car (reverse global-mark-ring))))
-      (push-mark))))
+;; Basic UI settings
+(use-package emacs
+  :ensure nil
+  :custom
+  (inhibit-startup-message t)
+  (scroll-conservatively 101)
+  (scroll-margin 2)
+  (scroll-preserve-screen-position t)
+  (auto-window-vscroll nil)
+  (scroll-step 1)
+  (scroll-margin 3)
+  (scroll-conservatively most-positive-fixnum)
+  (maximum-scroll-margin 0.5)
+  (auto-window-vscroll nil)
+  (mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (mouse-wheel-progressive-speed nil)
+  (pixel-scroll-precision-mode t) ;; For Emacs 29+
+  (load-prefer-newer t)
+  (history-length 1000)
+  (create-lockfiles nil)
+  (gc-cons-threshold 100000000)
+  (read-process-output-max (* 1024 1024))
+  :config
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (global-display-line-numbers-mode 1)
+  (global-auto-revert-mode 1)
+  (winner-mode 1)
+  (show-paren-mode 1)
+  (global-hl-line-mode 1)
+  (savehist-mode t)
+  ;; Restore gc-cons-threshold after startup
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setq gc-cons-threshold 800000)))
+  ;; Font settings
+  (set-frame-font "Source Code Pro-12" nil t))
+;; Files and backup settings
+(use-package files
+  :ensure nil
+  :custom
+  (backup-by-copying t)
+  (version-control t)
+  (kept-new-versions 10)
+  (kept-old-versions 5)
+  (delete-old-versions t)
+  (auto-save-default t)
+  (delete-by-moving-to-trash t)
+  :config
+  (let ((backup-dir (expand-file-name "backups" user-emacs-directory)))
+    (unless (file-exists-p backup-dir)
+      (make-directory backup-dir t))
+    (setq backup-directory-alist `(("." . ,backup-dir))
+          auto-save-file-name-transforms `((".*" ,backup-dir t)))))
 
-(defun vemacs/backward-global-mark ()
-  "Use `pop-global-mark', pushing current point if not on ring."
-  (interactive)
-  (vemacs/push-mark-maybe)
-  (when (vemacs/marker-is-point-p (car global-mark-ring))
-    (call-interactively 'pop-global-mark))
-  (call-interactively 'pop-global-mark))
+;; Built-in completion configuration
+(use-package minibuffer
+  :ensure nil
+  :custom
+  (completion-cycle-threshold 3)
+  (tab-always-indent 'complete)
+  (completion-category-defaults nil)
+  (completion-category-overrides nil)
+  :config
+  (setq completion-styles '(basic partial-completion substring initials flex)))
 
-(defun vemacs/forward-global-mark ()
-  "Hack `pop-global-mark' to go in reverse, pushing current point if not on ring."
-  (interactive)
-  (vemacs/push-mark-maybe)
-  (setq global-mark-ring (nreverse global-mark-ring))
-  (when (vemacs/marker-is-point-p (car global-mark-ring))
-    (call-interactively 'pop-global-mark))
-  (call-interactively 'pop-global-mark)
-  (setq global-mark-ring (nreverse global-mark-ring)))
+;; Language-specific settings
+(use-package prog-mode
+  :ensure nil
+  :hook
+  ((c-mode . eglot-ensure)
+   (c++-mode . eglot-ensure)
+   (python-mode . eglot-ensure)
+   (emacs-lisp-mode . (lambda ()
+                        (setq indent-tabs-mode nil
+                              tab-width 2)))))
 
-(defun vemacs/find-file ()
-  (interactive)
-  (if (projectile-project-p)
-      (call-interactively 'projectile-find-file)
-    (call-interactively 'find-file)))
+;; Custom file settings
+(use-package cus-edit
+  :ensure nil
+  :custom
+  (custom-file (expand-file-name "custom.el" user-emacs-directory))
+  :config
+  (when (file-exists-p custom-file)
+    (load custom-file)))
 
-(defun vemacs/dired ()
-  (interactive)
-  (if (projectile-project-p)
-      (dired (projectile-project-root))
-    (dired "~/")))
-
-(defun vemacs/xy-window-pixel-ratio ()
-  "Return the ratio of the window's width to its height in pixels."
-  (interactive)
-  (let* ((edges (window-pixel-edges))
-         (width (- (nth 2 edges) (nth 0 edges)))
-         (height (- (nth 3 edges) (nth 1 edges)))
-         (ratio (/ (float width) height)))
-    (if (called-interactively-p 'interactive)
-        (message "Width/Height Ratio: %f" ratio)
-      ratio)))
-
-(defun vemacs/auto-split-window ()
-  "Split the current window along its biggest dimension and run `projectile-find-file`."
-  (interactive)
-  (if (> (vemacs/xy-window-pixel-ratio) 1.0)
-      (split-window-horizontally)       ; Wider window, split horizontally
-    (split-window-vertically))          ; Taller window, split vertically
-  (other-window 1)
-  (projectile-find-file))
-
-(defun vemacs/indent-region (num-spaces)
-  "Indent or unindent the selected region by NUM-SPACES."
-  (if (region-active-p)
-      (let ((start (region-beginning))
-            (end (region-end)))
-        (save-excursion
-          (goto-char start)
-          (while (< (point) end)
-            (indent-rigidly (point) (min (1+ end) (line-end-position)) num-spaces)
-            (forward-line)))
-        (setq deactivate-mark nil))
-    (if (< num-spaces 0) (vemacs/forward-global-mark) (vemacs/backward-global-mark))))
-
-(defun vemacs/meow-append ()
-  ;; https://github.com/meow-edit/meow/issues/43
-  (interactive)
-  (unless (region-active-p) (forward-char 1))
-  (if meow--temp-normal
-      (progn
-        (message "Quit temporary normal mode")
-        (meow--switch-state 'motion))
-    (meow--direction-forward)
-    (when (bound-and-true-p delete-selection-mode)
-      (meow--cancel-selection))
-    (meow--switch-state 'insert)))
-
-(defun vemacs/meow-left ()
-  (interactive)
-  (if (region-active-p)
-      (meow-left-expand)
-    (meow-left)))
-
-(defun vemacs/meow-next ()
-  (interactive)
-  (if (region-active-p)
-      (meow-next-expand 1)
-    (meow-next 1)))
-
-(defun vemacs/meow-prev ()
-  (interactive)
-  (if (region-active-p)
-      (meow-prev-expand 1)
-    (meow-prev 1)))
-
-(defun vemacs/meow-right ()
-  (interactive)
-  (if (region-active-p)
-      (meow-right-expand)
-    (meow-right)))
-
-(defun vemacs/meow-grab-or-go-to-bottom ()
-  (interactive)
-  (if (region-active-p)
-      (meow-grab)
-    (meow-end-of-thing 'buffer)))
-
-(defun vemacs/meow-kill-or-line ()
-  (interactive)
-  (if (region-active-p)
-      (meow-kill)
-    (meow-line 1)))
-
-;; Basic settings
-(setq inhibit-startup-message t)
-(menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(setq default-frame-alist '((undecorated . t)))
-(global-display-line-numbers-mode 1)
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-(global-auto-revert-mode 1)
-(winner-mode 1)
-(show-paren-mode 1)
-(global-hl-line-mode 1)
+;; ;; Basic settings
+;; (setq inhibit-startup-message t)
+;; (menu-bar-mode -1)
+;; (tool-bar-mode -1)
+;; (scroll-bar-mode -1)
+;; (global-display-line-numbers-mode 1)
+;; (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+;; (global-auto-revert-mode 1)
+;; (winner-mode 1)
+;; (show-paren-mode 1)
+;; (global-hl-line-mode 1)
+;; (setq-default history-length 1000)
+;; (savehist-mode t)
+;;
+;; ;; Backup settings
+;; ;; Create backup directory if it doesn't exist
+;; (let ((backup-dir (expand-file-name "backups" user-emacs-directory)))
+;;   (unless (file-exists-p backup-dir)
+;;     (make-directory backup-dir t)))
+;;
+;; ;; Configure backup settings
+;; (setq
+;;  ;; Use versioned backups
+;;  version-control t
+;;
+;;  ;; Keep all versions
+;;  kept-new-versions 10
+;;  kept-old-versions 5
+;;
+;;  ;; Delete old versions without asking
+;;  delete-old-versions t
+;;
+;;  ;; Create backup files by copying
+;;  backup-by-copying t
+;;
+;;  ;; Set backup directory
+;;  backup-directory-alist `(("." . ,(expand-file-name "backups" user-emacs-directory)))
+;;
+;;  ;; Also save auto-save files in the backup directory
+;;  auto-save-file-name-transforms `((".*" ,(expand-file-name "backups/" user-emacs-directory) t))
+;;
+;;  ;; Don't create lockfiles
+;;  create-lockfiles nil)
+;;
+;; ;; Optional: Enable automatic cleanup of old backups
+;; (setq delete-by-moving-to-trash t)  ; Move to trash instead of immediate deletion
+;;
+;; ;; Built-in completion configurations
+;; (setq completion-cycle-threshold 3)            ; Show candidates when 3 or more are available
+;; (setq tab-always-indent 'complete)             ; Make TAB do completion after indenting
+;; (setq completion-styles '(basic partial-completion substring initials flex))
+;; (setq completion-category-defaults nil)        ; Don't use predefined style defaults
+;; (setq completion-category-overrides nil)       ; Don't override styles for different categories
 
 ;; Package configurations
 (use-package ido
   :ensure nil
   :config
   (ido-mode 1)
+  (setq ido-use-virtual-buffers t)
+  (setq ido-enable-flex-matching t)
   (ido-everywhere 1))
 
 (use-package ido-completing-read+
@@ -209,130 +219,28 @@
   :config
   (amx-mode 1))
 
-;; MEOW
+;;; Meow configuration with Vim-like keybindings
 (use-package meow
-  :demand t
-  :bind
-  ;; Define CapsLock as a Nabla and use it as a modifier (https://www.emacswiki.org/emacs/CapsKey#toc5)
-  ;; Use nabla (aka CapsLock) as leader (https://www.emacswiki.org/emacs/CapsKey#toc5)
-  ;; ("∇" . meow-keypad)
+  :custom
+  (meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+  :hook
+  (ido-setup . (lambda ()
+                 (define-key ido-completion-map (kbd "C-l") 'ido-next-match)
+                 (define-key ido-completion-map (kbd "C-h") 'ido-prev-match)))
   :config
+  ;; Custom functions to emulate Vim behavior
   (setq meow-use-clipboard t) ;;
-  (defun meow-setup ()
-    ;; Enable modeline indicator
-    (meow-setup-indicator)
-    ;; Define prefixes that are baypassed to keypad mode
-    (setq meow-keypad-start-keys '((?x . ?x)))
-    ;; Define the layout
-    (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-    (meow-motion-overwrite-define-key
-     '("j" . meow-next)
-     '("k" . meow-prev)
-     '("<escape>" . ignore))
-    (meow-leader-define-key
-     ;; SPC j/k will run the original command in MOTION state.
-     '("j" . "H-j")
-     '("k" . "H-k")
-     '("?" . meow-cheatsheet)
-     '(":" . execute-extended-command)
-     '(";" . eval-expression)
-     '("." . ibuffer)
-     '("," . scratch-buffer)
-     '("*" . project-search)
-     '("'" . text-scale-adjust)
-     '("b" . consult-buffer)
-     '("c" . comment-line)
-     '("w" . save-buffer)
-     '("a" . lsp-execute-code-action)
-     '("o" . vemacs/dired)
-     '("f" . vemacs/find-file)
-     '("h" . replace-string)
-     '("d" . consult-flymake)
-     '("t" . eat)
-     '("T" . eat-project)
-     '("r" . async-shell-command)
-     '("m" . compile)
-     ;; '("u" . undo-tee-visualize)
-     '("s" . vemacs/auto-split-window))
-    (meow-normal-define-key
-     '("0" . meow-expand-0)
-     '("9" . meow-expand-9)
-     '("8" . meow-expand-8)
-     '("7" . meow-expand-7)
-     '("6" . meow-expand-6)
-     '("5" . meow-expand-5)
-     '("4" . meow-expand-4)
-     '("3" . meow-expand-3)
-     '("2" . meow-expand-2)
-     '("1" . meow-expand-1)
-     '("-" . negative-argument)
-     '(";" . meow-reverse)
-     '("/" . meow-visit)
-     '("I" . meow-inner-of-thing) ;; '("," . meow-inner-of-thing)
-     '("A" . meow-bounds-of-thing) ;; '("." . meow-bounds-of-thing)
-     '("," . meow-beginning-of-thing) ;; '("[" . meow-beginning-of-thing)
-     '("." . meow-end-of-thing) ;; '("]" . meow-end-of-thing)
-     '("a" . vemacs/meow-append)
-     '("o" . meow-open-below) ;; '("A" . meow-open-below)
-     '("b" . meow-back-word)
-     '("B" . meow-back-symbol)
-     '("c" . meow-change)
-     '("x" . meow-delete) ;; '("d" . meow-delete)
-     '("X" . meow-backward-delete) ;; '("D" . meow-backward-delete)
-     '("e" . meow-next-word)
-     '("E" . meow-next-symbol)
-     '("f" . meow-find)
-     '("g" . meow-cancel-selection)
-     '("G" . meow-grab)
-     '("h" . vemacs/meow-left)
-     '("H" . meow-left-expand)
-     '("i" . meow-insert)
-     '("O" . meow-open-above) ;; '("I" . meow-open-above)
-     '("j" . vemacs/meow-next)
-     '("J" . meow-next-expand)
-     '("k" . vemacs/meow-prev)
-     '("K" . meow-prev-expand)
-     '("l" . vemacs/meow-right)
-     '("L" . meow-right-expand)
-     '("m" . meow-join)
-     '("n" . meow-search)
-     '("Q" . meow-block) ;; '("o" . meow-block)
-     ;; '("C-B" . meow-to-block) ;; '("O" . meow-to-block)
-     '("p" . meow-yank)
-     '("P" . meow-yank-pop) ;; This presents a paste menu
-     '("q" . meow-quit)
-     ;; '("Q" . meow-goto-line)
-     '("r" . meow-replace)
-     '("R" . meow-swap-grab)
-     '("d" . vemacs/meow-kill-or-line)
-     '("t" . meow-till)
-     '("u" . meow-undo)
-     '("U" . meow-undo-in-selection)
-     '("v" . meow-visit)
-     '("w" . meow-mark-word)
-     '("W" . meow-mark-symbol)
-     '("V" . meow-line) ;; '("x" . meow-line)
-     '(":" . meow-goto-line) ;; '("X" . meow-goto-line)
-     '("y" . meow-save)
-     '("Y" . meow-sync-grab)
-     '("z" . meow-pop-selection)
-     '("'" . repeat)
-     '("ç" . git-gutter:next-hunk)
-     '("Ç" . git-gutter:previous-hunk)
-     '("<tab>" .  (lambda () (interactive) (vemacs/indent-region 2)))
-     '("<backtab>" .  (lambda () (interactive) (vemacs/indent-region -2)))
-     '("<escape>" . meow-cancel-selection) ;; '("<escape>" . ignore)
-     '("∇" . consult-global-mark)
-     '("C-h" . windmove-left)
-     '("C-l" . windmove-right)
-     '("C-k" . windmove-up)
-     '("C-j" . windmove-down)
-     '("C-q" . delete-window)))
-  (meow-setup)
+  (setq meow-leader-key "SPC")
+  (oblsk/meow-setup)
+  ;; Initialize modal state
   (meow-global-mode 1))
 
 (use-package eglot
-  :hook ((prog-mode . eglot-ensure)))
+  :hook (prog-mode . eglot-ensure)
+  :config
+  (setq tab-always-indent 'complete)
+  (setq completion-cycle-threshold 3)
+  (setq completion-styles '(basic partial-completion substring)))
 
 (use-package rust-mode
   :hook (rust-mode . eglot-ensure))
@@ -348,31 +256,151 @@
 
 (use-package markdown-mode)
 
+;; LaTeX configuration
+(use-package tex
+  :ensure auctex
+  :custom
+  (TeX-auto-save t)                   ; Enable parse on save
+  (TeX-parse-self t)                  ; Enable parse on load
+  (TeX-master nil)                    ; Query for master file
+  (TeX-electric-sub-and-superscript t)  ; Automatically insert braces in math mode
+  (LaTeX-electric-left-right-brace t)   ; Auto-insert closing braces
+  (TeX-electric-math '("$" . "$"))      ; Auto-insert closing $
+  (LaTeX-indent-level 2)                ; Indentation amount
+  (LaTeX-item-indent 0)                 ; List item indentation
+  (TeX-source-correlate-mode t)         ; Enable source-preview correlation
+  (TeX-source-correlate-start-server t) ; Start server for inverse search
+  (TeX-view-program-selection '((output-pdf "PDF Tools"))) ; Use PDF-tools for viewing
+  :config
+  ;; Enable additional LaTeX features
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (turn-on-auto-fill)        ; Auto-wrap lines
+              (LaTeX-math-mode)          ; Enable math mode
+              (reftex-mode)              ; Enable reference management
+              (flyspell-mode)            ; Enable spell checking
+              (outline-minor-mode)))     ; Enable outline for folding
+
+  ;; Set up latexmk as the default command
+  (push
+   '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+     :help "Run latexmk on file")
+   TeX-command-list))
+
+;; CDLaTeX for fast math input
+(use-package cdlatex
+  :hook (LaTeX-mode . cdlatex-mode)
+  :custom
+  (cdlatex-math-symbol-alist
+   '((?= ("\\equiv" "\\approx" "\\cong" "\\triangleq"))
+     (?< ("\\leq" "\\ll" "\\prec" "\\subset"))
+     (?> ("\\geq" "\\gg" "\\succ" "\\supset"))
+     (?| ("\\mid" "\\parallel" "\\perp" "\\|"))
+     (?/ ("\\not"))
+     (?~ ("\\tilde" "\\sim" "\\simeq" "\\approx"))))
+  :config
+  (setq cdlatex-math-modify-alist
+        '((?b "\\mathbb" nil t nil nil)
+          (?c "\\mathcal" nil t nil nil)
+          (?f "\\mathfrak" nil t nil nil)
+          (?s "\\mathscr" nil t nil nil))))
+
+;; PDF Tools for viewing PDFs
+(use-package pdf-tools
+  :magic ("%PDF" . pdf-view-mode)
+  :config
+  (pdf-tools-install)
+  :custom
+  (pdf-view-display-size 'fit-page)
+  (pdf-annot-activate-created-annotations t))
+
+;; LaTeX preview pane (optional but useful)
+(use-package latex-preview-pane
+  :hook (LaTeX-mode . latex-preview-pane-mode)
+  :custom
+  (latex-preview-pane-multifile-mode 'auctex))
+
 (use-package magit)
 
 (use-package doom-themes
   :config
   (load-theme 'doom-tokyo-night t))
 
-;; Language specific settings
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'c++-mode-hook 'eglot-ensure)
-(add-hook 'python-mode-hook 'eglot-ensure)
+;; Flymake configuration for static analysis
+;; Flymake is built into Emacs and works well with eglot
+(use-package flymake
+  :ensure nil  ; built-in package
+  :hook (prog-mode . flymake-mode)
+  :config
+  ;; Show diagnostics in echo area when point is on the problematic line
+  (setq help-at-pt-display-when-idle t)
+  (setq help-at-pt-timer-delay 0.1)
+  (help-at-pt-set-timer)
 
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (setq indent-tabs-mode nil)
-            (setq tab-width 2)))
+  ;; Customize faces for better visibility in terminal
+  (custom-set-faces
+   '(flymake-error   ((t (:underline (:style wave :color "red")))))
+   '(flymake-warning ((t (:underline (:style wave :color "yellow")))))
+   '(flymake-note    ((t (:underline (:style wave :color "green"))))))
 
-;; Font settings
-(set-frame-font "Source Code Pro-12" nil t)
+  ;; Optional key bindings for navigation
+  :bind (:map flymake-mode-map
+              ("M-n" . flymake-goto-next-error)
+              ("M-p" . flymake-goto-prev-error)))
 
-;; Save customizations to separate file
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(when (file-exists-p custom-file)
-  (load custom-file))
+;; diff-hl for git gutter functionality
+(use-package diff-hl
+  :hook ((prog-mode . diff-hl-mode)
+         (text-mode . diff-hl-mode)
+         (conf-mode . diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh))
+  :config
+  ;; Update diff-hl after git operations
+  (add-hook 'after-save-hook 'diff-hl-update)
 
-;; Restore gc-cons-threshold
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold 800000)))
+  ;; Configure diff-hl for terminal use
+  (diff-hl-margin-mode 1)
+
+  ;; Customize the margin symbols for better visibility in terminal
+  (setq diff-hl-margin-symbols-alist
+        '((insert . "+")
+          (delete . "-")
+          (change . "~")
+          (unknown . "?")
+          (ignored . " ")))
+
+  ;; Remove background colors and keep only the signs colored
+  (custom-set-faces
+   '(diff-hl-insert ((t (:foreground "green" :background nil :inherit nil))))
+   '(diff-hl-delete ((t (:foreground "red" :background nil :inherit nil))))
+   '(diff-hl-change ((t (:foreground "yellow" :background nil :inherit nil))))
+
+   ;; Also set margin faces to match
+   '(diff-hl-margin-insert ((t (:foreground "green" :inherit nil))))
+   '(diff-hl-margin-delete ((t (:foreground "red" :inherit nil))))
+   '(diff-hl-margin-change ((t (:foreground "yellow" :inherit nil))))))
+
+;; ;; Language specific settings
+;; (add-hook 'c-mode-hook 'eglot-ensure)
+;; (add-hook 'c++-mode-hook 'eglot-ensure)
+;; (add-hook 'python-mode-hook 'eglot-ensure)
+;;
+;; (add-hook 'emacs-lisp-mode-hook
+;;           (lambda ()
+;;             (setq indent-tabs-mode nil)
+;;             (setq tab-width 2)))
+;;
+;; ;; Font settings
+;; (set-frame-font "Source Code Pro-12" nil t)
+;;
+;; ;; Save customizations to separate file
+;; (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+;; (when (file-exists-p custom-file)
+;;   (load custom-file))
+
+;; ;; Restore gc-cons-threshold
+;; (add-hook 'emacs-startup-hook
+;;           (lambda ()
+;;             (setq gc-cons-threshold 800000)))
