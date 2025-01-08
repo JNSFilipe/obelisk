@@ -24,11 +24,14 @@ cask "nikitabobko/tap/aerospace"
 
 # Programming Languages
 # brew "zig", args: [ "HEAD" ]
+brew "python-lsp-server"
 brew "python@3.13"
 brew "armadillo"
+brew "ruff-lsp"
 brew "openblas"
 brew "raylib"
 cask "mactex"
+brew "black"
 brew "node"
 brew "rust"
 brew "gcc"
