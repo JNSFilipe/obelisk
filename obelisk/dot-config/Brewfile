@@ -17,6 +17,7 @@ brew "less"
 brew "stow"
 brew "eza"
 brew "fzf"
+brew "fd"
 brew "jq"
 
 # Window Management
