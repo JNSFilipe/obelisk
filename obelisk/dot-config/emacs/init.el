@@ -91,6 +91,7 @@
   (show-paren-mode 1)
   (global-hl-line-mode 1)
   (savehist-mode t)
+  (xterm-mouse-mode t) ;; Enable mouse support in terminal
   ;; Restore gc-cons-threshold after startup
   (add-hook 'emacs-startup-hook
             (lambda ()
@@ -146,60 +147,6 @@
   (when (file-exists-p custom-file)
     (load custom-file)))
 
-;; ;; Basic settings
-;; (setq inhibit-startup-message t)
-;; (menu-bar-mode -1)
-;; (tool-bar-mode -1)
-;; (scroll-bar-mode -1)
-;; (global-display-line-numbers-mode 1)
-;; (setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
-;; (global-auto-revert-mode 1)
-;; (winner-mode 1)
-;; (show-paren-mode 1)
-;; (global-hl-line-mode 1)
-;; (setq-default history-length 1000)
-;; (savehist-mode t)
-;;
-;; ;; Backup settings
-;; ;; Create backup directory if it doesn't exist
-;; (let ((backup-dir (expand-file-name "backups" user-emacs-directory)))
-;;   (unless (file-exists-p backup-dir)
-;;     (make-directory backup-dir t)))
-;;
-;; ;; Configure backup settings
-;; (setq
-;;  ;; Use versioned backups
-;;  version-control t
-;;
-;;  ;; Keep all versions
-;;  kept-new-versions 10
-;;  kept-old-versions 5
-;;
-;;  ;; Delete old versions without asking
-;;  delete-old-versions t
-;;
-;;  ;; Create backup files by copying
-;;  backup-by-copying t
-;;
-;;  ;; Set backup directory
-;;  backup-directory-alist `(("." . ,(expand-file-name "backups" user-emacs-directory)))
-;;
-;;  ;; Also save auto-save files in the backup directory
-;;  auto-save-file-name-transforms `((".*" ,(expand-file-name "backups/" user-emacs-directory) t))
-;;
-;;  ;; Don't create lockfiles
-;;  create-lockfiles nil)
-;;
-;; ;; Optional: Enable automatic cleanup of old backups
-;; (setq delete-by-moving-to-trash t)  ; Move to trash instead of immediate deletion
-;;
-;; ;; Built-in completion configurations
-;; (setq completion-cycle-threshold 3)            ; Show candidates when 3 or more are available
-;; (setq tab-always-indent 'complete)             ; Make TAB do completion after indenting
-;; (setq completion-styles '(basic partial-completion substring initials flex))
-;; (setq completion-category-defaults nil)        ; Don't use predefined style defaults
-;; (setq completion-category-overrides nil)       ; Don't override styles for different categories
-
 ;; Package configurations
 (use-package ido
   :ensure nil
@@ -219,21 +166,132 @@
   :config
   (amx-mode 1))
 
-;;; Meow configuration with Vim-like keybindings
-(use-package meow
-  :custom
-  (meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-  :hook
-  (ido-setup . (lambda ()
-                 (define-key ido-completion-map (kbd "C-l") 'ido-next-match)
-                 (define-key ido-completion-map (kbd "C-h") 'ido-prev-match)))
+;; Recentf configuration
+(use-package recentf
+ :ensure nil  ; built-in package
+ :init
+ (recentf-mode 1)
+ :custom
+ (recentf-max-saved-items 500)
+ (recentf-max-menu-items 15)
+ (recentf-auto-cleanup 'never))
+
+;; Evil and related packages
+(use-package evil
+  :init
+  (setq evil-want-C-i-jump nil)
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll nil)
+  (setq evil-undo-system 'undo-redo)
+  (setq evil-search-module 'isearch) ;; use emacs' built-in search functionality.
+  (setq evil-respect-visual-line-mode t)
+  (if (display-graphic-p)
+   (progn
+     (blink-cursor-mode -1)
+     (setq evil-insert-state-cursor 'bar
+           evil-normal-state-cursor 'box))
+   (progn
+     (setq evil-insert-state-cursor nil
+           evil-normal-state-cursor nil)
+     (add-hook 'evil-insert-state-entry-hook (lambda () (send-string-to-terminal "\e[6 q")))
+     (add-hook 'evil-normal-state-entry-hook (lambda () (send-string-to-terminal "\e[2 q")))))
   :config
-  ;; Custom functions to emulate Vim behavior
-  (setq meow-use-clipboard t) ;;
-  (setq meow-leader-key "SPC")
-  (oblsk/meow-setup)
-  ;; Initialize modal state
-  (meow-global-mode 1))
+  (evil-define-key 'normal 'global
+   "j" "gj"
+   "k" "gk"
+   "w" "viw"
+   "W" "viW"
+   "ç" 'diff-hl-next-hunk
+   "Ç" 'diff-hl-previous-hunk
+   (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
+   (kbd "<tab>") 'evil-jump-forward
+   (kbd "<backtab>") 'evil-jump-backward)
+
+  (evil-define-key 'visual 'global
+   (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
+   (kbd "<") '(lambda () (interactive) (oblsk/indent-region 2))
+   (kbd ">") '(lambda () (interactive) (oblsk/indent-region -2))
+   (kbd "<tab>") '(lambda () (interactive) (oblsk/indent-region 2))
+   (kbd "<backtab>") '(lambda () (interactive) (oblsk/indent-region -2)))
+
+  ;; Window movement bindings
+  (define-key evil-normal-state-map (kbd "C-h C-h") 'evil-window-left)
+  (define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
+  (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
+  (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
+
+  ;; Additional keybindings
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key ido-common-completion-map (kbd "<escape>") 'abort-recursive-edit)
+  (global-set-key (kbd "C-q") 'delete-window)
+
+  (general-create-definer oblsk/inner-menu
+    :keymaps 'evil-normal-state-map
+    :prefix "t")
+
+  (oblsk/inner-menu
+    "r" '("vi(" :which-key "inner round parens")
+    "s" '("vi[" :which-key "inner square parens")
+    "c" '("vi{" :which-key "inner curly braces")
+    "q" '("vi\"" :which-key "inner quotes")
+    "a" '("vi'" :which-key "inner apostrophes"))
+
+  ;; (oblsk/outer-menu
+  ;;   "r" '("va(" :which-key "around round parens")
+  ;;   "s" '("va[" :which-key "around square parens")
+  ;;   "c" '("va{" :which-key "around curly braces")
+  ;;   "q" '("va\"" :which-key "around quotes")
+  ;;   "a" '("va'" :which-key "around apostrophes"))
+
+  (general-create-definer oblsk/inner-menu
+    :keymaps 'evil-normal-state-map
+    :prefix "t")
+
+  ;; (general-create-definer oblsk/outer-menu
+  ;;   :keymaps 'evil-normal-state-map
+  ;;   :prefix "T")
+
+  (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
+(use-package which-key
+  :init
+  (setq which-key-sort-order 'which-key-key-order-alpha
+        which-key-side-window-max-width 0.33
+        which-key-idle-delay 0.05)
+  :config
+  (which-key-mode))
+
+(use-package general
+  :after evil
+  :config
+  (general-create-definer my/leader-keys
+    :keymaps '(normal insert visual emacs)
+    :prefix "SPC"
+    :global-prefix "C-SPC")
+
+  ;; Example keybindings - customize these according to your needs
+  (my/leader-keys
+    "SPC" '(execute-extended-command :which-key "M-x")
+    "f" '(oblsk/ido-find-file-recursive :which-key "Find File")
+    "b" '(ido-switch-buffer :which-key "Switch Buffer")
+    "g" '(magit-status :which-key "Git")
+    "c" '(comment-line :which-key "Comment")
+    "m" '(oblsk/find-makefile-targets :which-key "Make")
+    "M" '(compile :which-key "Compile")
+    "s" '(oblsk/auto-split-window :which-key "Split")
+    "w" '(save-buffer :which-key "Save Buffer")
+    "z" '(oblsk/toggle-window-layout :which-key "Toggle Zoom")
+
+    "h"  '(:ignore t :which-key "help")
+    "hf" '(describe-function :which-key "describe function")
+    "hv" '(describe-variable :which-key "describe variable")
+    "hk" '(describe-key :which-key "describe key")))
 
 (use-package eglot
   :hook (prog-mode . eglot-ensure)
@@ -255,6 +313,12 @@
   :hook (lua-mode . eglot-ensure))
 
 (use-package markdown-mode)
+
+(use-package tuareg
+  :hook (tuareg-mode . eglot-ensure)
+  :config
+  (add-to-list 'load-path (concat (getenv "HOME") "/.opam/default/share/emacs/site-lisp"))
+  (require 'ocp-indent))
 
 ;; LaTeX configuration
 (use-package tex
@@ -322,6 +386,12 @@
 
 (use-package magit)
 
+;; Share clipboard with system in nw mode
+(use-package pbcopy
+  :ensure t
+  :config
+  (turn-on-pbcopy))
+
 (use-package doom-themes
   :config
   (load-theme 'doom-tokyo-night t))
@@ -382,25 +452,3 @@
    '(diff-hl-margin-delete ((t (:foreground "red" :inherit nil))))
    '(diff-hl-margin-change ((t (:foreground "yellow" :inherit nil))))))
 
-;; ;; Language specific settings
-;; (add-hook 'c-mode-hook 'eglot-ensure)
-;; (add-hook 'c++-mode-hook 'eglot-ensure)
-;; (add-hook 'python-mode-hook 'eglot-ensure)
-;;
-;; (add-hook 'emacs-lisp-mode-hook
-;;           (lambda ()
-;;             (setq indent-tabs-mode nil)
-;;             (setq tab-width 2)))
-;;
-;; ;; Font settings
-;; (set-frame-font "Source Code Pro-12" nil t)
-;;
-;; ;; Save customizations to separate file
-;; (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-;; (when (file-exists-p custom-file)
-;;   (load custom-file))
-
-;; ;; Restore gc-cons-threshold
-;; (add-hook 'emacs-startup-hook
-;;           (lambda ()
-;;             (setq gc-cons-threshold 800000)))
