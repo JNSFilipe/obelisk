@@ -15,5 +15,8 @@ obelisk/dot-config/nvim/lazy-lock.json
 # Exceptions
 !obelisk/dot-config/emacs/init.el
 !obelisk/dot-config/emacs/oblsk.el
+!obelisk/dot-config/zed/keymap.json
+!obelisk/dot-config/zed/settings.json
+
 # AI/Aider stuff
 .aider*
