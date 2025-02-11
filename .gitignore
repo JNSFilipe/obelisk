@@ -1,4 +1,5 @@
 # Files that I don't want to track
+obelisk/dot-config/gh/*
 obelisk/dot-config/zed/*
 obelisk/dot-config/htop/*
 obelisk/dot-config/pudb/*
