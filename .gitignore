@@ -7,9 +7,12 @@ obelisk/dot-config/marimo/*
 obelisk/dot-config/zellij/*
 obelisk/dot-config/raycast/*
 obelisk/dot-config/lazygit/*
+/obelisk/dot-config/psppirerc
 obelisk/dot-config/github-copilot/*
 obelisk/dot-config/nvim/lazy-lock.json
 
 # Exceptions
 !obelisk/dot-config/emacs/init.el
 !obelisk/dot-config/emacs/oblsk.el
+# AI/Aider stuff
+.aider*
