@@ -50,6 +50,7 @@
 ;; Install use-package support
 (elpaca elpaca-use-package
   (elpaca-use-package-mode)
+  (setq use-package-always-defer t)
   (setq elpaca-use-package-by-default t))
 
 (elpaca-wait)
@@ -61,6 +62,7 @@
 
 ;; Basic UI settings
 (use-package emacs
+  :defer nil
   :ensure nil
   :custom
   (inhibit-startup-message t)
@@ -92,14 +94,34 @@
   (global-hl-line-mode 1)
   (savehist-mode t)
   (xterm-mouse-mode t) ;; Enable mouse support in terminal
+  ;; Show both line and column numbers in the mode line
+  (line-number-mode 1)
+  (column-number-mode 1)
+  ;; Set default indentation to 2 spaces
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 2)
+  ;; ;; Show trailing whitespace and tabs
+  ;; (setq-default show-trailing-whitespace t)
+  ;; (global-whitespace-mode f)
+  ;; (add-to-list 'whitespace-style 'space-mark)
+  ;; (add-to-list 'whitespace-style 'tab-mark)
+  ;; (add-to-list 'whitespace-style 'newline-mark)
+  ;; Enable relative line numbers
+  (global-display-line-numbers-mode 1)
+  (setq display-line-numbers-type 'relative)
   ;; Restore gc-cons-threshold after startup
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq gc-cons-threshold 800000)))
   ;; Font settings
   (set-frame-font "Source Code Pro-12" nil t))
+
+;; Update transient, required by other packages (magit, gptel)
+(use-package transient)
+
 ;; Files and backup settings
 (use-package files
+  :defer nil
   :ensure nil
   :custom
   (backup-by-copying t)
@@ -118,6 +140,7 @@
 
 ;; Built-in completion configuration
 (use-package minibuffer
+  :defer nil
   :ensure nil
   :custom
   (completion-cycle-threshold 3)
@@ -129,6 +152,7 @@
 
 ;; Language-specific settings
 (use-package prog-mode
+  :defer nil
   :ensure nil
   :hook
   ((c-mode . eglot-ensure)
@@ -140,6 +164,7 @@
 
 ;; Custom file settings
 (use-package cus-edit
+  :defer nil
   :ensure nil
   :custom
   (custom-file (expand-file-name "custom.el" user-emacs-directory))
@@ -147,14 +172,18 @@
   (when (file-exists-p custom-file)
     (load custom-file)))
 
-;; Package configurations
 (use-package ido
+  :defer nil
   :ensure nil
   :config
   (ido-mode 1)
   (setq ido-use-virtual-buffers t)
   (setq ido-enable-flex-matching t)
-  (ido-everywhere 1))
+  (ido-everywhere 1)
+  ;; Navigation keybindings
+  (define-key ido-common-completion-map (kbd "C-l") 'ido-next-match)
+  (define-key ido-common-completion-map (kbd "C-h") 'ido-prev-match)
+  (define-key ido-common-completion-map (kbd "<escape>") 'abort-recursive-edit))
 
 (use-package ido-completing-read+
   :after ido
@@ -168,16 +197,25 @@
 
 ;; Recentf configuration
 (use-package recentf
- :ensure nil  ; built-in package
- :init
- (recentf-mode 1)
- :custom
- (recentf-max-saved-items 500)
- (recentf-max-menu-items 15)
- (recentf-auto-cleanup 'never))
+  ;; :defer nil
+  :ensure nil  ; built-in package
+  :init
+  (recentf-mode 1)
+  :custom
+  (recentf-max-saved-items 500)
+  (recentf-max-menu-items 15)
+  (recentf-auto-cleanup 'never))
+
+;; Enable cursor change in terminal
+(use-package evil-terminal-cursor-changer
+  :defer nil
+  :config
+  (unless (display-graphic-p)
+    (etcc-on)))
 
 ;; Evil and related packages
 (use-package evil
+  :defer nil
   :init
   (setq evil-want-C-i-jump nil)
   (setq evil-want-integration t)
@@ -186,34 +224,27 @@
   (setq evil-undo-system 'undo-redo)
   (setq evil-search-module 'isearch) ;; use emacs' built-in search functionality.
   (setq evil-respect-visual-line-mode t)
-  (if (display-graphic-p)
-   (progn
-     (blink-cursor-mode -1)
-     (setq evil-insert-state-cursor 'bar
-           evil-normal-state-cursor 'box))
-   (progn
-     (setq evil-insert-state-cursor nil
-           evil-normal-state-cursor nil)
-     (add-hook 'evil-insert-state-entry-hook (lambda () (send-string-to-terminal "\e[6 q")))
-     (add-hook 'evil-normal-state-entry-hook (lambda () (send-string-to-terminal "\e[2 q")))))
+  (setq evil-insert-state-cursor 'bar)
+  (setq evil-normal-state-cursor 'box)
+  (blink-cursor-mode -1)
   :config
   (evil-define-key 'normal 'global
-   "j" "gj"
-   "k" "gk"
-   "w" "viw"
-   "W" "viW"
-   "ç" 'diff-hl-next-hunk
-   "Ç" 'diff-hl-previous-hunk
-   (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
-   (kbd "<tab>") 'evil-jump-forward
-   (kbd "<backtab>") 'evil-jump-backward)
+    "j" "gj"
+    "k" "gk"
+    "w" "viw"
+    "W" "viW"
+    "ç" 'diff-hl-next-hunk
+    "Ç" 'diff-hl-previous-hunk
+    (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
+    (kbd "<tab>") 'evil-jump-forward
+    (kbd "<backtab>") 'evil-jump-backward)
 
   (evil-define-key 'visual 'global
-   (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
-   (kbd "<") '(lambda () (interactive) (oblsk/indent-region 2))
-   (kbd ">") '(lambda () (interactive) (oblsk/indent-region -2))
-   (kbd "<tab>") '(lambda () (interactive) (oblsk/indent-region 2))
-   (kbd "<backtab>") '(lambda () (interactive) (oblsk/indent-region -2)))
+    (kbd "$") "g_" ;; https://stackoverflow.com/questions/20165596/select-entire-line-in-vim-without-the-new-line-character
+    (kbd "<") '(lambda () (interactive) (oblsk/indent-region 2))
+    (kbd ">") '(lambda () (interactive) (oblsk/indent-region -2))
+    (kbd "<tab>") '(lambda () (interactive) (oblsk/indent-region 2))
+    (kbd "<backtab>") '(lambda () (interactive) (oblsk/indent-region -2)))
 
   ;; Window movement bindings
   (define-key evil-normal-state-map (kbd "C-h C-h") 'evil-window-left)
@@ -255,11 +286,13 @@
   (evil-mode 1))
 
 (use-package evil-collection
+  :defer nil
   :after evil
   :config
   (evil-collection-init))
 
 (use-package which-key
+  :defer nil
   :init
   (setq which-key-sort-order 'which-key-key-order-alpha
         which-key-side-window-max-width 0.33
@@ -287,6 +320,7 @@
     "s" '(oblsk/auto-split-window :which-key "Split")
     "w" '(save-buffer :which-key "Save Buffer")
     "z" '(oblsk/toggle-window-layout :which-key "Toggle Zoom")
+    "F" '(format-all-buffer :which-key "Autoformat Buffer")
 
     "h"  '(:ignore t :which-key "help")
     "hf" '(describe-function :which-key "describe function")
@@ -388,11 +422,13 @@
 
 ;; Share clipboard with system in nw mode
 (use-package pbcopy
+  :defer nil
   :ensure t
   :config
   (turn-on-pbcopy))
 
 (use-package doom-themes
+  :defer nil
   :config
   (load-theme 'doom-tokyo-night t))
 
@@ -452,3 +488,9 @@
    '(diff-hl-margin-delete ((t (:foreground "red" :inherit nil))))
    '(diff-hl-margin-change ((t (:foreground "yellow" :inherit nil))))))
 
+;; autoformatter
+(use-package format-all
+  ;; https://ianyepan.github.io/posts/format-all/
+  :commands format-all-mode
+  :hook
+  (prog-mode . format-all-mode))
