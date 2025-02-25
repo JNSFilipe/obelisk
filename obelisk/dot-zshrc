@@ -89,9 +89,6 @@ alias del='sudo rm -r'
 alias comp='sudo make install'
 alias gl='git clone'
 alias lg='lazygit'
-alias bbic="brew update &&\
-    brew bundle install --cleanup --file=~/.config/Brewfile --no-lock &&\
-    brew upgrade" # https://matthiasportzel.com/brewfile/
 
 # Source OCaml
 # opam configuration

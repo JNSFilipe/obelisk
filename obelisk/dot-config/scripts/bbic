@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Get the Homebrew cache directory path
+CACHE_DIR="$(brew --cache)"
+
+# Measure its size in a human-readable format
+SIZE_BEFORE="$(du -sh "$CACHE_DIR" 2>/dev/null | awk '{print $1}')"
+
+# https://matthiasportzel.com/brewfile/ 
+brew update 
+brew bundle install --cleanup --file=~/.config/Brewfile --no-lock &&\
+brew upgrade 
+
+# Clean cache
+brew cleanup --prune=all --scrub
+
+# Remove the directory
+rm -rf "$CACHE_DIR"
+
+# Print the size of space freed
+echo "Freed up $SIZE_BEFORE of space."
+
+# Remove dmg and pkg installers from casks
+# https://github.com/Homebrew/homebrew-cask/issues/66242#issuecomment-511385186
+# https://apple.stackexchange.com/questions/359456/brew-cleanup-doesnt-scrub-the-caskroom
+# find "$(brew --prefix)/Caskroom" -type f -name '*.pkg' -delete
+find "$(brew --prefix)/Caskroom" -type f '(' -name '*.dmg' -or -name '*.pkg' ')' -delete
