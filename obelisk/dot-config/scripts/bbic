@@ -8,7 +8,7 @@ SIZE_BEFORE="$(du -sh "$CACHE_DIR" 2>/dev/null | awk '{print $1}')"
 
 # https://matthiasportzel.com/brewfile/ 
 brew update 
-brew bundle install --cleanup --file=~/.config/Brewfile --no-lock &&\
+brew bundle install --verbose --upgrade --cleanup --file=~/.config/Brewfile # --no-lock &&\
 brew upgrade 
 
 # Clean cache
