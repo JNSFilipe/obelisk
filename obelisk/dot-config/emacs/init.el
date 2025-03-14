@@ -227,6 +227,8 @@
   (setq evil-insert-state-cursor 'bar)
   (setq evil-normal-state-cursor 'box)
   (blink-cursor-mode -1)
+
+  (setq evil-disable-insert-state-bindings t)
   :config
   (evil-define-key 'normal 'global
     "j" "gj"
@@ -321,6 +323,7 @@
     "w" '(save-buffer :which-key "Save Buffer")
     "z" '(oblsk/toggle-window-layout :which-key "Toggle Zoom")
     "F" '(format-all-buffer :which-key "Autoformat Buffer")
+    "a" '(with-editor-async-shell-command :which-key "Async Shell Command")
 
     "h"  '(:ignore t :which-key "help")
     "hf" '(describe-function :which-key "describe function")
