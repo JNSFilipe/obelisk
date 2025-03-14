@@ -1,4 +1,8 @@
+# macOS stuff
+*.DS_Store
+
 # Files that I don't want to track
+node_modules
 obelisk/dot-config/gh/*
 obelisk/dot-config/zed/*
 obelisk/dot-config/htop/*
@@ -6,6 +10,7 @@ obelisk/dot-config/pudb/*
 obelisk/dot-config/emacs/*
 obelisk/dot-config/marimo/*
 obelisk/dot-config/zellij/*
+obelisk/dot-config/gtk-2.0/*
 obelisk/dot-config/raycast/*
 obelisk/dot-config/lazygit/*
 /obelisk/dot-config/psppirerc
@@ -15,6 +20,7 @@ obelisk/dot-config/nvim/lazy-lock.json
 # Exceptions
 !obelisk/dot-config/emacs/init.el
 !obelisk/dot-config/emacs/oblsk.el
+!obelisk/dot-config/emacs/early-init.el
 !obelisk/dot-config/zed/keymap.json
 !obelisk/dot-config/zed/settings.json
 

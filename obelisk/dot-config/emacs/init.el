@@ -114,7 +114,7 @@
             (lambda ()
               (setq gc-cons-threshold 800000)))
   ;; Font settings
-  (set-frame-font "Source Code Pro-12" nil t))
+  (set-frame-font "FiraCode Nerd Font Mono-12" nil t))
 
 ;; Update transient, required by other packages (magit, gptel)
 (use-package transient)
