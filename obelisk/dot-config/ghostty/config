@@ -4,7 +4,7 @@ theme = TokyoNight
 background-opacity = 0.9
 
 # Setup alt for macos
-# macos-option-as-alt = true
+macos-option-as-alt = true
 
 # Padding
 window-padding-x = 2,2
