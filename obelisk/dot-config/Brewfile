@@ -49,6 +49,7 @@ brew "uv"
 # Terms
 cask "wezterm"
 cask "ghostty"
+cask "kitty"
 # cask "warp"
 
 # Browsers
