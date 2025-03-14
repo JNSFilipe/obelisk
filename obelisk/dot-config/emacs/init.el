@@ -497,3 +497,35 @@
   :commands format-all-mode
   :hook
   (prog-mode . format-all-mode))
+
+;; Copilot
+(use-package copilot
+  :hook (prog-mode . copilot-mode)
+
+  :config
+  ;; 1) Grab whatever was originally on C-l in Evil insert state:
+  (let ((old-c-l (lookup-key evil-insert-state-map (kbd "C-l"))))
+
+    ;; 2) Define a helper that calls `copilot-accept-completion` if a suggestion
+    ;; is visible. Otherwise, it calls whatever was originally bound to C-l (or
+    ;; defaults to `recenter-top-bottom` if nothing was bound).
+    (defun oblsk/copilot-accept-or-fallback ()
+      (interactive)
+      (if (copilot--overlay-visible)
+          (copilot-accept-completion)
+        (if old-c-l
+            (call-interactively old-c-l)
+          ;; If there was no old binding, use the default Emacs action:
+          (call-interactively #'recenter-top-bottom))))
+    ;; 3) Finally, override C-l in Evil insert state with our new function:
+    (define-key evil-insert-state-map (kbd "C-l") #'oblsk/copilot-accept-or-fallback))
+
+  ;; https://github.com/copilot-emacs/copilot.el/issues/312#issuecomment-2149054737
+  (add-to-list 'copilot-indentation-alist '(prog-mode tab-width))
+  (add-to-list 'copilot-indentation-alist '(org-mode tab-width))
+  (add-to-list 'copilot-indentation-alist '(text-mode tab-width))
+  (add-to-list 'copilot-indentation-alist '(closure-mode tab-width))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode tab-width)))
+
+;; Copilot Chat
+
