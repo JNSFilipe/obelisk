@@ -75,7 +75,6 @@ if [ -z "$TMUX" ]; then
 fi
 
 # Alias
-alias em='emacs -nw'
 alias ls='eza --icons'
 alias la='eza --icons -A'
 alias ll='eza --icons -al'
@@ -96,6 +95,11 @@ alias lg='lazygit'
 
 # Function to find and activate a Python virtual environment
 activate() {
+    # If there is a currently active environment, deactivate it
+    if [ -n "$VIRTUAL_ENV" ]; then
+        deactivate
+    fi
+
     # Check for common virtual environment directory names
     venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
 
@@ -113,3 +117,22 @@ activate() {
     return 1
 }
 
+# Define the em function to launch emacs
+em() {
+    # Attempt to activate a virtual environment
+    if activate; then
+        # If activated successfully, check if python-lsp-server is installed
+        if ! uv pip show python-lsp-server &>/dev/null; then
+            echo "python-lsp-server not found. Installing..."
+            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
+        fi
+        # Now run emacs within the environment
+        emacs -nw "$@"
+    else
+        # If no environment is found, just run emacs
+        emacs -nw "$@"
+    fi
+}
+
+
+export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""
