@@ -133,7 +133,7 @@ cmd-8 = 'workspace 8'
 cmd-9 = 'workspace 9'
 # cmd-0 = 'workspace 0'
 
-alt-f = 'fullscreen'
+cmd-shift-f = 'fullscreen'
 alt-shift-f = 'layout floating'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
@@ -155,6 +155,7 @@ alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 
 # cmd-enter = 'exec-and-forget open -n /Applications/WezTerm.app'
 cmd-enter = 'exec-and-forget open -n /Applications/Ghostty.app'
+cmd-shift-enter = 'exec-and-forget open -n /Applications/kitty.app'
 
 # # 'service' binding mode declaration.
 # # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
