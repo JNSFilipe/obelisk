@@ -2,8 +2,10 @@
 tap "d12frosted/emacs-plus" # emacs-plus
 
 # Terminal utils
+brew "tree-sitter"
 brew "coreutils"
 brew "moreutils"
+brew "pygments"
 brew "starship"
 brew "ripgrep"
 brew "lazygit"
@@ -40,24 +42,23 @@ brew "boost"
 brew "opam"
 brew "node"
 brew "rust"
-brew "zig"
-brew "zls"
 brew "gcc"
 brew "go"
 brew "uv"
 
 # Terms
-cask "wezterm"
+# cask "wezterm"
 cask "ghostty"
-cask "kitty"
-# cask "warp"
+# cask "kitty"
+cask "warp"
 
 # Browsers
 cask "zen-browser"
 
 # Editors/Git
-brew "emacs-plus@30", args: ["with-native-comp"]
+# brew "emacs-plus@30", args: ["with-native-comp", "with-tree-sitter"]
 cask "visual-studio-code"
+brew "emacs-plus@30"
 cask "sublime-text"
 cask "arduino-ide"
 brew "git-lfs"
@@ -74,14 +75,18 @@ cask "font-fira-mono-nerd-font"
 # Misc
 cask "microsoft-office"
 cask "grandperspective"
+cask "microsoft-teams"
+cask "readdle-spark"
 cask "hp-easy-start"
 cask "google-drive"
+cask "tradingview"
 cask "epic-games"
 cask "bitwarden"
 cask "whatsapp"
 cask "freetube"
 cask "raycast"
 cask "spotify"
+cask "aldente"
 cask "notion"
 cask "shottr"
 cask "steam"
@@ -89,4 +94,6 @@ brew "yazi"
 brew "htop"
 cask "zoom"
 cask "ibkr"
-brew "mpv"
+cask "gimp"
+cask "iina" # Video player
+# brew "mpv"
