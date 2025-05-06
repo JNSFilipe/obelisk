@@ -207,20 +207,20 @@ require('lazy').setup({
               settings = {
                 pylsp = {
                   plugins = {
-                    -- formatter options
-                    black = { enabled = true },
-                    autopep8 = { enabled = false },
-                    yapf = { enabled = false },
-                    -- linter options
-                    mcabe = { enabled = false },
-                    flake8 = { enabled = false, ignore = "E501,C901" },
-                    pylint = { enabled = true, args = { "--disable=E501", "-" } }, -- Ignore line too long warning
-                    ruff = { enabled = false },
-                    pycodestyle = { enabled = false, ignore = { "E501" } },        -- Ignore line too long warning
-                    -- type checker
+                    -- -- formatter options
+                    -- black = { enabled = true },
+                    -- autopep8 = { enabled = false },
+                    -- yapf = { enabled = false },
+                    -- -- linter options
+                    -- mcabe = { enabled = false },
+                    -- flake8 = { enabled = false, ignore = "E501,C901" },
+                    -- pylint = { enabled = true, args = { "--disable=E501", "-" } }, -- Ignore line too long warning
+                    -- ruff = { enabled = false },
+                    -- pycodestyle = { enabled = false, ignore = { "E501" } }, -- Ignore line too long warning
+                    -- -- type checker
                     pylsp_mypy = {
                       enabled = true,
-                      overrides = { "--python-executable", "usr/bin/python3", true },
+                      -- overrides = { "--python-executable", "usr/bin/python3", true },
                       report_progress = true,
                       live_mode = false
                     },
@@ -250,7 +250,7 @@ require('lazy').setup({
                     jedi_signature_help = { enabled = true },
                     jedi_hover = { enabled = true },
                     -- import sorting
-                    isort = { enabled = true },
+                    -- isort = { enabled = true },
                   }
                 }
               }
