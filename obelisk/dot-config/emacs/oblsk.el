@@ -5,31 +5,6 @@
 (defvar oblsk/window-layout nil
  "Saved window layout configuration.")
 
-(defun oblsk/ido-find-file-recursive (&optional dir)
- "Find file recursively using ido with improved performance."
- (interactive)
- (let* ((default-directory (or dir command-line-default-directory))
-        (cmd "fd --type f --hidden --exclude .git")
-        (file-list (split-string (shell-command-to-string cmd) "\n" t))
-        (recent-files-full (mapcar 'expand-file-name recentf-list))
-        (recent-project-files
-         (seq-filter
-          (lambda (f)
-            (string-prefix-p (expand-file-name default-directory) f))
-          recent-files-full))
-        (recent-relative
-         (mapcar
-          (lambda (f) (file-relative-name f default-directory))
-          recent-project-files))
-        (sorted-files (delete-dups
-                      (append recent-relative
-                             file-list)))
-        (filename (ido-completing-read
-                  (format "Find file recursively from %s: "
-                         (abbreviate-file-name default-directory))
-                  sorted-files)))
-   (find-file filename)))
-
 (defun oblsk/xy-window-pixel-ratio ()
   "Return the ratio of the window's width to its height in pixels."
   (interactive)
@@ -48,7 +23,7 @@
       (split-window-horizontally)       ; Wider window, split horizontally
     (split-window-vertically))          ; Taller window, split vertically
   (other-window 1)
-  (call-interactively 'oblsk/ido-find-file-recursive))
+  (call-interactively 'fw-find-file))
 
 (defun oblsk/toggle-window-layout ()
  "Toggle between single window and saved window layout."
@@ -101,7 +76,7 @@
 
         ;; If we found targets, let user select one
         (if targets
-            (let* ((selected-target (ido-completing-read
+            (let* ((selected-target (completing-read
                                    "Make target: "
                                    targets
                                    nil  ; no predicate
@@ -112,3 +87,12 @@
               (compile (concat "make " selected-target)))
           (error "No targets found in %s" makefile-path))))))
 
+;; Startup time
+(defun oblsk/display-startup-time ()
+  (message
+   "Emacs loaded in %s with %d garbage collections."
+   (format
+    "%.2f seconds"
+    (float-time
+     (time-subtract after-init-time before-init-time)))
+   gcs-done))

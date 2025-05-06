@@ -8,12 +8,12 @@
 (setq package-enable-at-startup nil)
 
 ;; Bootstrap Elpaca
-(defvar elpaca-installer-version 0.8)
+(defvar elpaca-installer-version 0.10)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
+                              :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
@@ -23,7 +23,7 @@
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
+    (when (<= emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
         (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
                   ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
@@ -59,6 +59,15 @@
 ;; Helper functions
 ;; #############################################################################
 (load-file (expand-file-name "oblsk.el" user-emacs-directory))
+
+;; #############################################################################
+;; Select completion framework
+;; #############################################################################
+;; (defvar completion-framework 'ido
+(defvar completion-framework 'vertico
+;; (defvar completion-framework 'helm
+  "Completion framework to use. Options are 'vertico, 'helm, or 'ido.")
+;; #############################################################################
 
 ;; Basic UI settings
 (use-package emacs
@@ -119,6 +128,31 @@
 ;; Update transient, required by other packages (magit, gptel)
 (use-package transient)
 
+;;; COMPILATION
+(use-package compile
+  :ensure nil
+  :custom
+  ;; (setq-default compilation-scroll-output 'first-error)
+  (compilation-always-kill t)
+  (compilation-scroll-output 'first-error)
+  (ansi-color-for-compilation-mode t))
+
+;; PROCED
+(use-package proced
+  :ensure nil
+  :defer t
+  :custom
+  (proced-enable-color-flag t)
+  (proced-tree-flag t)
+  (proced-auto-update-flag 'visible)
+  (proced-auto-update-interval 1)
+  (proced-descent t)
+  (proced-filter 'user) ;; We can change interactively with `s'
+  :config
+  (add-hook 'proced-mode-hook
+            (lambda ()
+              (proced-toggle-auto-update 1))))
+
 ;; Files and backup settings
 (use-package files
   :defer nil
@@ -138,6 +172,14 @@
     (setq backup-directory-alist `(("." . ,backup-dir))
           auto-save-file-name-transforms `((".*" ,backup-dir t)))))
 
+;; Add completion backends
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-tex))
+
 ;; Built-in completion configuration
 (use-package minibuffer
   :defer nil
@@ -148,7 +190,7 @@
   (completion-category-defaults nil)
   (completion-category-overrides nil)
   :config
-  (setq completion-styles '(basic partial-completion substring initials flex)))
+  (setq completion-styles '(basic partial-completion substring initials flex emacs22)))
 
 ;; Language-specific settings
 (use-package prog-mode
@@ -172,28 +214,17 @@
   (when (file-exists-p custom-file)
     (load custom-file)))
 
-(use-package ido
-  :defer nil
-  :ensure nil
-  :config
-  (ido-mode 1)
-  (setq ido-use-virtual-buffers t)
-  (setq ido-enable-flex-matching t)
-  (ido-everywhere 1)
-  ;; Navigation keybindings
-  (define-key ido-common-completion-map (kbd "C-l") 'ido-next-match)
-  (define-key ido-common-completion-map (kbd "C-h") 'ido-prev-match)
-  (define-key ido-common-completion-map (kbd "<escape>") 'abort-recursive-edit))
-
-(use-package ido-completing-read+
-  :after ido
-  :config
-  (ido-ubiquitous-mode 1))
-
-(use-package amx
-  :after ido
-  :config
-  (amx-mode 1))
+;; Completion framework imports
+(pcase completion-framework
+  ('vertico
+   (load-file (expand-file-name "vertico-framework.el" user-emacs-directory)))
+  ('helm
+   (load-file (expand-file-name "helm-framework.el" user-emacs-directory)))
+  ('ido
+   (load-file (expand-file-name "ido-framework.el" user-emacs-directory)))
+  (_
+   (message "Unknown completion framework: %s, defaulting to ido" completion-framework)
+   (load-file (expand-file-name "ido-framework.el" user-emacs-directory))))
 
 ;; Recentf configuration
 (use-package recentf
@@ -256,7 +287,6 @@
 
   ;; Additional keybindings
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  (define-key ido-common-completion-map (kbd "<escape>") 'abort-recursive-edit)
   (global-set-key (kbd "C-q") 'delete-window)
 
   (general-create-definer oblsk/inner-menu
@@ -312,14 +342,26 @@
 
   ;; Example keybindings - customize these according to your needs
   (my/leader-keys
-    "SPC" '(execute-extended-command :which-key "M-x")
-    "f" '(oblsk/ido-find-file-recursive :which-key "Find File")
-    "b" '(ido-switch-buffer :which-key "Switch Buffer")
+    "SPC" '(fw-M-x :which-key "M-x")
+    "f" '(fw-find-file :which-key "Find File")
+    "b" '(fw-switch-buffer :which-key "Switch Buffer")
     "g" '(magit-status :which-key "Git")
     "c" '(comment-line :which-key "Comment")
     "m" '(oblsk/find-makefile-targets :which-key "Make")
     "M" '(compile :which-key "Compile")
-    "s" '(oblsk/auto-split-window :which-key "Split")
+    ;; "s" '(oblsk/auto-split-window :which-key "Split")
+    "s" '((lambda ()
+            (interactive)
+            (split-window-horizontally)
+            (other-window 1)
+            (fw-find-file))
+          :which-key "Split Horizontally")
+    "S" '((lambda ()
+            (interactive)
+            (split-window-vertically)
+            (other-window 1)
+            (fw-find-file))
+          :which-key "Split Vertically")
     "w" '(save-buffer :which-key "Save Buffer")
     "z" '(oblsk/toggle-window-layout :which-key "Toggle Zoom")
     "F" '(format-all-buffer :which-key "Autoformat Buffer")
@@ -349,6 +391,10 @@
 (use-package lua-mode
   :hook (lua-mode . eglot-ensure))
 
+(use-package odin-mode
+  :ensure (:host github :repo "mattt-b/odin-mode")
+  :hook (odin-mode . eglot-ensure))
+
 (use-package markdown-mode)
 
 (use-package tuareg
@@ -358,35 +404,35 @@
   (require 'ocp-indent))
 
 ;; LaTeX configuration
-(use-package tex
-  :ensure auctex
-  :custom
-  (TeX-auto-save t)                   ; Enable parse on save
-  (TeX-parse-self t)                  ; Enable parse on load
-  (TeX-master nil)                    ; Query for master file
-  (TeX-electric-sub-and-superscript t)  ; Automatically insert braces in math mode
-  (LaTeX-electric-left-right-brace t)   ; Auto-insert closing braces
-  (TeX-electric-math '("$" . "$"))      ; Auto-insert closing $
-  (LaTeX-indent-level 2)                ; Indentation amount
-  (LaTeX-item-indent 0)                 ; List item indentation
-  (TeX-source-correlate-mode t)         ; Enable source-preview correlation
-  (TeX-source-correlate-start-server t) ; Start server for inverse search
-  (TeX-view-program-selection '((output-pdf "PDF Tools"))) ; Use PDF-tools for viewing
-  :config
-  ;; Enable additional LaTeX features
-  (add-hook 'LaTeX-mode-hook
-            (lambda ()
-              (turn-on-auto-fill)        ; Auto-wrap lines
-              (LaTeX-math-mode)          ; Enable math mode
-              (reftex-mode)              ; Enable reference management
-              (flyspell-mode)            ; Enable spell checking
-              (outline-minor-mode)))     ; Enable outline for folding
+;; (use-package tex
+;;   :ensure auctex
+;;   :custom
+;;   (TeX-auto-save t)                   ; Enable parse on save
+;;   (TeX-parse-self t)                  ; Enable parse on load
+;;   (TeX-master nil)                    ; Query for master file
+;;   (TeX-electric-sub-and-superscript t)  ; Automatically insert braces in math mode
+;;   (LaTeX-electric-left-right-brace t)   ; Auto-insert closing braces
+;;   (TeX-electric-math '("$" . "$"))      ; Auto-insert closing $
+;;   (LaTeX-indent-level 2)                ; Indentation amount
+;;   (LaTeX-item-indent 0)                 ; List item indentation
+;;   (TeX-source-correlate-mode t)         ; Enable source-preview correlation
+;;   (TeX-source-correlate-start-server t) ; Start server for inverse search
+;;   (TeX-view-program-selection '((output-pdf "PDF Tools"))) ; Use PDF-tools for viewing
+;;   :config
+;;   ;; Enable additional LaTeX features
+;;   (add-hook 'LaTeX-mode-hook
+;;             (lambda ()
+;;               (turn-on-auto-fill)        ; Auto-wrap lines
+;;               (LaTeX-math-mode)          ; Enable math mode
+;;               (reftex-mode)              ; Enable reference management
+;;               (flyspell-mode)            ; Enable spell checking
+;;               (outline-minor-mode)))     ; Enable outline for folding
 
-  ;; Set up latexmk as the default command
-  (push
-   '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
-     :help "Run latexmk on file")
-   TeX-command-list))
+;;   ;; Set up latexmk as the default command
+;;   (push
+;;    '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+;;      :help "Run latexmk on file")
+;;    TeX-command-list))
 
 ;; CDLaTeX for fast math input
 (use-package cdlatex
@@ -415,11 +461,11 @@
   (pdf-view-display-size 'fit-page)
   (pdf-annot-activate-created-annotations t))
 
-;; LaTeX preview pane (optional but useful)
-(use-package latex-preview-pane
-  :hook (LaTeX-mode . latex-preview-pane-mode)
-  :custom
-  (latex-preview-pane-multifile-mode 'auctex))
+;; ;; LaTeX preview pane (optional but useful)
+;; (use-package latex-preview-pane
+;;   :hook (LaTeX-mode . latex-preview-pane-mode)
+;;   :custom
+;;   (latex-preview-pane-multifile-mode 'auctex))
 
 (use-package magit)
 
@@ -527,5 +573,5 @@
   (add-to-list 'copilot-indentation-alist '(closure-mode tab-width))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode tab-width)))
 
-;; Copilot Chat
-
+;; Print startup time
+;; (add-hook 'emacs-startup-hook #'oblsk/display-startup-time)

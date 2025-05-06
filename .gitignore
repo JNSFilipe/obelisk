@@ -6,6 +6,7 @@ node_modules
 obelisk/dot-config/gh/*
 obelisk/dot-config/zed/*
 obelisk/dot-config/htop/*
+obelisk/dot-hammerspoon/*
 obelisk/dot-config/pudb/*
 obelisk/dot-config/emacs/*
 obelisk/dot-config/marimo/*
@@ -21,6 +22,7 @@ obelisk/dot-config/nvim/lazy-lock.json
 !obelisk/dot-config/emacs/init.el
 !obelisk/dot-config/emacs/oblsk.el
 !obelisk/dot-config/emacs/early-init.el
+!obelisk/dot-config/emacs/*-framework.el
 !obelisk/dot-config/zed/keymap.json
 !obelisk/dot-config/zed/settings.json
 
