@@ -8,7 +8,7 @@
 (setq package-enable-at-startup nil)
 
 ;; Bootstrap Elpaca
-(defvar elpaca-installer-version 0.10)
+(defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -484,7 +484,7 @@
 ;; Flymake configuration for static analysis
 ;; Flymake is built into Emacs and works well with eglot
 (use-package flymake
-  :ensure nil  ; built-in package
+  ;; :ensure nil  ; built-in package
   :hook (prog-mode . flymake-mode)
   :config
   ;; Show diagnostics in echo area when point is on the problematic line
