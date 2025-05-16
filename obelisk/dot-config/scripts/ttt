@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# List all tmux sessions
+sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
+
+# Check if any sessions exist
+if [[ -z "$sessions" ]]; then
+  echo "No tmux sessions found."
+  exit 1
+fi
+
+# Use fzf to select a session
+selected=$(echo "$sessions" | fzf --prompt="Select tmux session: ")
+
+# Exit if nothing selected
+[[ -z "$selected" ]] && exit 0
+
+# Determine if we're already inside a tmux session
+if [[ -n "$TMUX" ]]; then
+  # Inside a tmux session: switch client to selected session
+  tmux switch-client -t "$selected"
+else
+  # Outside tmux: attach to selected session
+  tmux attach-session -t "$selected"
+fi
