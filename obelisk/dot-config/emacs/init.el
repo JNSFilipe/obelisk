@@ -153,6 +153,13 @@
             (lambda ()
               (proced-toggle-auto-update 1))))
 
+;;; DIRED
+(use-package dired
+  :ensure nil
+  :config
+  ;; https://emacs.stackexchange.com/a/5604
+  (setq dired-dwim-target t))
+
 ;; Files and backup settings
 (use-package files
   :defer nil
@@ -322,6 +329,11 @@
   :after evil
   :config
   (evil-collection-init))
+
+;; Multi-cursor support
+(use-package evil-multiedit
+  :config
+  (evil-multiedit-default-keybinds))
 
 (use-package which-key
   :defer nil
