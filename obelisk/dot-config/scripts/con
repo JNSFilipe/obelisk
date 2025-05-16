@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import argparse
+import socket
+import subprocess
+import ipaddress
+import os
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Connect to an external host; doesn't need to be reachable
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
+
+def scan_network_for_ssh(ip_base):
+    print(f"Scanning for SSH targets on {ip_base}.0/24...")
+    found = []
+    for i in range(1, 255):
+        ip = f"{ip_base}.{i}"
+        result = subprocess.run(
+            ["timeout", "1", "bash", "-c", f"echo > /dev/tcp/{ip}/22"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if result.returncode == 0:
+            print(f"Found SSH: {ip}")
+            found.append(ip)
+    return found
+
+def start_tmux_session(ip, user):
+    session_name = f"con_{ip.replace('.', '_')}"
+    ssh_cmd = f"ssh {user}@{ip}"
+    emacs_cmd = f"emacs -nw /ssh:{user}@{ip}:/"
+
+    subprocess.run(["tmux", "new-session", "-d", "-s", session_name, ssh_cmd])
+    subprocess.run(["tmux", "split-window", "-h", "-t", session_name, emacs_cmd])
+    subprocess.run(["tmux", "select-layout", "-t", session_name, "even-horizontal"])
+    subprocess.run(["tmux", "attach-session", "-t", session_name])
+
+def main():
+    parser = argparse.ArgumentParser(description="Network SSH Helper Tool")
+    parser.add_argument("command", choices=["l", "ls", "c", "con"], help="Command to run")
+    parser.add_argument("user", nargs="?", help="Username for SSH (only required with 'c' or 'con')")
+
+    args = parser.parse_args()
+    local_ip = get_local_ip()
+    ip_base = '.'.join(local_ip.split('.')[:3])
+
+    if args.command in ["l", "ls"]:
+        scan_network_for_ssh(ip_base)
+    elif args.command in ["c", "con"]:
+        if not args.user:
+            print("Error: SSH username required for connection mode.")
+            return
+        final_octet = input("Enter the last octet of the IP address (e.g., 42 for 192.168.1.42): ").strip()
+        try:
+            full_ip = str(ipaddress.ip_address(f"{ip_base}.{final_octet}"))
+        except ValueError:
+            print("Invalid IP.")
+            return
+        start_tmux_session(full_ip, args.user)
+    else:
+        print("Unknown command.")
+
+if __name__ == "__main__":
+    main()
