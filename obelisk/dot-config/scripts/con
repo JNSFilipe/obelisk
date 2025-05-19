@@ -3,13 +3,13 @@
 import argparse
 import socket
 import subprocess
-import ipaddress
-import os
+# import ipaddress
+import sys
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Connect to an external host; doesn't need to be reachable
+        # Doesn't need to connect; just used to get local IP
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
     finally:
@@ -42,7 +42,8 @@ def start_tmux_session(ip, user):
 def main():
     parser = argparse.ArgumentParser(description="Network SSH Helper Tool")
     parser.add_argument("command", choices=["l", "ls", "c", "con"], help="Command to run")
-    parser.add_argument("user", nargs="?", help="Username for SSH (only required with 'c' or 'con')")
+    parser.add_argument("user", nargs="?", help="Username for SSH (required for 'c' or 'con')")
+    parser.add_argument("last_octet", nargs="?", help="Last octet of target IP (required for 'c' or 'con')")
 
     args = parser.parse_args()
     local_ip = get_local_ip()
@@ -50,19 +51,22 @@ def main():
 
     if args.command in ["l", "ls"]:
         scan_network_for_ssh(ip_base)
+
     elif args.command in ["c", "con"]:
-        if not args.user:
-            print("Error: SSH username required for connection mode.")
-            return
-        final_octet = input("Enter the last octet of the IP address (e.g., 42 for 192.168.1.42): ").strip()
+        if not args.user or not args.last_octet:
+            print("Usage: con c <user> <last_octet>")
+            sys.exit(1)
+
         try:
-            full_ip = str(ipaddress.ip_address(f"{ip_base}.{final_octet}"))
+            last_octet = int(args.last_octet)
+            if not (1 <= last_octet <= 254):
+                raise ValueError
         except ValueError:
-            print("Invalid IP.")
-            return
+            print("Invalid last octet. Must be an integer between 1 and 254.")
+            sys.exit(1)
+
+        full_ip = f"{ip_base}.{last_octet}"
         start_tmux_session(full_ip, args.user)
-    else:
-        print("Unknown command.")
 
 if __name__ == "__main__":
     main()
