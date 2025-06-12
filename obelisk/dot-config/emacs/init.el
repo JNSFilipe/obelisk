@@ -7,53 +7,28 @@
 ;; Initialize package system
 (setq package-enable-at-startup nil)
 
-;; Bootstrap Elpaca
-(defvar elpaca-installer-version 0.11)
-(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1 :inherit ignore
-                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
-(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
-  (add-to-list 'load-path (if (file-exists-p build) build repo))
-  (unless (file-exists-p repo)
-    (make-directory repo t)
-    (when (<= emacs-major-version 28) (require 'subr-x))
-    (condition-case-unless-debug err
-        (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                  ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                  ,@(when-let* ((depth (plist-get order :depth)))
-                                                      (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                  ,(plist-get order :repo) ,repo))))
-                  ((zerop (call-process "git" nil buffer t "checkout"
-                                        (or (plist-get order :ref) "--"))))
-                  (emacs (concat invocation-directory invocation-name))
-                  ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                        "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                  ((require 'elpaca))
-                  ((elpaca-generate-autoloads "elpaca" repo)))
-            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-  (unless (require 'elpaca-autoloads nil t)
-    (require 'elpaca)
-    (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
-(add-hook 'after-init-hook #'elpaca-process-queues)
-(elpaca `(,@elpaca-order))
+;; Bootstrap straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-;; Install use-package support
-(elpaca elpaca-use-package
-  (elpaca-use-package-mode)
-  (setq use-package-always-defer t)
-  (setq elpaca-use-package-by-default t))
+;; Install use-package via straight.el
+(straight-use-package 'use-package)
 
-(elpaca-wait)
+;; Configure use-package to use straight.el by default
+(use-package straight
+  :custom
+  (use-package-always-defer t)
+  (straight-use-package-by-default t))
 
 ;; #############################################################################
 ;; Helper functions
@@ -72,7 +47,7 @@
 ;; Basic UI settings
 (use-package emacs
   :defer nil
-  :ensure nil
+  :straight nil
   :custom
   (inhibit-startup-message t)
   (scroll-conservatively 101)
@@ -109,12 +84,6 @@
   ;; Set default indentation to 2 spaces
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
-  ;; ;; Show trailing whitespace and tabs
-  ;; (setq-default show-trailing-whitespace t)
-  ;; (global-whitespace-mode f)
-  ;; (add-to-list 'whitespace-style 'space-mark)
-  ;; (add-to-list 'whitespace-style 'tab-mark)
-  ;; (add-to-list 'whitespace-style 'newline-mark)
   ;; Enable relative line numbers
   (global-display-line-numbers-mode 1)
   (setq display-line-numbers-type 'relative)
@@ -130,7 +99,7 @@
 
 ;;; COMPILATION
 (use-package compile
-  :ensure nil
+  :straight nil
   :custom
   ;; (setq-default compilation-scroll-output 'first-error)
   (compilation-always-kill t)
@@ -139,7 +108,7 @@
 
 ;; PROCED
 (use-package proced
-  :ensure nil
+  :straight nil
   :defer t
   :custom
   (proced-enable-color-flag t)
@@ -155,7 +124,7 @@
 
 ;;; DIRED
 (use-package dired
-  :ensure nil
+  :straight nil
   :config
   ;; https://emacs.stackexchange.com/a/5604
   (setq dired-dwim-target t))
@@ -163,7 +132,7 @@
 ;; Files and backup settings
 (use-package files
   :defer nil
-  :ensure nil
+  :straight nil
   :custom
   (backup-by-copying t)
   (version-control t)
@@ -190,7 +159,7 @@
 ;; Built-in completion configuration
 (use-package minibuffer
   :defer nil
-  :ensure nil
+  :straight nil
   :custom
   (completion-cycle-threshold 3)
   (tab-always-indent 'complete)
@@ -202,7 +171,7 @@
 ;; Language-specific settings
 (use-package prog-mode
   :defer nil
-  :ensure nil
+  :straight nil
   :hook
   ((c-mode . eglot-ensure)
    (c++-mode . eglot-ensure)
@@ -214,7 +183,7 @@
 ;; Custom file settings
 (use-package cus-edit
   :defer nil
-  :ensure nil
+  :straight nil
   :custom
   (custom-file (expand-file-name "custom.el" user-emacs-directory))
   :config
@@ -236,7 +205,7 @@
 ;; Recentf configuration
 (use-package recentf
   ;; :defer nil
-  :ensure nil  ; built-in package
+  :straight nil  ; built-in package
   :init
   (recentf-mode 1)
   :custom
@@ -296,32 +265,6 @@
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (global-set-key (kbd "C-q") 'delete-window)
 
-  (general-create-definer oblsk/inner-menu
-    :keymaps 'evil-normal-state-map
-    :prefix "t")
-
-  (oblsk/inner-menu
-    "r" '("vi(" :which-key "inner round parens")
-    "s" '("vi[" :which-key "inner square parens")
-    "c" '("vi{" :which-key "inner curly braces")
-    "q" '("vi\"" :which-key "inner quotes")
-    "a" '("vi'" :which-key "inner apostrophes"))
-
-  ;; (oblsk/outer-menu
-  ;;   "r" '("va(" :which-key "around round parens")
-  ;;   "s" '("va[" :which-key "around square parens")
-  ;;   "c" '("va{" :which-key "around curly braces")
-  ;;   "q" '("va\"" :which-key "around quotes")
-  ;;   "a" '("va'" :which-key "around apostrophes"))
-
-  (general-create-definer oblsk/inner-menu
-    :keymaps 'evil-normal-state-map
-    :prefix "t")
-
-  ;; (general-create-definer oblsk/outer-menu
-  ;;   :keymaps 'evil-normal-state-map
-  ;;   :prefix "T")
-
   (evil-mode 1))
 
 (use-package evil-collection
@@ -347,6 +290,8 @@
 (use-package general
   :after evil
   :config
+
+  ;; Define the main leader keys
   (general-create-definer my/leader-keys
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
@@ -385,11 +330,20 @@
     "hk" '(describe-key :which-key "describe key")))
 
 (use-package eglot
-  :hook (prog-mode . eglot-ensure)
+  :straight nil
+  :hook ((c-mode       . eglot-ensure)
+         (c++-mode     . eglot-ensure)
+         (python-mode  . eglot-ensure)
+         (rust-mode    . eglot-ensure)
+         (go-mode      . eglot-ensure)
+         (zig-mode     . eglot-ensure)
+         (lua-mode     . eglot-ensure)
+         (odin-mode    . eglot-ensure)
+         (tuareg-mode  . eglot-ensure))
   :config
-  (setq tab-always-indent 'complete)
-  (setq completion-cycle-threshold 3)
-  (setq completion-styles '(basic partial-completion substring)))
+  (setq tab-always-indent 'complete
+        completion-cycle-threshold 3
+        completion-styles '(basic partial-completion substring)))
 
 (use-package rust-mode
   :hook (rust-mode . eglot-ensure))
@@ -404,7 +358,7 @@
   :hook (lua-mode . eglot-ensure))
 
 (use-package odin-mode
-  :ensure (:host github :repo "mattt-b/odin-mode")
+  :straight (:host github :repo "mattt-b/odin-mode")
   :hook (odin-mode . eglot-ensure))
 
 (use-package markdown-mode)
@@ -484,7 +438,6 @@
 ;; Share clipboard with system in nw mode
 (use-package pbcopy
   :defer nil
-  :ensure t
   :config
   (turn-on-pbcopy))
 
@@ -496,7 +449,7 @@
 ;; Flymake configuration for static analysis
 ;; Flymake is built into Emacs and works well with eglot
 (use-package flymake
-  ;; :ensure nil  ; built-in package
+  :straight nil  ; built-in package
   :hook (prog-mode . flymake-mode)
   :config
   ;; Show diagnostics in echo area when point is on the problematic line
@@ -558,6 +511,7 @@
 
 ;; Copilot
 (use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el" "dist"))
   :hook (prog-mode . copilot-mode)
 
   :config
@@ -585,20 +539,11 @@
   (add-to-list 'copilot-indentation-alist '(closure-mode tab-width))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode tab-width)))
 
-;; Print startup time
-;; (add-hook 'emacs-startup-hook #'oblsk/display-startup-time)
-
 (use-package dape
   :preface
   ;; By default dape shares the same keybinding prefix as `gud'
   ;; If you do not want to use any prefix, set it to nil.
   (setq dape-key-prefix "\C-x\C-a")
-
-  ;; :hook
-  ;; Save breakpoints on quit
-  ;; (kill-emacs . dape-breakpoint-save)
-  ;; Load breakpoints on startup
-  ;; (after-init . dape-breakpoint-load)
 
   :config
   ;; Turn on global bindings for setting breakpoints with mouse
@@ -629,7 +574,9 @@
 
 ;; Enable repeat mode for more ergonomic `dape' use
 (use-package repeat
-  :ensure nil  ; built-in package
+  :straight nil  ; built-in package
   :config
   (repeat-mode))
 
+;; Print startup time
+;; (add-hook 'emacs-startup-hook #'oblsk/display-startup-time)
