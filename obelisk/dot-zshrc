@@ -1,3 +1,9 @@
+# Automatically attach or create a tmux session named "main"
+# with an exception for VS Code terminals
+if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ "$TERM_PROGRAM" != "vscode" ]; then
+  tmux attach-session -t main || tmux new-session -s main
+fi
+
 # Setup zsh history
 HISTFILE=~/.zsh_history
 HISTSIZE=10000000
@@ -46,25 +52,36 @@ znap source marlonrichert/zsh-autocomplete
 # Better zsh autocompletion
 znap source zsh-users/zsh-autosuggestions
 
+# Better zsh history search
+znap source atuinsh/atuin
+
 # Use pure pormpt if starship not installed; starship otherwise
-if ! type "starship" > /dev/null; then
-    # Starshipt not installed; install and setup pure prompt
-    # Install and setup pure prompt
-    fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
-    znap source sindresorhus/pure # Pull the repository from github
-    autoload -U promptinit; promptinit # Recommended on README
-    zstyle :prompt:pure:prompt:success color green
-    zstyle :prompt:pure:prompt:error color red
-    zstyle :prompt:pure:git:stash show yes
-    prompt pure # Recommended on README
-else
-    # Starshipt installed; Setup starship
-    eval "$(starship init zsh)"
-fi
+# if ! type "starship" > /dev/null; then
+#     # Starshipt not installed; install and setup pure prompt
+#     # Install and setup pure prompt
+#     fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
+#     znap source sindresorhus/pure # Pull the repository from github
+#     autoload -U promptinit; promptinit # Recommended on README
+#     zstyle :prompt:pure:prompt:success color green
+#     zstyle :prompt:pure:prompt:error color red
+#     zstyle :prompt:pure:git:stash show yes
+#     prompt pure # Recommended on README
+# else
+#     # Starshipt installed; Setup starship
+#     eval "$(starship init zsh)"
+# fi
+
+fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
+znap source sindresorhus/pure # Pull the repository from github
+autoload -U promptinit; promptinit # Recommended on README
+zstyle :prompt:pure:prompt:success color green
+zstyle :prompt:pure:prompt:error color red
+zstyle :prompt:pure:git:stash show yes
+prompt pure # Recommended on README
 
 # fzf integration
-source <(fzf --zsh)
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons $realpath'
+# source <(fzf --zsh)
+# zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons $realpath'
 
 # Setup zoxide
 eval "$(zoxide init zsh)"
@@ -75,6 +92,7 @@ if [ -z "$TMUX" ]; then
 fi
 
 # Alias
+alias cd='z'
 alias ls='eza --icons'
 alias la='eza --icons -A'
 alias ll='eza --icons -al'
@@ -89,10 +107,14 @@ alias comp='sudo make install'
 alias gl='git clone'
 alias lg='lazygit'
 alias rcp='rsync -avzh --progress --stats'
+alias spartan='emacs --init-dir $HOME/.config/spartan'
 
 # Source OCaml
 # opam configuration
 [[ ! -r ~/.opam/opam-init/init.zsh ]] || source ~/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null
+
+# [ ! -f "$HOME/.x-cmd.root/X" ] || . "$HOME/.x-cmd.root/X" # boot up x-cmd.
+export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""
 
 # Function to find and activate a Python virtual environment
 activate() {
@@ -135,5 +157,20 @@ em() {
     fi
 }
 
+# Define the em function to launch spartan emacs
+sp() {
+    # Attempt to activate a virtual environment
+    if activate; then
+        # If activated successfully, check if python-lsp-server is installed
+        if ! uv pip show python-lsp-server &>/dev/null; then
+            echo "python-lsp-server not found. Installing..."
+            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
+        fi
+        # Now run emacs within the environment
+        emacs --init-dir $HOME/.config/spartan -nw "$@"
+    else
+        # If no environment is found, just run emacs
+        emacs --init-dir $HOME/.config/spartan -nw "$@"
+    fi
+}
 
-export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""

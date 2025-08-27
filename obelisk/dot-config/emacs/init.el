@@ -161,7 +161,8 @@
   :defer nil
   :straight nil
   :custom
-  (completion-cycle-threshold 3)
+  ;; Complete if the candidate is unique.
+  (completion-cycle-threshold 1)
   (tab-always-indent 'complete)
   (completion-category-defaults nil)
   (completion-category-overrides nil)
@@ -173,10 +174,7 @@
   :defer nil
   :straight nil
   :hook
-  ((c-mode . eglot-ensure)
-   (c++-mode . eglot-ensure)
-   (python-mode . eglot-ensure)
-   (emacs-lisp-mode . (lambda ()
+  ((emacs-lisp-mode . (lambda ()
                         (setq indent-tabs-mode nil
                               tab-width 2)))))
 
@@ -297,12 +295,13 @@
     :prefix "SPC"
     :global-prefix "C-SPC")
 
-  ;; Example keybindings - customize these according to your needs
+  ;; Customize keybindings
   (my/leader-keys
     "SPC" '(fw-M-x :which-key "M-x")
     "f" '(fw-find-file :which-key "Find File")
     "b" '(fw-switch-buffer :which-key "Switch Buffer")
-    "g" '(magit-status :which-key "Git")
+    "g" '(consult-ripgrep :which-key "Grep")
+    "G" '(magit-status :which-key "Git")
     "c" '(comment-line :which-key "Comment")
     "m" '(oblsk/find-makefile-targets :which-key "Make")
     "M" '(compile :which-key "Compile")
@@ -324,47 +323,136 @@
     "F" '(format-all-buffer :which-key "Autoformat Buffer")
     "a" '(with-editor-async-shell-command :which-key "Async Shell Command")
 
+    ;; Bookmarks
+    "k" '(oblsk/browse-bookmarks :which-key "Bookmarks")
+
+    ;; Help and documentation
     "h"  '(:ignore t :which-key "help")
     "hf" '(describe-function :which-key "describe function")
     "hv" '(describe-variable :which-key "describe variable")
-    "hk" '(describe-key :which-key "describe key")))
+    "hk" '(describe-key :which-key "describe key")
 
-(use-package eglot
-  :straight nil
-  :hook ((c-mode       . eglot-ensure)
-         (c++-mode     . eglot-ensure)
-         (python-mode  . eglot-ensure)
-         (rust-mode    . eglot-ensure)
-         (go-mode      . eglot-ensure)
-         (zig-mode     . eglot-ensure)
-         (lua-mode     . eglot-ensure)
-         (odin-mode    . eglot-ensure)
-         (tuareg-mode  . eglot-ensure))
+    ;; LSP commands
+    "l"  '(:ignore t :which-key "LSP")
+    "la" '(lsp-execute-code-action :which-key "Code Actions")
+    "ld" '(xref-find-definitions :which-key "Go to Definition")
+    "lD" '(lsp-find-declaration :which-key "Go to Declaration")
+    "li" '(lsp-find-implementation :which-key "Go to Implementation")
+    "lt" '(lsp-find-type-definition :which-key "Go to Type Definition")
+    "lR" '(xref-find-references :which-key "Find References")
+    "lr" '(lsp-rename :which-key "Rename Symbol")
+    "le" '(lsp-ui-flycheck-list :which-key "List Errors/Diagnostics")
+    "lh" '(lsp-describe-thing-at-point :which-key "Help/Describe at Point")
+    "ls" '(lsp-ui-imenu :which-key "Symbol Outline")
+
+;; Debugging (DAP)
+    "d"  '(:ignore t :which-key "Debug")
+    "db" '(dap-breakpoint-toggle :which-key "Toggle Breakpoint") ;; <-- This line is now correct
+    "dc" '(dap-continue :which-key "Continue")
+    "dd" '(dap-debug :which-key "Start Debug Session")
+    "dD" '(dap-debug-last :which-key "Debug Last Session")
+    "di" '(dap-step-in :which-key "Step In")
+    "do" '(dap-step-out :which-key "Step Out")
+    "dn" '(dap-next :which-key "Next Line")
+    "de" '(dap-eval :which-key "Eval Expression")
+    "dq" '(dap-disconnect :which-key "Disconnect/Quit")
+    "dr" '(dap-ui-repl :which-key "Open REPL")))
+
+;; LSP (Language Server Protocol) support with lsp-mode
+;; NOTE: You must install the language servers for your languages
+;; (e.g., clangd, pylsp, rust-analyzer) for lsp-mode to work.
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook ((prog-mode . lsp-deferred)
+         (kill-emacs . #'lsp-shutdown-all-workspaces))
+  :init
+  ;; Set these before lsp-mode loads to prevent startup warnings
+  (setq lsp-keymap-prefix "C-c l")
+  (setq lsp-completion-provider :capf)
+  (setq lsp-enable-snippet nil)
   :config
-  (setq tab-always-indent 'complete
-        completion-cycle-threshold 3
-        completion-styles '(basic partial-completion substring)))
+  ;; Enable which-key integration for better keybinding discovery
+  (lsp-enable-which-key-integration t)
+  ;; Set performance options
+  (setq lsp-idle-delay 0.500)
+  (setq lsp-log-io nil))
 
-(use-package rust-mode
-  :hook (rust-mode . eglot-ensure))
+;; Optional but recommended: UI enhancements for lsp-mode
+(use-package lsp-ui
+  :after lsp-mode
+  :commands lsp-ui-mode
+  :config
+  ;; --- Fixes for *Messages* buffer errors ---
+  ;; The `lsp--on-idle` timer error is often caused by automatic UI updates
+  ;; on hover. Disabling these makes the UI more stable.
+  ;; You can still view documentation manually with `lsp-describe-thing-at-point`
+  ;; (bound to `SPC l h` in your config).
+  (setq lsp-ui-doc-enable nil)
+  (setq lsp-ui-sideline-show-hover nil)
+  ;; ------------------------------------------
+  ;; Configure other UI elements.
+  (setq lsp-ui-doc-position 'bottom)
+  (setq lsp-ui-sideline-show-diagnostics t)
+  (setq lsp-ui-sideline-show-code-actions t)
+  (setq lsp-ui-imenu-window-width 30)
+  (setq lsp-ui-flycheck-enable t))
 
-(use-package go-mode
-  :hook (go-mode . eglot-ensure))
+;; DAP (Debug Adapter Protocol) support
+(use-package dap-mode
+  :after lsp-mode
+  :config
+  ;; Enable dap-mode's global minor mode. This makes commands available
+  ;; and sets up integrations without starting a debug session.
+  (dap-mode 1)
 
-(use-package zig-mode
-  :hook (zig-mode . eglot-ensure))
+  ;; Configure breakpoint visuals for better compatibility.
+  (setq dap-breakpoint-indicator "●") ;; A solid circle
+  (setq dap-breakpoint-disabled-indicator "○") ;; A hollow circle
+  (setq dap-breakpoint-pending-indicator "»") ;; Arrows for pending
+  (custom-set-faces
+   '(dap-breakpoint-face ((t (:foreground "red" :weight 'bold))))
+   '(dap-breakpoint-disabled-face ((t (:foreground "gray")))))
 
-(use-package lua-mode
-  :hook (lua-mode . eglot-ensure))
+  (dap-auto-configure-mode)
+  ;; --- Language-specific setup ---
+  ;; NOTE: You must install the actual debug adapters on your system.
+  ;; e.g., `pip install debugpy` for Python.
+  (require 'dap-python)
+  ;; Use the modern `debugpy` adapter instead of the old `ptvsd`
+  (setq dap-python-debugger 'debugpy)
+  (require 'dap-go)
+  (require 'dap-gdb-lldb))
+
+;; UI for DAP.
+(use-package dap-ui
+  ;; As you correctly pointed out, dap-ui is part of the dap-mode package,
+  ;; so we tell `straight` not to install it as a separate package.
+  :straight nil
+  :after dap-mode
+  :config
+  ;; Enable the UI globally. It is designed to only show its windows
+  ;; when a debug session is active.
+  (dap-ui-mode 1))
+
+(use-package rust-mode)
+
+(use-package go-mode)
+
+(use-package zig-mode)
+
+(use-package lua-mode)
 
 (use-package odin-mode
-  :straight (:host github :repo "mattt-b/odin-mode")
-  :hook (odin-mode . eglot-ensure))
+  :straight (:host github :repo "mattt-b/odin-mode"))
+
+(use-package python-mode
+  :straight nil
+  :hook (python-mode . (lambda ()
+                         (setq python-indent-offset 2))))
 
 (use-package markdown-mode)
 
 (use-package tuareg
-  :hook (tuareg-mode . eglot-ensure)
   :config
   (add-to-list 'load-path (concat (getenv "HOME") "/.opam/default/share/emacs/site-lisp"))
   (require 'ocp-indent))
@@ -373,9 +461,9 @@
 ;; (use-package tex
 ;;   :ensure auctex
 ;;   :custom
-;;   (TeX-auto-save t)                   ; Enable parse on save
-;;   (TeX-parse-self t)                  ; Enable parse on load
-;;   (TeX-master nil)                    ; Query for master file
+;;   (TeX-auto-save t)                  ; Enable parse on save
+;;   (TeX-parse-self t)                 ; Enable parse on load
+;;   (TeX-master nil)                   ; Query for master file
 ;;   (TeX-electric-sub-and-superscript t)  ; Automatically insert braces in math mode
 ;;   (LaTeX-electric-left-right-brace t)   ; Auto-insert closing braces
 ;;   (TeX-electric-math '("$" . "$"))      ; Auto-insert closing $
@@ -388,11 +476,11 @@
 ;;   ;; Enable additional LaTeX features
 ;;   (add-hook 'LaTeX-mode-hook
 ;;             (lambda ()
-;;               (turn-on-auto-fill)        ; Auto-wrap lines
-;;               (LaTeX-math-mode)          ; Enable math mode
-;;               (reftex-mode)              ; Enable reference management
-;;               (flyspell-mode)            ; Enable spell checking
-;;               (outline-minor-mode)))     ; Enable outline for folding
+;;               (turn-on-auto-fill)       ; Auto-wrap lines
+;;               (LaTeX-math-mode)         ; Enable math mode
+;;               (reftex-mode)             ; Enable reference management
+;;               (flyspell-mode)           ; Enable spell checking
+;;               (outline-minor-mode)))    ; Enable outline for folding
 
 ;;   ;; Set up latexmk as the default command
 ;;   (push
@@ -447,7 +535,7 @@
   (load-theme 'doom-tokyo-night t))
 
 ;; Flymake configuration for static analysis
-;; Flymake is built into Emacs and works well with eglot
+;; Flymake is built into Emacs and is used by lsp-mode as a backend.
 (use-package flymake
   :straight nil  ; built-in package
   :hook (prog-mode . flymake-mode)
@@ -491,16 +579,23 @@
           (unknown . "?")
           (ignored . " ")))
 
-  ;; Remove background colors and keep only the signs colored
+  ;; Remove background colors and keep only the signs colored.
+  ;; We achieve this by *only* setting the foreground color.
   (custom-set-faces
-   '(diff-hl-insert ((t (:foreground "green" :background nil :inherit nil))))
-   '(diff-hl-delete ((t (:foreground "red" :background nil :inherit nil))))
-   '(diff-hl-change ((t (:foreground "yellow" :background nil :inherit nil))))
+   '(diff-hl-insert ((t (:foreground "green"))))
+   '(diff-hl-delete ((t (:foreground "red"))))
+   '(diff-hl-change ((t (:foreground "yellow"))))
 
    ;; Also set margin faces to match
-   '(diff-hl-margin-insert ((t (:foreground "green" :inherit nil))))
-   '(diff-hl-margin-delete ((t (:foreground "red" :inherit nil))))
-   '(diff-hl-margin-change ((t (:foreground "yellow" :inherit nil))))))
+   '(diff-hl-margin-insert ((t (:foreground "green"))))
+   '(diff-hl-margin-delete ((t (:foreground "red"))))
+   '(diff-hl-margin-change ((t (:foreground "yellow"))))))
+
+;; Editing grep results directly? 
+(use-package wgrep)
+
+;; vterm for terminal emulation
+(use-package vterm)
 
 ;; autoformatter
 (use-package format-all
@@ -539,44 +634,12 @@
   (add-to-list 'copilot-indentation-alist '(closure-mode tab-width))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode tab-width)))
 
-(use-package dape
-  :preface
-  ;; By default dape shares the same keybinding prefix as `gud'
-  ;; If you do not want to use any prefix, set it to nil.
-  (setq dape-key-prefix "\C-x\C-a")
-
+;; Claude Code
+(use-package claude-code-ide
+  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+  :bind ("C-c ç" . claude-code-ide-menu) ; Set your favorite keybinding
   :config
-  ;; Turn on global bindings for setting breakpoints with mouse
-  (dape-breakpoint-global-mode)
-
-  ;; Info buffers to the right
-  ;; (setq dape-buffer-window-arrangement 'right)
-
-  ;; Info buffers like gud (gdb-mi)
-  (setq dape-buffer-window-arrangement 'gud)
-  (setq dape-info-hide-mode-line nil)
-
-  ;; Pulse source line (performance hit)
-  ;; (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
-
-  ;; Showing inlay hints
-  (setq dape-inlay-hints t)
-
-  ;; Save buffers on startup, useful for interpreted languages
-  ;; (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
-
-  ;; Kill compile buffer on build success
-  ;; (add-hook 'dape-compile-hook 'kill-buffer)
-
-  ;; Projectile users
-  ;; (setq dape-cwd-function 'projectile-project-root)
-  )
-
-;; Enable repeat mode for more ergonomic `dape' use
-(use-package repeat
-  :straight nil  ; built-in package
-  :config
-  (repeat-mode))
+  (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
 
 ;; Print startup time
 ;; (add-hook 'emacs-startup-hook #'oblsk/display-startup-time)

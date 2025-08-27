@@ -1,7 +1,8 @@
 # Theme
 # theme = Oxocarbon
 theme = TokyoNight
-background-opacity = 0.9
+# background-opacity = 0.9
+background-opacity = 1.0
 
 # Setup alt for macos
 # macos-option-as-alt = true
