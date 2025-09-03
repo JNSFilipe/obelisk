@@ -157,6 +157,23 @@ em() {
     fi
 }
 
+# Define the dem function to launch doom emacs
+dem() {
+    # Attempt to activate a virtual environment
+    if activate; then
+        # If activated successfully, check if python-lsp-server is installed
+        if ! uv pip show python-lsp-server &>/dev/null; then
+            echo "python-lsp-server not found. Installing..."
+            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
+        fi
+        # Now run emacs within the environment
+        emacs --init-dir $HOME/.config/demacs -nw "$@"
+    else
+        # If no environment is found, just run emacs
+        emacs --init-dir $HOME/.config/demacs -nw "$@"
+    fi
+}
+
 # Define the em function to launch spartan emacs
 sp() {
     # Attempt to activate a virtual environment
