@@ -9,7 +9,7 @@
   // Set menu key bindings
   {
     "bindings": {
-      "ctrl-k": "menu::SelectPrev",
+      "ctrl-k": "menu::SelectPrevious",
       "ctrl-j": "menu::SelectNext",
       "ctrl-l": "menu::Confirm",
       "ctrl-h": "menu::Cancel"
@@ -17,11 +17,11 @@
   },
   // Shortcuts for inline completion (ghost text)
   {
-    "context": "Editor && vim_mode == insert && inline_completion",
+    "context": "Editor && vim_mode == insert && edit_prediction",
     "use_key_equivalents": true,
     "bindings": {
-      "ctrl-l": "editor::AcceptInlineCompletion",
-      "ctrl-shift-l": "editor::AcceptPartialInlineCompletion"
+      "ctrl-l": "editor::AcceptEditPrediction",
+      "ctrl-shift-l": "editor::AcceptPartialEditPrediction"
     }
   },
   // Shortcuts for dropdown completion
@@ -33,19 +33,7 @@
       "enter": "editor::ConfirmCompletion",
       "tab": "editor::ComposeCompletion",
       "shift-j": "editor::ContextMenuNext", // TODO: Figure out how to use ctrl instead of shift
-      "shift-k": "editor::ContextMenuPrev" // TODO: Figure out how to use ctrl instead of shift
-    }
-  },
-  {
-    "context": "Workspace",
-    "bindings": {
-      // "shift shift": "file_finder::Toggle"
-    }
-  },
-  {
-    "context": "Editor",
-    "bindings": {
-      // "j k": ["workspace::SendKeystrokes", "escape"]
+      "shift-k": "editor::ContextMenuPrevious" // TODO: Figure out how to use ctrl instead of shift
     }
   },
   {
@@ -60,15 +48,15 @@
 
       // Window movement bindings
       // Ctrl jklk to move between panes
-      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"],
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown",
 
       // +Git
       // Git prev/next hunk
       "ç": "editor::GoToHunk",
-      "Ç": "editor::GoToPrevHunk",
+      "Ç": "editor::GoToPreviousHunk",
 
       // Shift/ctlr key combos
       // Close active panel
@@ -132,10 +120,10 @@
   {
     "context": "Terminal",
     "bindings": {
-      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"],
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown",
       "ctrl-z": "workspace::ToggleZoom",
       "ctrl-q": "pane::CloseAllItems",
       "escape": "pane::CloseAllItems"
@@ -145,10 +133,10 @@
   {
     "context": "menu",
     "bindings": {
-      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"]
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown"
     }
   },
   // File panel (netrw)
@@ -166,10 +154,10 @@
       "q": "workspace::ToggleRightDock",
       "space e": "workspace::ToggleRightDock",
       // Navigate between panel
-      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"]
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown"
     }
   }
   // Panel nagivation
@@ -182,4 +170,11 @@
   //     "j": ["workspace::ActivatePaneInDirection", "Down"]
   //   }
   // }
+,
+  {
+    "context": "(((Editor && vim_mode == normal) && !VimWaiting) && !menu)",
+    "bindings": {
+      "shift-Ç": "editor::GoToPreviousHunk"
+    }
+  }
 ]

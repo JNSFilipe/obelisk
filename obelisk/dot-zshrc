@@ -157,8 +157,8 @@ em() {
     fi
 }
 
-# Define the dem function to launch doom emacs
-dem() {
+# Define the dem function to launch vanilla emacs
+vem() {
     # Attempt to activate a virtual environment
     if activate; then
         # If activated successfully, check if python-lsp-server is installed
@@ -167,10 +167,10 @@ dem() {
             uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
         fi
         # Now run emacs within the environment
-        emacs --init-dir $HOME/.config/demacs -nw "$@"
+        emacs --init-dir $HOME/.config/vemacs -nw "$@"
     else
         # If no environment is found, just run emacs
-        emacs --init-dir $HOME/.config/demacs -nw "$@"
+        emacs --init-dir $HOME/.config/vemacs -nw "$@"
     fi
 }
 
@@ -239,7 +239,7 @@ essh() {
     
     # Launch GUI Emacs with TRAMP
     # Use nohup to detach from terminal and redirect output
-    nohup emacs --init-dir $HOME/.config/demacs "$tramp_path" >/dev/null 2>&1 &
+    nohup emacs "$tramp_path" >/dev/null 2>&1 &
 }
 
 # Open remote eshell in Emacs TRAMP with -nw
