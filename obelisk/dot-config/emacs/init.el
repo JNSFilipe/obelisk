@@ -591,9 +591,6 @@
    '(diff-hl-margin-delete ((t (:foreground "red"))))
    '(diff-hl-margin-change ((t (:foreground "yellow"))))))
 
-;; Editing grep results directly? 
-(use-package wgrep)
-
 ;; vterm for terminal emulation
 (use-package vterm)
 

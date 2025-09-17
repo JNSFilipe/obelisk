@@ -1,0 +1,83 @@
+{
+  "profiles": [
+    {
+      "name": "Default profile",
+      "selected": true,
+      "virtual_hid_keyboard": { "keyboard_type_v2": "iso" },
+
+      "devices": [
+        {
+          "identifiers": { "is_keyboard": true },
+          "simple_modifications": [
+            { "from": { "apple_vendor_top_case_key_code": "keyboard_fn" }, "to": [ { "key_code": "left_control" } ] },
+            { "from": { "key_code": "left_control" }, "to": [ { "apple_vendor_top_case_key_code": "keyboard_fn" } ] }
+          ]
+        }
+      ],
+
+      "complex_modifications": {
+        "rules": [
+
+          /* ----- Your caps lock rule ----- */
+          {
+            "description": "Change caps_lock to command+control+option+shift",
+            "manipulators": [
+              {
+                "type": "basic",
+                "from": { "key_code": "caps_lock", "modifiers": { "optional": ["any"] } },
+                "to": [ { "key_code": "left_shift", "modifiers": ["left_command", "left_control", "left_option"] } ]
+              }
+            ]
+          },
+
+          /* ----- S-layer ----- */
+          {
+            "description": "S-layer (hold s to enable layer)",
+            "manipulators": [
+
+              /* Activate s-layer */
+              {
+                "type": "basic",
+                "from": { "key_code": "s", "modifiers": { "optional": ["any"] } },
+                "to": [ { "set_variable": { "name": "s_layer", "value": 1 } } ],
+                "to_after_key_up": [ { "set_variable": { "name": "s_layer", "value": 0 } } ],
+                "to_if_alone": [ { "key_code": "s" } ],
+                "parameters": {
+                  "basic.to_if_alone_timeout_milliseconds": 250,
+                  "basic.to_if_held_down_threshold_milliseconds": 200
+                }
+              },
+
+              /* hjkl -> arrows */
+              { "type": "basic", "from": { "key_code": "h" }, "to": [ { "key_code": "left_arrow" } ],  "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+              { "type": "basic", "from": { "key_code": "j" }, "to": [ { "key_code": "down_arrow" } ],  "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+              { "type": "basic", "from": { "key_code": "k" }, "to": [ { "key_code": "up_arrow" } ],    "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+              { "type": "basic", "from": { "key_code": "l" }, "to": [ { "key_code": "right_arrow" } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* d -> ( */
+              { "type": "basic", "from": { "key_code": "d" }, "to": [ { "key_code": "8", "modifiers": ["left_shift"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* f -> ) */
+              { "type": "basic", "from": { "key_code": "f" }, "to": [ { "key_code": "9", "modifiers": ["left_shift"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* c -> [ */
+              { "type": "basic", "from": { "key_code": "c" }, "to": [ { "key_code": "8", "modifiers": ["right_option"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* v -> ] */
+              { "type": "basic", "from": { "key_code": "v" }, "to": [ { "key_code": "9", "modifiers": ["right_option"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* e -> { */
+              { "type": "basic", "from": { "key_code": "e" }, "to": [ { "key_code": "8", "modifiers": ["left_shift", "right_option"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* r -> } */
+              { "type": "basic", "from": { "key_code": "r" }, "to": [ { "key_code": "9", "modifiers": ["left_shift", "right_option"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] },
+
+              /* a -> @ */
+              { "type": "basic", "from": { "key_code": "a" }, "to": [ { "key_code": "2", "modifiers": ["right_option"] } ], "conditions": [ { "type": "variable_if", "name": "s_layer", "value": 1 } ] }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

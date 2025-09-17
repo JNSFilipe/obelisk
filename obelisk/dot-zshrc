@@ -174,20 +174,117 @@ dem() {
     fi
 }
 
-# Define the em function to launch spartan emacs
-sp() {
-    # Attempt to activate a virtual environment
-    if activate; then
-        # If activated successfully, check if python-lsp-server is installed
-        if ! uv pip show python-lsp-server &>/dev/null; then
-            echo "python-lsp-server not found. Installing..."
-            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
-        fi
-        # Now run emacs within the environment
-        emacs --init-dir $HOME/.config/spartan -nw "$@"
-    else
-        # If no environment is found, just run emacs
-        emacs --init-dir $HOME/.config/spartan -nw "$@"
+# Define the essh function to launch GUI Emacs with TRAMP for remote editing
+essh() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: essh [user@]hostname [additional_ssh_options]"
+        echo "Examples:"
+        echo "  essh user@example.com"
+        echo "  essh root@192.168.1.100"
+        echo "  essh -p 2222 user@example.com"
+        return 1
     fi
+    
+    # Parse arguments to extract host and any SSH options
+    local ssh_args=()
+    local host=""
+    local port=""
+    
+    # Process arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -p)
+                port="$2"
+                ssh_args+=("$1" "$2")
+                shift 2
+                ;;
+            -*)
+                ssh_args+=("$1")
+                shift
+                ;;
+            *)
+                if [[ -z "$host" ]]; then
+                    host="$1"
+                else
+                    ssh_args+=("$1")
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    if [[ -z "$host" ]]; then
+        echo "Error: No hostname provided"
+        return 1
+    fi
+    
+    # Build the TRAMP path
+    local tramp_path="/ssh:"
+    
+    # Add port if specified
+    if [[ -n "$port" ]]; then
+        # Extract user and hostname
+        if [[ "$host" == *"@"* ]]; then
+            local user="${host%@*}"
+            local hostname="${host#*@}"
+            tramp_path="/ssh:${user}@${hostname}#${port}:"
+        else
+            tramp_path="/ssh:${host}#${port}:"
+        fi
+    else
+        tramp_path="/ssh:${host}:"
+    fi
+    
+    echo "Opening Emacs with TRAMP connection to: $tramp_path"
+    
+    # Launch GUI Emacs with TRAMP
+    # Use nohup to detach from terminal and redirect output
+    nohup emacs --init-dir $HOME/.config/demacs "$tramp_path" >/dev/null 2>&1 &
 }
 
+# Open remote eshell in Emacs TRAMP with -nw
+tramp() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: tramp user@host [remote-path]"
+    return 1
+  fi
+
+  local userhost="$1"
+  local path="${2:-~}"   # default to home dir if not given
+
+  emacs -nw --eval "(let ((default-directory \"/ssh:${userhost}:${path}/\")) (eshell t))"
+}
+
+# Persistent SSH that auto-reconnects and supplies the password once.
+# Requires: autossh, sshpass
+pssh() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: pssh user@host [ssh-args...]"
+    echo "Examples:"
+    echo "  pssh user@server"
+    echo "  pssh user@server -p 2222"
+    echo "  pssh user@server -L 8080:localhost:80"
+    return 1
+  fi
+
+  local userhost="$1"
+  shift
+
+  # secure password prompt (no echo)
+  local pw
+  read -rs "pw?Password for ${userhost}: "
+  echo
+
+  # Ensure autossh always launches ssh THROUGH sshpass (even on restarts)
+  # Using env var avoids showing the password in process args.
+  SSHPASS="$pw" AUTOSSH_SSH="sshpass -e ssh" \
+  autossh \
+    -M 0 \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=3 \
+    -o StrictHostKeyChecking=accept-new \
+    "$userhost" "$@"
+
+  # cleanup
+  unset pw
+}

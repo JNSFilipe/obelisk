@@ -103,6 +103,13 @@
   ;; Keep the selection active after shifting with <> (nice QoL)
   (setq evil-keep-visual-state-on-shift t)
 
+  ;; Enable Emacs keybinds in Evil insert mode
+  (setq evil-disable-insert-state-bindings t)
+
+  ;; Jump through git hunks
+  (map! :n "ç" #'+vc-gutter/next-hunk
+        :n "Ç" #'+vc-gutter/previous-hunk)
+
   ;; Bind C-g and
   (map! :map global-map
         "C-q" #'kill-this-buffer ;; Kill current buffer
@@ -111,11 +118,6 @@
         "C-g"    #'doom/escape)  ;; Bind ESC and C-g together
   (global-set-key [remap keyboard-quit] #'doom/escape) ;; Add quitting insert mode to doom/escape (C-g by default)
   (setq evil-esc-delay 0.01)) ;; make ESC detection snappier in terminals
-
-;; Jump through git hunks
-(after! git-gutter
-  (map! :n "ç" #'git-gutter:next-hunk
-        :n "Ç" #'git-gutter:previous-hunk))
 
 ;; Leader keybindings
 (after! general
@@ -133,17 +135,29 @@
     :desc "Files" "f" #'projectile-find-file
     :desc "Buffers" "b" #'consult-buffer
     :desc "Toggle Comment" "c" #'comment-line
-    :desc "Diagnostics" "D" #'consult-lsp-diagnostics
-    :desc "Dubug" "d" #'+debugger/start
+    :desc "LSP Diagnostics" "D" #'consult-lsp-diagnostics
     :desc "Run" "r" #'async-shell-command
     :desc "Make" "m" #'+make/run
-    :desc "Compile" "m" #'compile
+    :desc "Compile" "M" #'compile
     :desc "Vertical Split" "s" #'evil-window-vsplit
     :desc "Horizontal Split" "S" #'evil-window-split
     :desc "Undo Tree" "u" #'undo-tree-visualize
     :desc "Yanks" :n "y" #'consult-yank-pop
     :desc "Yanks" :v "y" #'consult-yank-replace
     :desc "Switch Project" "p" #'projectile-switch-project))
+
+;; Separate dape keybindings with proper prefix using 'd' for debug
+(map! :leader
+      (:prefix ("d" . "debug")
+       :desc "Toggle Breakpoint" "b" #'dape-breakpoint-toggle
+       :desc "Start Debug" "d" #'dape
+       :desc "Debug Continue" "c" #'dape-continue
+       :desc "Debug Step Over" "n" #'dape-next
+       :desc "Debug Step Into" "i" #'dape-step-in
+       :desc "Debug Step Out" "o" #'dape-step-out
+       :desc "Debug Restart" "r" #'dape-restart
+       :desc "Debug Quit" "q" #'dape-quit
+       :desc "Debug Evaluate" "e" #'dape-evaluate-expression))
 
 
 ;; Config custom packages
@@ -152,3 +166,47 @@
   :hook (prog-mode . copilot-mode)
   :bind (:map copilot-completion-map
               ("C-l" . 'copilot-accept-completion)))
+
+;; Configure dape for better terminal visibility
+(use-package! dape
+  :config
+  ;; Enable breakpoint global mode
+  (dape-breakpoint-global-mode +1)
+  
+  ;; Better terminal compatibility - use text indicators instead of fringe
+  (setq dape-buffer-window-arrangement 'gud
+        dape-inlay-hints t
+        dape-cwd-function #'projectile-project-root)
+
+  ;; Custom breakpoint display for terminal
+  (defface dape-breakpoint-face
+    '((t :background "red" :foreground "white" :weight bold))
+    "Face for breakpoint indicators in terminal.")
+
+  ;; Make breakpoints more visible in terminal
+  (when (not (display-graphic-p))
+    ;; Use text-based breakpoint indicators
+    (setq dape-breakpoint-margin-string "●")
+    
+    ;; Custom function to highlight breakpoint lines
+    (defun dape-highlight-breakpoint-line ()
+      "Highlight the entire line where a breakpoint is set."
+      (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
+        (overlay-put overlay 'face '(:background "#3c1f1e" :extend t))
+        (overlay-put overlay 'before-string 
+                     (propertize "● " 'face '(:foreground "red" :weight bold)))))
+    
+    ;; Override the default breakpoint display
+    (advice-add 'dape-breakpoint-place :after
+                (lambda (&rest _)
+                  (when (not (display-graphic-p))
+                    (save-excursion
+                      (dape-highlight-breakpoint-line))))))
+
+  ;; Enhanced breakpoint visibility in terminal
+  (add-hook 'dape-breakpoint-global-mode-hook
+            (lambda ()
+              (when (not (display-graphic-p))
+                ;; In terminal mode, ensure left margin is available
+                (setq left-margin-width 3)
+                (set-window-buffer (selected-window) (current-buffer))))))
