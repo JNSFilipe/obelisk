@@ -15,19 +15,19 @@ obelisk/dot-config/portal/*
 obelisk/dot-config/gtk-2.0/*
 obelisk/dot-config/raycast/*
 obelisk/dot-config/lazygit/*
-/obelisk/dot-config/joyride/*
-/obelisk/dot-config/psppirerc
-/obelisk/dot-config/configstore
-/obelisk/dot-config/copilot-chat
+obelisk/dot-config/joyride/*
+obelisk/dot-config/psppirerc
+obelisk/dot-config/configstore
+obelisk/dot-config/copilot-chat
 obelisk/dot-config/github-copilot/*
 obelisk/dot-config/nvim/lazy-lock.json
-/obelisk/dot-config/karabiner/automatic_backups
+obelisk/dot-config/karabiner/automatic_backups
 
 # Exceptions
-!obelisk/dot-config/vmacs/init.el
-!obelisk/dot-config/vmacs/oblsk.el
-!obelisk/dot-config/vmacs/early-init.el
-!obelisk/dot-config/vmacs/*-framework.el
+!obelisk/dot-config/vemacs/init.el
+!obelisk/dot-config/vemacs/oblsk.el
+!obelisk/dot-config/vemacs/early-init.el
+!obelisk/dot-config/vemacs/*-framework.el
 !obelisk/dot-config/zed/keymap.json
 !obelisk/dot-config/zed/settings.json
 
