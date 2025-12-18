@@ -33,3 +33,5 @@ obelisk/dot-config/karabiner/automatic_backups
 
 # AI/Aider stuff
 .aider*
+*.pub
+/obelisk/dot-config/containers

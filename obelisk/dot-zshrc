@@ -1,6 +1,6 @@
 # Automatically attach or create a tmux session named "main"
-# with an exception for VS Code terminals
-if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ "$TERM_PROGRAM" != "vscode" ]; then
+# Only when using Ghostty terminal
+if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ "$TERM_PROGRAM" = "ghostty" ]; then
   tmux attach-session -t main || tmux new-session -s main
 fi
 
@@ -55,22 +55,6 @@ znap source zsh-users/zsh-autosuggestions
 # Better zsh history search
 znap source atuinsh/atuin
 
-# Use pure pormpt if starship not installed; starship otherwise
-# if ! type "starship" > /dev/null; then
-#     # Starshipt not installed; install and setup pure prompt
-#     # Install and setup pure prompt
-#     fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
-#     znap source sindresorhus/pure # Pull the repository from github
-#     autoload -U promptinit; promptinit # Recommended on README
-#     zstyle :prompt:pure:prompt:success color green
-#     zstyle :prompt:pure:prompt:error color red
-#     zstyle :prompt:pure:git:stash show yes
-#     prompt pure # Recommended on README
-# else
-#     # Starshipt installed; Setup starship
-#     eval "$(starship init zsh)"
-# fi
-
 fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
 znap source sindresorhus/pure # Pull the repository from github
 autoload -U promptinit; promptinit # Recommended on README
@@ -91,14 +75,12 @@ if [ -z "$TMUX" ]; then
     bindkey -s "^ " "zzz\n"
 fi
 
-# Alias
+alias la='ls -A'
+alias ll='ls -al'
+alias lsg='ls -d -- *(/N)'
+alias lag='ls -d -A -- *(/N) .*(/N)'
+alias llg='ls -d -al -- *(/N) .*(/N)'
 alias cd='z'
-alias ls='eza --icons'
-alias la='eza --icons -A'
-alias ll='eza --icons -al'
-alias lsg='eza --icons -D'
-alias lag='eza --icons -AD'
-alias llg='eza --icons -alD'
 alias ww='wget'
 alias vi='nvim'
 alias vim='nvim'
@@ -107,7 +89,12 @@ alias comp='sudo make install'
 alias gl='git clone'
 alias lg='lazygit'
 alias rcp='rsync -avzh --progress --stats'
-alias spartan='emacs --init-dir $HOME/.config/spartan'
+alias brewdeps="brew deps --installed --tree"
+alias brewup="brew upgrade --greedy"
+alias caskup="brew upgrade --cask --greedy"
+alias brewcl="brew cleanup -s && rm -rf \$(brew --cache)"
+alias brewrm-msupdate="brew uninstall microsoft-auto-update"
+alias brewall="brewup && caskup && brewcl && brewrm-msupdate"
 
 # Source OCaml
 # opam configuration
@@ -115,6 +102,30 @@ alias spartan='emacs --init-dir $HOME/.config/spartan'
 
 # [ ! -f "$HOME/.x-cmd.root/X" ] || . "$HOME/.x-cmd.root/X" # boot up x-cmd.
 export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""
+
+# lsd wrapper: only force the "nice columns" when -l is requested
+ls() {
+  local want_long=0 a
+  for a in "$@"; do
+    [[ $a == -- ]] && break
+    [[ $a == --long ]] && { want_long=1; break; }
+    [[ $a == -l ]] && { want_long=1; break; }
+    # covers -la, -al, -lh, -lA, etc.
+    if [[ $a == -?* && $a != --* && $a == *l* ]]; then
+      want_long=1; break
+    fi
+  done
+
+  if (( want_long )); then
+    command lsd \
+      --blocks permission,size,user,date,name \
+      --size short \
+      --date '+%d %b %H:%M' \
+      "$@"
+  else
+    command lsd "$@"
+  fi
+}
 
 # Function to find and activate a Python virtual environment
 activate() {
@@ -174,6 +185,23 @@ vem() {
     fi
 }
 
+# Define the dem function to launch vanilla emacs
+bem() {
+    # Attempt to activate a virtual environment
+    if activate; then
+        # If activated successfully, check if python-lsp-server is installed
+        if ! uv pip show python-lsp-server &>/dev/null; then
+            echo "python-lsp-server not found. Installing..."
+            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
+        fi
+        # Now run emacs within the environment
+        emacs --init-dir $HOME/.config/emacs-bedrock -nw "$@"
+    else
+        # If no environment is found, just run emacs
+        emacs --init-dir $HOME/.config/emacs-bedrock -nw "$@"
+    fi
+}
+
 # Define the essh function to launch GUI Emacs with TRAMP for remote editing
 essh() {
     if [ $# -eq 0 ]; then
@@ -184,12 +212,12 @@ essh() {
         echo "  essh -p 2222 user@example.com"
         return 1
     fi
-    
+
     # Parse arguments to extract host and any SSH options
     local ssh_args=()
     local host=""
     local port=""
-    
+
     # Process arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -212,15 +240,15 @@ essh() {
                 ;;
         esac
     done
-    
+
     if [[ -z "$host" ]]; then
         echo "Error: No hostname provided"
         return 1
     fi
-    
+
     # Build the TRAMP path
     local tramp_path="/ssh:"
-    
+
     # Add port if specified
     if [[ -n "$port" ]]; then
         # Extract user and hostname
@@ -234,9 +262,9 @@ essh() {
     else
         tramp_path="/ssh:${host}:"
     fi
-    
+
     echo "Opening Emacs with TRAMP connection to: $tramp_path"
-    
+
     # Launch GUI Emacs with TRAMP
     # Use nohup to detach from terminal and redirect output
     nohup emacs "$tramp_path" >/dev/null 2>&1 &
@@ -288,3 +316,5 @@ pssh() {
   # cleanup
   unset pw
 }
+
+export PATH="$PATH:"/Applications/microchip/xc8/v3.10/bin""

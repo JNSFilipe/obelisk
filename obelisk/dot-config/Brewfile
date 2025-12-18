@@ -1,40 +1,42 @@
 # Taps
 tap "d12frosted/emacs-plus" # emacs-plus
 # tap "deskflow/homebrew-tap" # software KVM
+tap "oven-sh/bun" # bun
 
 # Terminal utils
 brew "tree-sitter"
-cask "claude-code"
 brew "coreutils"
 brew "moreutils"
 brew "pygments"
-brew "starship"
 brew "ripgrep"
 brew "autossh"
 brew "sshpass"
 brew "lazygit"
+# brew "euporie" # View Jupyter Notebooks in terminal
 brew "zoxide"
-# brew "zellij"
 brew "portal" # Send files to other devices
-brew "x-cmd"
 brew "atuin"
 brew "nmap"
 brew "wget"
 brew "tmux"
+brew "doxx" # View docx in terminal
 brew "make"
 brew "less"
 brew "stow"
 brew "yazi"
 brew "htop"
-brew "eza"
+brew "e1s" # AWS ECS TUI manager
+brew "act" # Run GitHub Actions locally
+brew "lsd"
 brew "fzf"
 brew "fd"
 brew "jq"
 
 # Window Management
-# cask "nikitabobko/tap/aerospace"
 cask "karabiner-elements"
 cask "leader-key"
+# brew "deskflow"
+cask "alt-tab"
 
 # Programming Languages
 brew "llvm"# , args: ["with-toolchain"]
@@ -53,11 +55,12 @@ cask "mactex"
 brew "boost"
 brew "cmake"
 brew "black"
-brew "xmake"
 brew "opam"
 brew "node"
 brew "rust"
 brew "gcc"
+brew "zig"
+brew "bun"
 brew "go"
 brew "uv"
 
@@ -69,12 +72,19 @@ cask "ghostty"
 
 # Browsers
 cask "brave-browser"
+cask "chatgpt-atlas"
 cask "zen"
 
+# AI
+cask "claude-code"
+cask "chatgpt"
+cask "claude"
+cask "codex"
+
 # Editors/Git
-# brew "emacs-plus@30", args: ["with-native-comp", "with-tree-sitter"]
+brew "emacs-plus@31", args: ["with-compress-install"]
 cask "visual-studio-code"
-brew "emacs-plus@30"
+brew "tree-sitter-cli"
 cask "sublime-text"
 # cask "arduino-ide"
 cask "mplabx-ide"
@@ -95,27 +105,34 @@ cask "font-source-code-pro"
 cask "font-iosevka"
 
 # Misc
+cask "microsoft-powerpoint"
+cask "raspberry-pi-imager"
 cask "nvidia-geforce-now"
-cask "microsoft-office"
 cask "grandperspective"
 cask "microsoft-teams"
-cask "readdle-spark"
+cask "microsoft-excel"
+cask "notion-calendar"
+cask "the-unarchiver"
+cask "microsoft-word"
+cask "docker-desktop"
+# cask "readdle-spark"
 cask "hp-easy-start"
 cask "google-drive"
 # cask "tradingview"
-# cask "notion-mail"
+cask "notion-mail"
 # cask "epic-games"
 cask "bitwarden"
 cask "whatsapp"
-cask "todoist"
+# cask "todoist"
 # cask "obsidian"
 # cask "antinote"
 cask "postman"
 cask "raycast"
 cask "spotify"
-cask "aldente"
+# cask "aldente"
 cask "notion"
-cask "shottr"
+brew "docker"
+# cask "shottr"
 cask "mqttx"
 cask "steam"
 cask "zoom"

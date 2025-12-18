@@ -1,27 +1,37 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Get the Homebrew cache directory path
+BREWFILE="${HOME}/.config/Brewfile"
+
+# Optional: set DRY_RUN=1 to preview removals (no uninstall)
+DRY_RUN="${DRY_RUN:-0}"
+
 CACHE_DIR="$(brew --cache)"
+SIZE_BEFORE="$(du -sh "$CACHE_DIR" 2>/dev/null | awk '{print $1}' || true)"
 
-# Measure its size in a human-readable format
-SIZE_BEFORE="$(du -sh "$CACHE_DIR" 2>/dev/null | awk '{print $1}')"
+brew update
 
-# https://matthiasportzel.com/brewfile/ 
-brew update 
-brew bundle install --verbose --upgrade --cleanup --file=~/.config/Brewfile # --no-lock &&\
-brew upgrade 
+# Install/upgrade to match Brewfile. Upgrades are the default behavior for brew bundle.  [oai_citation:5‡docs.brew.sh](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
+brew bundle install --verbose --file="$BREWFILE"
 
-# Clean cache
+# Remove anything not declared (dry-run by default unless --force).  [oai_citation:6‡docs.brew.sh](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
+if [[ "$DRY_RUN" == "1" ]]; then
+  brew bundle cleanup --file="$BREWFILE"
+else
+  brew bundle cleanup --file="$BREWFILE" --force
+fi
+
+# Remove now-unneeded dependencies (optional but often helps after cleanup).
+# "brew autoremove" is a first-class command.  [oai_citation:7‡docs.brew.sh](https://docs.brew.sh/Manpage?utm_source=chatgpt.com)
+brew autoremove || true
+
+# Clean up old versions & downloads
 brew cleanup --prune=all --scrub
 
-# Remove the directory
-rm -rf "$CACHE_DIR"
+# If you REALLY want to delete downloads even for currently installed formulae/casks:  [oai_citation:8‡Ask Different](https://apple.stackexchange.com/questions/359456/brew-cleanup-doesnt-scrub-the-caskroom)
+rm -rf "$(brew --cache)"
 
-# Print the size of space freed
-echo "Freed up $SIZE_BEFORE of space."
-
-# Remove dmg and pkg installers from casks
-# https://github.com/Homebrew/homebrew-cask/issues/66242#issuecomment-511385186
-# https://apple.stackexchange.com/questions/359456/brew-cleanup-doesnt-scrub-the-caskroom
-# find "$(brew --prefix)/Caskroom" -type f -name '*.pkg' -delete
+# Remove dmg/pkg installers left in Caskroom (not the same as cache)
 find "$(brew --prefix)/Caskroom" -type f '(' -name '*.dmg' -or -name '*.pkg' ')' -delete
+
+echo "Freed up ~${SIZE_BEFORE} of Homebrew cache (plus any extra cleanup above)."
