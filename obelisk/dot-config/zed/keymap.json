@@ -42,6 +42,10 @@
       // put key-bindings here if you want them to work only in normal mode
 
       // Vim remaps
+      "h": ["workspace::SendKeystrokes", "g h"],
+      "j": ["workspace::SendKeystrokes", "g j"],
+      "k": ["workspace::SendKeystrokes", "g k"],
+      "l": ["workspace::SendKeystrokes", "g l"],
       "w": ["workspace::SendKeystrokes", "v i w"],
       "W": ["workspace::SendKeystrokes", "v i W"],
       "g f": "editor::OpenExcerpts",
@@ -74,18 +78,22 @@
       "space f": "file_finder::Toggle",
       // Buffer finder
       "space b": "tab_switcher::Toggle",
-      // Project search
-      "space /": "pane::DeploySearch",
+      // Project search (grep)
+      "space g": "pane::DeploySearch",
       // Toggle comment
       "space c": "editor::ToggleComments",
       // Show project panel with current file
       "space o": "workspace::ToggleLeftDock",
       // Split pane vertically
       "space s": "pane::SplitVertical",
+      // Split pane vertically
+      "space S": "pane::SplitHorizontal",
       // Zoom current buffer
       "space z": "workspace::ToggleZoom",
       // Terminal
-      "space m": "terminal_panel::ToggleFocus",
+      "space t": "terminal_panel::ToggleFocus",
+      // Projects
+      "space p": "projects::OpenRecent",
       // LSP stuff - https://gist.github.com/adibhanna/896257e6c2c501186221312fd9fd1b9c
       "space l a": "editor::ToggleCodeActions",
       "space l r": "editor::Rename",
@@ -170,11 +178,4 @@
   //     "j": ["workspace::ActivatePaneInDirection", "Down"]
   //   }
   // }
-,
-  {
-    "context": "(((Editor && vim_mode == normal) && !VimWaiting) && !menu)",
-    "bindings": {
-      "shift-Ç": "editor::GoToPreviousHunk"
-    }
-  }
 ]

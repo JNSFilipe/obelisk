@@ -7,54 +7,39 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "base_keymap": "VSCode",
   "ssh_connections": [
     {
-      "host": "loki",
-      "projects": [
-        {
-          "paths": [
-            "/home/digiwest"
-          ]
-        }
-      ]
-    },
-    {
-      "host": "mercado",
-      "projects": [
-        {
-          "paths": [
-            "/home/digiwest/camera-car-counting-certificates"
-          ]
-        },
-        {
-          "paths": [
-            "/home/digiwest/camera-car-counting-smartparking"
-          ]
-        }
-      ]
-    },
-    {
-      "host": "192.168.222.195",
+      "host": "192.168.222.215",
       "username": "digiwest",
+      "args": [],
+      "projects": []
+    },
+    {
+      "host": "192.168.222.171",
+      "username": "digiwest",
+      "args": [],
       "projects": [
         {
           "paths": [
-            "/home/digiwest/camera-car-counting-certificates"
+            "/home/digiwest/cilica"
           ]
         }
       ]
     }
   ],
   "agent": {
+    "always_allow_tool_actions": true,
     "default_model": {
       "provider": "copilot_chat",
-      "model": "claude-sonnet-4"
+      "model": "claude-sonnet-4.5"
     },
+    "model_parameters": []
   },
   "vim_mode": true,
   "cursor_blink": false,
   // use relative line numbers
-  "relative_line_numbers": true,
+  "relative_line_numbers": "enabled",
   "tab_bar": {
     "show": false
   },
