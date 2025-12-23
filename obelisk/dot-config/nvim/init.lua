@@ -125,6 +125,9 @@ require("lazy").setup({
 					map("grn", vim.lsp.buf.rename, "[R]e[n]ame")
 					map("gra", vim.lsp.buf.code_action, "Code [A]ction", { "n", "x" })
 
+
+					-- Direct jump to definition
+					map("gd", vim.lsp.buf.definition, "Go to [D]efinition")
 					map("grr", function()
 						Snacks.picker.lsp_references()
 					end, "[R]eferences")
@@ -226,39 +229,12 @@ require("lazy").setup({
 				},
 			})
 
-			vim.lsp.config("pylsp", {
-				settings = {
-					pylsp = {
-						plugins = {
-							pylsp_mypy = { enabled = true, report_progress = true, live_mode = false },
-							jedi_definition = {
-								enabled = true,
-								follow_imports = true,
-								follow_builtin_imports = true,
-								follow_builtin_definitions = true,
-							},
-							jedi_rename = { enabled = true },
-							jedi_completion = {
-								enabled = true,
-								fuzzy = true,
-								eager = true,
-								include_params = true,
-								cache_labels_for = {
-									"torch",
-									"numpy",
-									"optuna",
-									"pandas",
-									"yfinance",
-									"matplotlib",
-									"torchvision",
-								},
-							},
-							jedi_signature_help = { enabled = true },
-							jedi_hover = { enabled = true },
-						},
-					},
-				},
+			vim.lsp.config("ty", {
+				cmd = { "ty", "server" },
+				filetypes = { "python" },
+				root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 			})
+
 
 			vim.lsp.config("zls", {
 				root_markers = { ".git", "build.zig", "zls.json" },
@@ -276,22 +252,21 @@ require("lazy").setup({
 					"clangd",
 					"texlab",
 					"bashls",
-					"pylsp",
 					"arduino_language_server",
 					"zls",
 				},
-				automatic_enable = {
-					"lua_ls",
-					"rust_analyzer",
-					"gopls",
-					"clangd",
-					"texlab",
-					"bashls",
-					"pylsp",
-					"arduino_language_server",
-					"zls",
+				handlers = {
+					-- Default handler: enable all servers except pylsp (using ty instead)
+					function(server_name)
+						if server_name ~= "pylsp" then
+							vim.lsp.enable(server_name)
+						end
+					end,
 				},
 			})
+
+			-- Enable ty manually (not available via Mason)
+			vim.lsp.enable("ty")
 
 			-- Tools used by conform
 			require("mason-tool-installer").setup({
