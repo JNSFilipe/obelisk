@@ -36,7 +36,7 @@ brew "jq"
 cask "karabiner-elements"
 cask "leader-key"
 # brew "deskflow"
-cask "alt-tab"
+cask "dockdoor" # App switcher
 
 # Programming Languages
 brew "llvm"# , args: ["with-toolchain"]
@@ -63,6 +63,7 @@ brew "zig"
 brew "bun"
 brew "go"
 brew "uv"
+brew "ty"
 
 # Terms
 # cask "wezterm"
