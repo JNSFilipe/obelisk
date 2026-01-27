@@ -3,6 +3,7 @@ tap "d12frosted/emacs-plus" # emacs-plus
 # tap "deskflow/homebrew-tap" # software KVM
 tap "oven-sh/bun" # bun
 
+
 # Terminal utils
 brew "tree-sitter"
 brew "coreutils"
@@ -23,20 +24,16 @@ brew "doxx" # View docx in terminal
 brew "make"
 brew "less"
 brew "stow"
-brew "yazi"
 brew "htop"
-brew "e1s" # AWS ECS TUI manager
 brew "act" # Run GitHub Actions locally
-brew "lsd"
 brew "fzf"
 brew "fd"
 brew "jq"
 
 # Window Management
-cask "karabiner-elements"
 cask "leader-key"
-# brew "deskflow"
 cask "dockdoor" # App switcher
+brew "kanata" # For homerow-style mods
 
 # Programming Languages
 brew "llvm"# , args: ["with-toolchain"]
@@ -50,7 +47,6 @@ brew "pybind11"
 brew "openblas"
 # brew "roswell"
 brew "raylib"
-brew "ta-lib"
 cask "mactex"
 brew "boost"
 brew "cmake"
@@ -72,12 +68,11 @@ cask "ghostty"
 # cask "kitty"
 
 # Browsers
-cask "brave-browser"
 cask "chatgpt-atlas"
-cask "zen"
 
 # AI
 cask "claude-code"
+cask "copilot-cli"
 cask "chatgpt"
 cask "claude"
 cask "codex"
@@ -116,28 +111,24 @@ cask "notion-calendar"
 cask "the-unarchiver"
 cask "microsoft-word"
 cask "docker-desktop"
-# cask "readdle-spark"
 cask "hp-easy-start"
+cask "tailscale-app"
 cask "google-drive"
 # cask "tradingview"
 cask "notion-mail"
 # cask "epic-games"
 cask "bitwarden"
 cask "whatsapp"
-# cask "todoist"
-# cask "obsidian"
-# cask "antinote"
+cask "adguard"
 cask "postman"
 cask "raycast"
 cask "spotify"
-# cask "aldente"
+cask "clickup"
 cask "notion"
 brew "docker"
-# cask "shottr"
 cask "mqttx"
 cask "steam"
 cask "zoom"
 # cask "ibkr"
 cask "gimp"
 cask "iina" # Video player
-# brew "mpv"

@@ -35,3 +35,5 @@ obelisk/dot-config/karabiner/automatic_backups
 .aider*
 *.pub
 /obelisk/dot-config/containers
+/obelisk/dot-config/.copilot
+/obelisk/dot-config/fish/conf.d
