@@ -62,6 +62,22 @@ local function tmux_move_right()
 	end
 end
 
+local function ido_open_or_fallback(opts, fallback)
+	local ok, mod = pcall(require, "ido")
+	if ok and mod and type(mod.open) == "function" then
+		local ok_open, err = pcall(mod.open, opts or {})
+		if ok_open then
+			return
+		end
+		vim.notify("Ido picker error: " .. tostring(err), vim.log.levels.ERROR)
+	else
+		vim.notify("Ido picker not available, falling back", vim.log.levels.WARN)
+	end
+	if fallback then
+		fallback()
+	end
+end
+
 -----------------------------------------------------------------------
 -- Bootstrap lazy.nvim
 -----------------------------------------------------------------------
@@ -229,6 +245,24 @@ require("lazy").setup({
 				},
 			})
 
+
+			vim.lsp.config("clangd", {
+				cmd = {
+					"clangd",
+					"--background-index",
+					"--clang-tidy",
+					"--header-insertion=iwyu",
+					"--completion-style=detailed",
+					"--function-arg-placeholders",
+					"--fallback-style=llvm",
+				},
+				init_options = {
+					usePlaceholders = true,
+					completeUnimported = true,
+					clangdFileStatus = true,
+				},
+				root_markers = { "compile_commands.json", "compile_flags.txt", ".git", "Makefile" },
+			})
 			vim.lsp.config("ty", {
 				cmd = { "ty", "server" },
 				filetypes = { "python" },
@@ -391,9 +425,11 @@ require("lazy").setup({
 			{
 				"<leader>f",
 				function()
-					Snacks.picker.smart()
+					ido_open_or_fallback({ source = "files", prompt = "Find file: ", include_root = true }, function()
+						Snacks.picker.files()
+					end)
 				end,
-				desc = "Files",
+				desc = "Files (Ido)",
 			},
 			{
 				"<leader>b",
@@ -936,5 +972,7 @@ vim.keymap.set("n", "<C-q>", "<cmd>clo<cr>", { desc = "Close Window" })
 
 -- File picker in insert mode
 vim.keymap.set("i", "<C-x><C-f>", function()
-	Snacks.picker.files()
+	ido_open_or_fallback({ source = "files", prompt = "Find file: ", include_root = true }, function()
+		Snacks.picker.files()
+	end)
 end, { silent = true, desc = "Pick file" })
