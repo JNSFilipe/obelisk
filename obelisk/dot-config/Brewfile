@@ -98,6 +98,7 @@ cask "font-symbols-only-nerd-font"
 cask "font-fira-code-nerd-font"
 cask "font-fira-mono-nerd-font"
 cask "font-source-code-pro"
+cask "font-geist-mono"
 cask "font-iosevka"
 
 # Misc
