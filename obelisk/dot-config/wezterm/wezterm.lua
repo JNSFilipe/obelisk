@@ -56,6 +56,53 @@ local rounded_left = ""
 local rounded_right = ""
 local pill_gap = " "
 local workspace_icon = " "
+local tab_history_by_window = {}
+
+local function get_active_tab_index(window)
+	local mux_window = window:mux_window()
+	if not mux_window then
+		return nil
+	end
+
+	for idx, tab_info in ipairs(mux_window:tabs_with_info()) do
+		if tab_info.is_active then
+			return idx - 1
+		end
+	end
+
+	return nil
+end
+
+local function track_tab_history(window)
+	local window_id = window:window_id()
+	local active_tab_index = get_active_tab_index(window)
+	if active_tab_index == nil then
+		return
+	end
+
+	local history = tab_history_by_window[window_id]
+	if not history then
+		tab_history_by_window[window_id] = { current = active_tab_index, previous = nil }
+		return
+	end
+
+	if history.current ~= active_tab_index then
+		history.previous = history.current
+		history.current = active_tab_index
+	end
+end
+
+local function switch_to_previous_tab(window, pane)
+	local history = tab_history_by_window[window:window_id()]
+	if not history or history.previous == nil then
+		return
+	end
+
+	local target = history.previous
+	history.previous = history.current
+	history.current = target
+	window:perform_action(act.ActivateTab(target), pane)
+end
 
 local function tab_title(tab_info)
 	local title = tab_info.tab_title
@@ -73,7 +120,12 @@ wezterm.on("sessionizer-switch", function(window, pane)
 	sessionizer.switch_session(window, pane)
 end)
 
+wezterm.on("previous-tab", function(window, pane)
+	switch_to_previous_tab(window, pane)
+end)
+
 wezterm.on("update-right-status", function(window, _pane)
+	track_tab_history(window)
 	local workspace = window:active_workspace()
 	local left_status = wezterm.format({
 		{ Background = { Color = palette.bg } },
@@ -150,6 +202,7 @@ config.show_new_tab_button_in_tab_bar = false
 config.tab_max_width = 56
 config.window_padding = { left = 3, right = 0, top = 3, bottom = 0 }
 config.colors = {
+	compose_cursor = palette.active_badge_bg,
 	tab_bar = {
 		background = palette.bg,
 		active_tab = {
@@ -197,6 +250,22 @@ config.leader = { key = "z", mods = "CTRL", timeout_milliseconds = 2000 }
 config.keys = {
 	{ key = "Space", mods = "LEADER", action = act.EmitEvent("sessionizer") },
 	{ key = "z", mods = "LEADER|CTRL", action = act.EmitEvent("sessionizer-switch") },
+	{ key = "c", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
+	{ key = "s", mods = "LEADER", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+	{ key = "S", mods = "LEADER|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+	{ key = "Tab", mods = "LEADER", action = act.EmitEvent("previous-tab") },
+	{ key = "h", mods = "LEADER", action = act.ActivatePaneDirection("Left") },
+	{ key = "j", mods = "LEADER", action = act.ActivatePaneDirection("Down") },
+	{ key = "k", mods = "LEADER", action = act.ActivatePaneDirection("Up") },
+	{ key = "l", mods = "LEADER", action = act.ActivatePaneDirection("Right") },
 }
+
+for i = 1, 9 do
+	table.insert(config.keys, {
+		key = tostring(i),
+		mods = "LEADER",
+		action = act.ActivateTab(i - 1),
+	})
+end
 
 return config

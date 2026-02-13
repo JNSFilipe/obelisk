@@ -4,6 +4,7 @@ foreground = "#ffffff"
 cursor_bg = "#ffffff"
 cursor_border = "#ffffff"
 cursor_fg = "#161616"
+compose_cursor = "#ff7eb6"
 
 ansi = [
   "#262626",
