@@ -184,6 +184,101 @@ local function fuzzy_filter(items_or_provider, query, opts)
     return out
 end
 
+local function normalize_path(path)
+    if not path or path == "" then
+        return nil
+    end
+    local abs = vim.fn.fnamemodify(path, ":p")
+    if not abs or abs == "" then
+        return nil
+    end
+    local real = (vim.uv or vim.loop).fs_realpath(abs)
+    return real or abs
+end
+
+local function filename_from_item(item, parser)
+    if parser then
+        local ok, data = pcall(parser, item)
+        if ok and type(data) == "table" and data.filename and data.filename ~= "" then
+            return data.filename
+        end
+    end
+
+    if type(item) ~= "string" then
+        return nil
+    end
+
+    local p = item:match("^%d+:%s+(.-):%d+:%d+$")
+    if p and p ~= "" then
+        return p
+    end
+
+    p = item:match("^(.-):%d+:%d+:")
+    if p and p ~= "" then
+        return p
+    end
+
+    p = item:match("^(.-):%d+:%d+$")
+    if p and p ~= "" then
+        return p
+    end
+
+    if item:find("/") or item:find("\\") or vim.fn.filereadable(item) == 1 then
+        return item
+    end
+
+    return nil
+end
+
+local function sort_matches_by_recency(matches, parser)
+    if #matches <= 1 then
+        return matches
+    end
+
+    local oldfiles = vim.v.oldfiles or {}
+    if #oldfiles == 0 then
+        return matches
+    end
+
+    local rank = {}
+    for i, file in ipairs(oldfiles) do
+        local key = normalize_path(file)
+        if key and not rank[key] then
+            rank[key] = i
+        end
+    end
+
+    local total = #oldfiles
+    local scored = {}
+
+    for i, item in ipairs(matches) do
+        local filename = filename_from_item(item, parser)
+        local key = normalize_path(filename)
+        local recency = 0
+        if key and rank[key] then
+            recency = total - rank[key] + 1
+        end
+        scored[#scored + 1] = {
+            item = item,
+            recency = recency,
+            original = i,
+        }
+    end
+
+    table.sort(scored, function(a, b)
+        if a.recency == b.recency then
+            return a.original < b.original
+        end
+        return a.recency > b.recency
+    end)
+
+    local sorted = {}
+    for _, s in ipairs(scored) do
+        sorted[#sorted + 1] = s.item
+    end
+    return sorted
+end
+
 local UI = {}
 UI.__index = UI
 
@@ -560,6 +655,9 @@ function M.pick(items_or_provider, on_select, opts)
             selected_index = 1
             opts.on_change(input, function(matches)
                 current_matches = matches or {}
+                if opts.sort_by_recency then
+                    current_matches = sort_matches_by_recency(current_matches, parser)
+                end
                 normalize_selected_index()
                 ui:render(current_matches, selected_index, marked, input)
                 preview()
@@ -568,6 +666,9 @@ function M.pick(items_or_provider, on_select, opts)
         end
 
         current_matches = fuzzy_filter(items_or_provider, input, { sorter = opts.sorter })
+        if opts.sort_by_recency then
+            current_matches = sort_matches_by_recency(current_matches, parser)
+        end
         selected_index = 1
         ui:render(current_matches, selected_index, marked, input)
         preview()
@@ -807,6 +908,7 @@ function M.files(opts)
 
     M.pick(files_list, nil, {
         prompt = opts.prompt or "Files > ",
+        sort_by_recency = opts.sort_by_recency ~= false,
         keymaps = {
             ["<Tab>"] = "toggle_mark",
             ["<CR>"] = "select_entry",
@@ -864,6 +966,7 @@ function M.live_grep(opts)
 
     M.pick({}, M.jump_to_location, {
         prompt = opts.prompt or "Grep > ",
+        sort_by_recency = opts.sort_by_recency == true,
         parser = M.parsers.grep,
         on_change = run_async_grep,
         keymaps = {
@@ -916,6 +1019,7 @@ function M.buffers(opts)
 
     M.pick(items, M.jump_to_location, {
         prompt = opts.prompt or "Buffers > ",
+        sort_by_recency = opts.sort_by_recency ~= false,
         keymaps = {
             ["<Tab>"] = "toggle_mark",
             ["<CR>"] = "select_entry",
@@ -976,6 +1080,7 @@ function M.diagnostics(opts)
 
     M.pick(items, M.jump_to_location, {
         prompt = opts.prompt or "Diagnostics > ",
+        sort_by_recency = opts.sort_by_recency == true,
         keymaps = {
             ["<Tab>"] = "toggle_mark",
             ["<CR>"] = "select_entry",
@@ -1050,6 +1155,7 @@ function M.git_diff(opts)
 
     M.pick(files, nil, {
         prompt = opts.prompt or "Git diff > ",
+        sort_by_recency = opts.sort_by_recency == true,
         keymaps = {
             ["<Tab>"] = "toggle_mark",
             ["<CR>"] = "select_entry",
