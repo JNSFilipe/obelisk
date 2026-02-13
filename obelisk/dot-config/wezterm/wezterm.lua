@@ -3,19 +3,55 @@ local sessionizer = require("sessionizer")
 local config = {}
 local act = wezterm.action
 
-local palette = {
-	bg = "#0f111a",
-	surface = "#16161e",
-	surface_alt = "#1f2335",
-	text = "#c0caf5",
-	muted = "#565f89",
-	accent = "#7aa2f7",
-	success = "#9ece6a",
-	active_badge_bg = "#bb9af7",
-	active_badge_fg = "#1a1b26",
-	inactive_badge_bg = "#2f334d",
-	inactive_badge_fg = "#a9b1d6",
-}
+-- Set theme
+-- local color_scheme_name = "Catppuccin Mocha"
+-- local color_scheme_name = "Oxocarbon Dark"
+local color_scheme_name = "oxocarbon"
+config.color_scheme = color_scheme_name
+local custom_schemes = {}
+local ok, loaded_oxocarbon = pcall(function()
+	return wezterm.color.load_scheme(wezterm.config_dir .. "/colors/oxocarbon.toml")
+end)
+if ok and loaded_oxocarbon then
+	custom_schemes.oxocarbon = loaded_oxocarbon
+	config.color_schemes = custom_schemes
+end
+
+local function first_non_nil(...)
+	for i = 1, select("#", ...) do
+		local value = select(i, ...)
+		if value ~= nil then
+			return value
+		end
+	end
+	return nil
+end
+
+local function palette_from_scheme(scheme_name)
+	local builtins = wezterm.get_builtin_color_schemes()
+	local scheme = custom_schemes[scheme_name] or builtins[scheme_name] or {}
+	local tab_bar = scheme.tab_bar or {}
+	local active_tab = tab_bar.active_tab or {}
+	local inactive_tab = tab_bar.inactive_tab or {}
+	local ansi = scheme.ansi or {}
+	local brights = scheme.brights or {}
+
+	return {
+		bg = first_non_nil(tab_bar.background, scheme.background, "#000000"),
+		-- Keep base surfaces neutral (gray-ish) instead of theme accent colors.
+		surface = first_non_nil(ansi[1], inactive_tab.bg_color, scheme.background, "#111111"),
+		surface_alt = first_non_nil(brights[1], ansi[1], inactive_tab.bg_color, scheme.background, "#222222"),
+		text = first_non_nil(scheme.foreground, active_tab.fg_color, "#ffffff"),
+		muted = first_non_nil(inactive_tab.fg_color, scheme.foreground, "#bbbbbb"),
+		success = first_non_nil(ansi[3], brights[3], scheme.foreground, "#00ff00"),
+		active_badge_bg = first_non_nil(brights[5], ansi[5], active_tab.bg_color, scheme.background, "#777777"),
+		active_badge_fg = first_non_nil(active_tab.fg_color, scheme.background, "#000000"),
+		inactive_badge_bg = first_non_nil(ansi[1], inactive_tab.bg_color, scheme.background, "#333333"),
+		inactive_badge_fg = first_non_nil(inactive_tab.fg_color, scheme.foreground, "#cccccc"),
+	}
+end
+
+local palette = palette_from_scheme(color_scheme_name)
 local rounded_left = ""
 local rounded_right = ""
 local pill_gap = " "
@@ -99,10 +135,6 @@ wezterm.on("format-tab-title", function(tab, _tabs, _panes, _cfg, _hover, max_wi
 	}
 end)
 
--- Set theme
--- config.color_scheme = "Catppuccin Mocha"
--- config.color_scheme = "Oxocarbon Dark"
-config.color_scheme = "tokyonight_night"
 -- config.window_background_opacity = 0.9
 
 -- Config Fonts
