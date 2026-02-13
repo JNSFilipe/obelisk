@@ -46,16 +46,18 @@ compinit
 # fzf autocompletion
 znap source Aloxaf/fzf-tab
 
-# Fish like gohst autocompletion
-znap source marlonrichert/zsh-autocomplete
-
-# Better zsh autocompletion
-znap source zsh-users/zsh-autosuggestions
+# Fish like ghost autocompletion (disable in Emacs eat terminal)
+if [[ -z "$INSIDE_EMACS_EAT" ]]; then
+    znap source marlonrichert/zsh-autocomplete
+    znap source zsh-users/zsh-autosuggestions
+fi
 
 # Better zsh history search
 znap source atuinsh/atuin
+# Propagate ATUIN_SESSION to tmux so display-popup inherits it
+[[ -n "$TMUX" && -n "$ATUIN_SESSION" ]] && tmux setenv ATUIN_SESSION "$ATUIN_SESSION"
 
-fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this wont work on first install)
+fpath+=($HOME/.znap/sindresorhus/pure) # Load necessary functions (this won't work on first install)
 znap source sindresorhus/pure # Pull the repository from github
 autoload -U promptinit; promptinit # Recommended on README
 zstyle :prompt:pure:prompt:success color green
@@ -70,16 +72,12 @@ prompt pure # Recommended on README
 # Setup zoxide
 eval "$(zoxide init zsh)"
 
-# If not within tmux, bind ctrl+Space to session starter
-if [ -z "$TMUX" ]; then
-    bindkey -s "^ " "zzz\n"
-fi
-
-alias la='ls -A'
-alias ll='ls -al'
-alias lsg='ls -d -- *(/N)'
-alias lag='ls -d -A -- *(/N) .*(/N)'
-alias llg='ls -d -al -- *(/N) .*(/N)'
+alias ls='ls --color=auto'
+alias la='ls --color=auto  -A'
+alias ll='ls --color=auto  -al'
+alias lsg='ls --color=auto -d -- *(/N)'
+alias lag='ls --color=auto -d -A -- *(/N) .*(/N)'
+alias llg='ls --color=auto -d -al -- *(/N) .*(/N)'
 alias cd='z'
 alias ww='wget'
 alias vi='nvim'
@@ -100,32 +98,7 @@ alias brewall="brewup && caskup && brewcl && brewrm-msupdate"
 # opam configuration
 [[ ! -r ~/.opam/opam-init/init.zsh ]] || source ~/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null
 
-# [ ! -f "$HOME/.x-cmd.root/X" ] || . "$HOME/.x-cmd.root/X" # boot up x-cmd.
 export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""
-
-# lsd wrapper: only force the "nice columns" when -l is requested
-ls() {
-  local want_long=0 a
-  for a in "$@"; do
-    [[ $a == -- ]] && break
-    [[ $a == --long ]] && { want_long=1; break; }
-    [[ $a == -l ]] && { want_long=1; break; }
-    # covers -la, -al, -lh, -lA, etc.
-    if [[ $a == -?* && $a != --* && $a == *l* ]]; then
-      want_long=1; break
-    fi
-  done
-
-  if (( want_long )); then
-    command lsd \
-      --blocks permission,size,user,date,name \
-      --size short \
-      --date '+%d %b %H:%M' \
-      "$@"
-  else
-    command lsd "$@"
-  fi
-}
 
 # Function to find and activate a Python virtual environment
 activate() {
@@ -165,40 +138,6 @@ em() {
     else
         # If no environment is found, just run emacs
         emacs -nw "$@"
-    fi
-}
-
-# Define the dem function to launch vanilla emacs
-vem() {
-    # Attempt to activate a virtual environment
-    if activate; then
-        # If activated successfully, check if python-lsp-server is installed
-        if ! uv pip show python-lsp-server &>/dev/null; then
-            echo "python-lsp-server not found. Installing..."
-            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
-        fi
-        # Now run emacs within the environment
-        emacs --init-dir $HOME/.config/vemacs -nw "$@"
-    else
-        # If no environment is found, just run emacs
-        emacs --init-dir $HOME/.config/vemacs -nw "$@"
-    fi
-}
-
-# Define the dem function to launch vanilla emacs
-bem() {
-    # Attempt to activate a virtual environment
-    if activate; then
-        # If activated successfully, check if python-lsp-server is installed
-        if ! uv pip show python-lsp-server &>/dev/null; then
-            echo "python-lsp-server not found. Installing..."
-            uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
-        fi
-        # Now run emacs within the environment
-        emacs --init-dir $HOME/.config/emacs-bedrock -nw "$@"
-    else
-        # If no environment is found, just run emacs
-        emacs --init-dir $HOME/.config/emacs-bedrock -nw "$@"
     fi
 }
 
