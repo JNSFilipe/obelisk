@@ -37,3 +37,4 @@ obelisk/dot-config/karabiner/automatic_backups
 /obelisk/dot-config/containers
 /obelisk/dot-config/.copilot
 /obelisk/dot-config/fish/conf.d
+*.~undo-tree~
