@@ -141,9 +141,8 @@ require("lazy").setup({
 					map("grn", vim.lsp.buf.rename, "[R]e[n]ame")
 					map("gra", vim.lsp.buf.code_action, "Code [A]ction", { "n", "x" })
 
-
 					-- Direct jump to definition
-					map("gd", vim.lsp.buf.definition, "Go to [D]efinition")
+					map("gd", vim.lsp.buf.definition, "Go to [D]definition")
 					map("grr", function()
 						Snacks.picker.lsp_references()
 					end, "[R]eferences")
@@ -245,7 +244,6 @@ require("lazy").setup({
 				},
 			})
 
-
 			vim.lsp.config("clangd", {
 				cmd = {
 					"clangd",
@@ -268,7 +266,6 @@ require("lazy").setup({
 				filetypes = { "python" },
 				root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 			})
-
 
 			vim.lsp.config("zls", {
 				root_markers = { ".git", "build.zig", "zls.json" },
@@ -346,6 +343,9 @@ require("lazy").setup({
 			completion = { documentation = { auto_show = false, auto_show_delay_ms = 500 } },
 			sources = {
 				default = { "lsp", "path", "snippets", "lazydev" },
+				per_filetype = {
+					minibuffer_input = {},
+				},
 				providers = { lazydev = { module = "lazydev.integrations.blink", score_offset = 100 } },
 			},
 			snippets = { preset = "luasnip" },
@@ -415,9 +415,9 @@ require("lazy").setup({
 			{
 				"<leader>h",
 				function()
-					Snacks.picker.git_diff()
+					require("minibuffer").git_diff()
 				end,
-				desc = "Git diff/hunks",
+				desc = "Git diff files",
 			},
 
 			{ "<leader>u", vim.cmd.UndotreeToggle, desc = "Undo" },
@@ -425,30 +425,28 @@ require("lazy").setup({
 			{
 				"<leader>f",
 				function()
-					ido_open_or_fallback({ source = "files", prompt = "Find file: ", include_root = true }, function()
-						Snacks.picker.files()
-					end)
+					require("minibuffer").files()
 				end,
-				desc = "Files (Ido)",
+				desc = "Files (Minibuffer)",
 			},
 			{
 				"<leader>b",
 				function()
-					Snacks.picker.buffers()
+					require("minibuffer").buffers()
 				end,
 				desc = "Buffers",
 			},
 			{
 				"<leader>H",
 				function()
-					Snacks.picker.man()
+					require("minibuffer").man()
 				end,
 				desc = "Man Pages",
 			},
 			{
 				"<leader>g",
 				function()
-					Snacks.picker.grep()
+					require("minibuffer").grep()
 				end,
 				desc = "Grep",
 			},
@@ -457,7 +455,7 @@ require("lazy").setup({
 			{
 				"<leader>sd",
 				function()
-					Snacks.picker.diagnostics()
+					require("minibuffer").diagnostics()
 				end,
 				desc = "Search Diagnostics",
 			},
@@ -465,7 +463,7 @@ require("lazy").setup({
 			{
 				"<leader><leader>",
 				function()
-					Snacks.picker.commands()
+					require("minibuffer").commands()
 				end,
 				desc = "Commands",
 			},
@@ -710,27 +708,6 @@ require("lazy").setup({
 	},
 
 	---------------------------------------------------------------------
-	-- Statusline
-	---------------------------------------------------------------------
-	{
-		"nvim-lualine/lualine.nvim",
-		opts = {
-			options = {
-				icons_enabled = true,
-				theme = "oxocarbon",
-				component_separators = "|",
-				section_separators = "",
-			},
-			sections = { lualine_c = { "filename" } },
-		},
-	},
-
-	---------------------------------------------------------------------
-	-- Terminal
-	---------------------------------------------------------------------
-	{ "akinsho/toggleterm.nvim", version = "*", config = true },
-
-	---------------------------------------------------------------------
 	-- Comment.nvim (fixed <leader>c)
 	---------------------------------------------------------------------
 	{
@@ -887,6 +864,10 @@ vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
 vim.o.foldcolumn = vim.fn.has("nvim-0.9") == 1 and "1" or nil
 
+-- Native statusline tuned to mimic the previous lualine sections:
+-- A(mode) | B(git/diff/diag) | C(filename) ... X(encoding/fileformat/filetype) | Y(progress) | Z(location)
+require("statusline").setup()
+
 vim.o.history = 100
 vim.o.laststatus = 3
 vim.o.linebreak = true
@@ -965,7 +946,9 @@ vim.keymap.set("n", "<C-k>", tmux_move_up, { noremap = true, desc = "Up" })
 vim.keymap.set("n", "<C-l>", tmux_move_right, { noremap = true, desc = "Right" })
 
 -- Terminal
-vim.keymap.set("n", "<leader>t", "<cmd>ToggleTerm<cr>", { desc = "Terminal" })
+vim.keymap.set("n", "<leader>t", function()
+	Snacks.terminal()
+end, { desc = "Terminal" })
 
 -- Close window
 vim.keymap.set("n", "<C-q>", "<cmd>clo<cr>", { desc = "Close Window" })

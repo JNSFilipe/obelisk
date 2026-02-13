@@ -1,7 +1,7 @@
 -- NOTE: This might someday be a standalone pluggin
 -- TODO:
 -- [ ] Make message saying what the program returns colorful
--- [ ] Make compilation buffer visible in :Telescope buffers
+-- [ ] Make compilation buffer visible in picker buffers
 -- [ ] See why outputs of C programs only appear when writing to stderr
 
 local M = {}
@@ -382,25 +382,28 @@ end
 
 -- Function to parse make targets from the Makefile
 local function parse_make_targets(makefile)
+  local seen = {}
   local targets = {}
-  -- local handle = io.popen("make -p -f " .. makefile .. " 2>/dev/null | awk '/^([^:]+):/ {print $1}'")
-  local handle = io.popen("cat " .. makefile .. " | grep '^[^#[:space:]].*:' | sed 's/:.*//'")
-  for line in handle:lines() do
-    if line ~= ".PHONY" then
-      table.insert(targets, line)
+
+  -- Parse target definitions directly from the file to avoid shelling out.
+  for _, line in ipairs(vim.fn.readfile(makefile)) do
+    if not line:match("^%s*#") and not line:match("^%s*\t") then
+      local lhs = line:match("^([^:#=]+):")
+      if lhs then
+        for target in lhs:gmatch("%S+") do
+          if target ~= ".PHONY" and not seen[target] then
+            seen[target] = true
+            table.insert(targets, target)
+          end
+        end
+      end
     end
   end
-  handle:close()
+
   return targets
 end
 
 function M.make_targets_async(opts)
-  local pickers = require("telescope.pickers")
-  local finders = require("telescope.finders")
-  local conf = require("telescope.config").values
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
-
   local makefile = find_makefile()
   if not makefile then
     print("No Makefile found in the current directory.")
@@ -412,25 +415,28 @@ function M.make_targets_async(opts)
     print("No targets found in the Makefile.")
     return
   end
-  vim.inspect(targets)
 
-  opts = opts or {}
-  pickers
-      .new(opts, {
-        prompt_title = "commands",
-        finder = finders.new_table(targets),
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr, map)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local command = "make -k " .. selection[1]
-            M.run_command_async(command)
-          end)
-          return true
-        end,
-      })
-      :find()
+  local ok, minibuffer = pcall(require, "minibuffer")
+  if ok and minibuffer and type(minibuffer.pick) == "function" then
+    minibuffer.pick(targets, nil, {
+      prompt = "Make > ",
+      keymaps = {
+        ["<CR>"] = "select_entry",
+      },
+      on_select = function(selection)
+        if selection and selection ~= "" then
+          M.run_command_async("make -k " .. selection)
+        end
+      end,
+    })
+    return
+  end
+
+  vim.ui.select(targets, { prompt = "Make target" }, function(selection)
+    if selection and selection ~= "" then
+      M.run_command_async("make -k " .. selection)
+    end
+  end)
 end
 
 return M
