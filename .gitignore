@@ -1,5 +1,9 @@
 # macOS stuff
+*.pub
 *.DS_Store
+
+# Emacs stuff
+*.~undo-tree~
 
 # Files that I don't want to track
 node_modules
@@ -17,6 +21,7 @@ obelisk/dot-config/raycast/*
 obelisk/dot-config/lazygit/*
 obelisk/dot-config/joyride/*
 obelisk/dot-config/psppirerc
+/obelisk/dot-config/containers
 obelisk/dot-config/configstore
 obelisk/dot-config/copilot-chat
 obelisk/dot-config/github-copilot/*
@@ -33,8 +38,5 @@ obelisk/dot-config/karabiner/automatic_backups
 
 # AI/Aider stuff
 .aider*
-*.pub
-/obelisk/dot-config/containers
-/obelisk/dot-config/.copilot
-/obelisk/dot-config/fish/conf.d
-*.~undo-tree~
+/**/.copilot
+/**/.claude
