@@ -1,11 +1,11 @@
 # macOS stuff
-*.pub
 *.DS_Store
 
 # Emacs stuff
 *.~undo-tree~
 
 # Files that I don't want to track
+*.pub
 node_modules
 obelisk/dot-config/gh/*
 obelisk/dot-config/zed/*
@@ -24,6 +24,7 @@ obelisk/dot-config/psppirerc
 /obelisk/dot-config/containers
 obelisk/dot-config/configstore
 obelisk/dot-config/copilot-chat
+obelisk/dot-config/nvim/.nvimlog
 obelisk/dot-config/github-copilot/*
 obelisk/dot-config/nvim/lazy-lock.json
 obelisk/dot-config/karabiner/automatic_backups
