@@ -880,6 +880,10 @@ vim.o.title = true
 vim.o.virtualedit = "block"
 vim.o.wrap = false
 
+require("avy").setup({
+	timeout_ms = 1200,
+})
+
 -----------------------------------------------------------------------
 -- Mappings (cleanup: no duplicates / no dead plugin refs)
 -----------------------------------------------------------------------
@@ -930,6 +934,21 @@ vim.keymap.set("n", "<Tab>", "<C-o>", { desc = "Jump to previous position" })
 -- Escape insert mode
 vim.keymap.set("i", "jj", "<Esc>", { desc = "Escape insert mode" })
 vim.keymap.set("i", "jk", "<Esc>", { desc = "Escape insert mode" })
+
+-- Insert mode: Emacs/Readline-style editing
+vim.keymap.set("i", "<C-a>", "<C-o>0", { desc = "Line start (readline)" })
+vim.keymap.set("i", "<C-e>", "<End>", { desc = "Line end (readline)" })
+vim.keymap.set("i", "<C-b>", "<Left>", { desc = "Backward char (readline)" })
+vim.keymap.set("i", "<C-f>", "<Right>", { desc = "Forward char (readline)" })
+vim.keymap.set("i", "<M-b>", "<C-o>b", { desc = "Backward word (readline)" })
+vim.keymap.set("i", "<M-f>", "<C-o>w", { desc = "Forward word (readline)" })
+vim.keymap.set("i", "<C-d>", "<Del>", { desc = "Delete char (readline)" })
+vim.keymap.set("i", "<C-h>", "<BS>", { desc = "Backward delete char (readline)" })
+vim.keymap.set("i", "<C-k>", "<C-o>D", { desc = "Kill to end of line (readline)" })
+vim.keymap.set("i", "<C-u>", "<C-o>d0", { desc = "Kill to start of line (readline)" })
+vim.keymap.set("i", "<M-d>", "<C-o>de", { desc = "Kill word forward (readline)" })
+vim.keymap.set("i", "<M-BS>", "<C-w>", { desc = "Kill word backward (readline)" })
+vim.keymap.set("i", "<C-y>", '<C-r>"', { desc = "Yank text (readline)" })
 
 -- Git hunks
 vim.keymap.set("n", "ç", function()

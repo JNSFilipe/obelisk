@@ -1,0 +1,272 @@
+local api = vim.api
+
+local M = {}
+
+local ns = api.nvim_create_namespace("avy_overlay")
+
+local cfg = {
+    timeout_ms = 1200,
+    highlight = "IncSearch",
+    label_highlight = "Search",
+}
+
+local state = {
+    active = false,
+    token = 0,
+    char = nil,
+    targets = nil,
+    buf = nil,
+    win = nil,
+    maps_installed = false,
+    group = nil,
+    suspend = false,
+}
+
+local function feed_key(key)
+    if not key or key == "" then
+        return
+    end
+    local tc = api.nvim_replace_termcodes(key, true, false, true)
+    api.nvim_feedkeys(tc, "n", false)
+end
+
+local function clear_overlay(buf)
+    if buf and api.nvim_buf_is_valid(buf) then
+        api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+    end
+end
+
+local function collect_targets(char)
+    local buf = api.nvim_get_current_buf()
+    local pos = api.nvim_win_get_cursor(0)
+    local start_row = pos[1] - 1
+    local start_col = pos[2]
+    local line_count = api.nvim_buf_line_count(buf)
+    local targets = {}
+
+    for row = start_row, line_count - 1 do
+        local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
+        local search_from = (row == start_row) and (start_col + 2) or 1
+
+        while #targets < 9 do
+            local idx = line:find(char, search_from, true)
+            if not idx then
+                break
+            end
+
+            targets[#targets + 1] = {
+                line = row + 1,
+                col = idx - 1,
+            }
+
+            search_from = idx + 1
+        end
+
+        if #targets >= 9 then
+            break
+        end
+    end
+
+    return targets
+end
+
+local function render_overlay(buf, targets)
+    clear_overlay(buf)
+    for i, target in ipairs(targets) do
+        api.nvim_buf_set_extmark(buf, ns, target.line - 1, target.col, {
+            virt_text = { { tostring(i), cfg.highlight } },
+            virt_text_pos = "overlay",
+            hl_mode = "replace",
+            end_col = target.col + 1,
+            hl_group = cfg.label_highlight,
+            priority = 220,
+        })
+    end
+    vim.cmd("redraw")
+end
+
+local function remove_digit_maps(buf)
+    if not buf or not api.nvim_buf_is_valid(buf) then
+        return
+    end
+
+    for _, mode in ipairs({ "n", "x" }) do
+        for i = 1, 9 do
+            pcall(vim.keymap.del, mode, tostring(i), { buffer = buf })
+        end
+        pcall(vim.keymap.del, mode, "<Esc>", { buffer = buf })
+    end
+end
+
+local function arm_timeout()
+    state.token = state.token + 1
+    local current = state.token
+
+    vim.defer_fn(function()
+        if state.active and state.token == current then
+            M.stop()
+        end
+    end, cfg.timeout_ms)
+end
+
+function M.stop()
+    if not state.active and not state.maps_installed then
+        return
+    end
+
+    clear_overlay(state.buf)
+    remove_digit_maps(state.buf)
+
+    if state.group then
+        pcall(api.nvim_del_augroup_by_id, state.group)
+    end
+
+    state.active = false
+    state.token = state.token + 1
+    state.char = nil
+    state.targets = nil
+    state.buf = nil
+    state.win = nil
+    state.maps_installed = false
+    state.group = nil
+    state.suspend = false
+end
+
+function M.jump(index)
+    if not state.active or not state.targets then
+        return
+    end
+
+    local target = state.targets[index]
+    if not target then
+        return
+    end
+
+    local char = state.char
+    state.suspend = true
+    clear_overlay(state.buf)
+
+    if state.group then
+        pcall(api.nvim_del_augroup_by_id, state.group)
+        state.group = nil
+    end
+
+    if state.win and api.nvim_win_is_valid(state.win) then
+        pcall(api.nvim_set_current_win, state.win)
+    end
+
+    if not pcall(api.nvim_win_set_cursor, 0, { target.line, target.col }) then
+        state.suspend = false
+        M.stop()
+        return
+    end
+
+    -- Rearm after the jump so pressing the same digit advances repeatedly.
+    vim.schedule(function()
+        if not state.active then
+            return
+        end
+        M.start_cycle(char)
+        state.suspend = false
+    end)
+end
+
+function M.start_cycle(char)
+    if not char or char == "" then
+        M.stop()
+        return
+    end
+
+    local win = api.nvim_get_current_win()
+    local buf = api.nvim_get_current_buf()
+    if not api.nvim_win_is_valid(win) or not api.nvim_buf_is_valid(buf) then
+        M.stop()
+        return
+    end
+
+    local targets = collect_targets(char)
+    if #targets == 0 then
+        M.stop()
+        return
+    end
+
+    state.active = true
+    state.char = char
+    state.targets = targets
+    state.buf = buf
+    state.win = win
+
+    if not state.maps_installed then
+        for _, mode in ipairs({ "n", "x" }) do
+            for i = 1, 9 do
+                vim.keymap.set(mode, tostring(i), function()
+                    require("avy").jump(i)
+                end, {
+                    buffer = buf,
+                    silent = true,
+                    nowait = true,
+                    desc = "Avy jump " .. i,
+                })
+            end
+
+            vim.keymap.set(mode, "<Esc>", function()
+                require("avy").stop()
+                feed_key("<Esc>")
+            end, {
+                buffer = buf,
+                silent = true,
+                nowait = true,
+                desc = "Avy cancel",
+            })
+        end
+        state.maps_installed = true
+    end
+
+    state.group = api.nvim_create_augroup("AvyActive", { clear = true })
+    api.nvim_create_autocmd({ "CursorMoved", "ModeChanged", "InsertEnter", "BufLeave", "WinLeave" }, {
+        group = state.group,
+        buffer = buf,
+        callback = function()
+            if not state.suspend then
+                require("avy").stop()
+            end
+        end,
+    })
+
+    render_overlay(buf, targets)
+    arm_timeout()
+end
+
+function M.trigger()
+    local char = vim.fn.getcharstr()
+    if not char or char == "" or char == "\027" then
+        return
+    end
+
+    M.stop()
+    M.start_cycle(char)
+end
+
+function M.setup(opts)
+    cfg = vim.tbl_extend("force", cfg, opts or {})
+
+    local function set_hl()
+        vim.api.nvim_set_hl(0, "AvyOverlay", { link = "IncSearch" })
+        vim.api.nvim_set_hl(0, "AvyLabel", { link = "Search" })
+    end
+
+    set_hl()
+    cfg.highlight = "AvyOverlay"
+    cfg.label_highlight = "AvyLabel"
+
+    vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("AvyHL", { clear = true }),
+        callback = set_hl,
+    })
+
+    vim.keymap.set({ "n", "x" }, "f", function()
+        require("avy").trigger()
+    end, { desc = "Avy jump (1-9)", silent = true })
+end
+
+return M
