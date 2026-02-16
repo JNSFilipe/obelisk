@@ -14,6 +14,7 @@ local state = {
     active = false,
     token = 0,
     char = nil,
+    direction = 1,
     targets = nil,
     buf = nil,
     win = nil,
@@ -36,7 +37,7 @@ local function clear_overlay(buf)
     end
 end
 
-local function collect_targets(char)
+local function collect_targets(char, direction)
     local buf = api.nvim_get_current_buf()
     local pos = api.nvim_win_get_cursor(0)
     local start_row = pos[1] - 1
@@ -44,26 +45,58 @@ local function collect_targets(char)
     local line_count = api.nvim_buf_line_count(buf)
     local targets = {}
 
-    for row = start_row, line_count - 1 do
-        local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
-        local search_from = (row == start_row) and (start_col + 2) or 1
+    if direction == -1 then
+        for row = start_row, 0, -1 do
+            local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
+            local max_col = (row == start_row) and start_col or #line
+            local matches = {}
+            local search_from = 1
 
-        while #targets < 9 do
-            local idx = line:find(char, search_from, true)
-            if not idx then
-                break
+            while true do
+                local idx = line:find(char, search_from, true)
+                if not idx or idx > max_col then
+                    break
+                end
+                matches[#matches + 1] = idx
+                search_from = idx + 1
             end
 
-            targets[#targets + 1] = {
-                line = row + 1,
-                col = idx - 1,
-            }
+            for i = #matches, 1, -1 do
+                targets[#targets + 1] = {
+                    line = row + 1,
+                    col = matches[i] - 1,
+                }
+                if #targets >= 9 then
+                    break
+                end
+            end
 
-            search_from = idx + 1
+            if #targets >= 9 then
+                break
+            end
         end
+    else
+        for row = start_row, line_count - 1 do
+            local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
+            local search_from = (row == start_row) and (start_col + 2) or 1
 
-        if #targets >= 9 then
-            break
+            while #targets < 9 do
+                local idx = line:find(char, search_from, true)
+                if not idx then
+                    break
+                end
+
+                targets[#targets + 1] = {
+                    line = row + 1,
+                    col = idx - 1,
+                }
+
+                search_from = idx + 1
+            end
+
+            if #targets >= 9 then
+                break
+            end
         end
     end
 
@@ -95,6 +128,7 @@ local function remove_digit_maps(buf)
             pcall(vim.keymap.del, mode, tostring(i), { buffer = buf })
         end
         pcall(vim.keymap.del, mode, "<Esc>", { buffer = buf })
+        pcall(vim.keymap.del, mode, ";", { buffer = buf })
     end
 end
 
@@ -124,6 +158,7 @@ function M.stop()
     state.active = false
     state.token = state.token + 1
     state.char = nil
+    state.direction = 1
     state.targets = nil
     state.buf = nil
     state.win = nil
@@ -184,7 +219,8 @@ function M.start_cycle(char)
         return
     end
 
-    local targets = collect_targets(char)
+    local direction = state.direction == -1 and -1 or 1
+    local targets = collect_targets(char, direction)
     if #targets == 0 then
         M.stop()
         return
@@ -192,6 +228,7 @@ function M.start_cycle(char)
 
     state.active = true
     state.char = char
+    state.direction = direction
     state.targets = targets
     state.buf = buf
     state.win = win
@@ -218,6 +255,15 @@ function M.start_cycle(char)
                 nowait = true,
                 desc = "Avy cancel",
             })
+
+            vim.keymap.set(mode, ";", function()
+                require("avy").invert_direction()
+            end, {
+                buffer = buf,
+                silent = true,
+                nowait = true,
+                desc = "Avy invert direction",
+            })
         end
         state.maps_installed = true
     end
@@ -237,6 +283,14 @@ function M.start_cycle(char)
     arm_timeout()
 end
 
+function M.invert_direction()
+    if not state.active then
+        return
+    end
+    state.direction = (state.direction == 1) and -1 or 1
+    M.start_cycle(state.char)
+end
+
 function M.trigger()
     local char = vim.fn.getcharstr()
     if not char or char == "" or char == "\027" then
@@ -244,6 +298,7 @@ function M.trigger()
     end
 
     M.stop()
+    state.direction = 1
     M.start_cycle(char)
 end
 
