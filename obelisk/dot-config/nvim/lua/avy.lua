@@ -13,7 +13,9 @@ local cfg = {
 local state = {
     active = false,
     token = 0,
+    kind = nil,
     char = nil,
+    needle = nil,
     direction = 1,
     targets = nil,
     buf = nil,
@@ -37,27 +39,47 @@ local function clear_overlay(buf)
     end
 end
 
-local function collect_targets(char, direction)
+local function is_word_char(ch)
+    return ch ~= nil and ch ~= "" and ch:match("[%w_]") ~= nil
+end
+
+local function is_word_match(line, idx, len)
+    local before = idx > 1 and line:sub(idx - 1, idx - 1) or ""
+    local after = line:sub(idx + len, idx + len)
+    return not is_word_char(before) and not is_word_char(after)
+end
+
+local function collect_targets(needle, direction, kind)
     local buf = api.nvim_get_current_buf()
     local pos = api.nvim_win_get_cursor(0)
     local start_row = pos[1] - 1
     local start_col = pos[2]
     local line_count = api.nvim_buf_line_count(buf)
     local targets = {}
+    local len = #needle
 
     if direction == -1 then
         for row = start_row, 0, -1 do
             local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
-            local max_col = (row == start_row) and start_col or #line
+            local max_col = #line
+            if row == start_row then
+                if kind == "word" then
+                    max_col = start_col
+                else
+                    max_col = start_col
+                end
+            end
             local matches = {}
             local search_from = 1
 
             while true do
-                local idx = line:find(char, search_from, true)
+                local idx = line:find(needle, search_from, true)
                 if not idx or idx > max_col then
                     break
                 end
-                matches[#matches + 1] = idx
+                if idx + len - 1 <= max_col and (kind ~= "word" or is_word_match(line, idx, len)) then
+                    matches[#matches + 1] = idx
+                end
                 search_from = idx + 1
             end
 
@@ -78,18 +100,27 @@ local function collect_targets(char, direction)
     else
         for row = start_row, line_count - 1 do
             local line = api.nvim_buf_get_lines(buf, row, row + 1, false)[1] or ""
-            local search_from = (row == start_row) and (start_col + 2) or 1
+            local search_from = 1
+            if row == start_row then
+                if kind == "word" then
+                    search_from = start_col + 2
+                else
+                    search_from = start_col + 2
+                end
+            end
 
             while #targets < 9 do
-                local idx = line:find(char, search_from, true)
+                local idx = line:find(needle, search_from, true)
                 if not idx then
                     break
                 end
 
-                targets[#targets + 1] = {
-                    line = row + 1,
-                    col = idx - 1,
-                }
+                if kind ~= "word" or is_word_match(line, idx, len) then
+                    targets[#targets + 1] = {
+                        line = row + 1,
+                        col = idx - 1,
+                    }
+                end
 
                 search_from = idx + 1
             end
@@ -157,7 +188,9 @@ function M.stop()
 
     state.active = false
     state.token = state.token + 1
+    state.kind = nil
     state.char = nil
+    state.needle = nil
     state.direction = 1
     state.targets = nil
     state.buf = nil
@@ -177,7 +210,8 @@ function M.jump(index)
         return
     end
 
-    local char = state.char
+    local needle = state.needle
+    local kind = state.kind
     state.suspend = true
     clear_overlay(state.buf)
 
@@ -201,13 +235,13 @@ function M.jump(index)
         if not state.active then
             return
         end
-        M.start_cycle(char)
+        M.start_cycle(needle, kind)
         state.suspend = false
     end)
 end
 
-function M.start_cycle(char)
-    if not char or char == "" then
+function M.start_cycle(needle, kind)
+    if not needle or needle == "" then
         M.stop()
         return
     end
@@ -219,15 +253,18 @@ function M.start_cycle(char)
         return
     end
 
+    kind = kind or state.kind or "char"
     local direction = state.direction == -1 and -1 or 1
-    local targets = collect_targets(char, direction)
+    local targets = collect_targets(needle, direction, kind)
     if #targets == 0 then
         M.stop()
         return
     end
 
     state.active = true
-    state.char = char
+    state.kind = kind
+    state.char = kind == "char" and needle or nil
+    state.needle = needle
     state.direction = direction
     state.targets = targets
     state.buf = buf
@@ -288,7 +325,7 @@ function M.invert_direction()
         return
     end
     state.direction = (state.direction == 1) and -1 or 1
-    M.start_cycle(state.char)
+    M.start_cycle(state.needle, state.kind)
 end
 
 function M.trigger()
@@ -299,8 +336,32 @@ function M.trigger()
 
     M.stop()
     state.direction = 1
-    M.start_cycle(char)
+    state.suspend = true
+    M.start_cycle(char, "char")
+    vim.schedule(function()
+        state.suspend = false
+    end)
 end
+
+function M.trigger_word_select()
+    local word = vim.fn.expand("<cword>")
+
+    if not word or word == "" then
+        return
+    end
+
+    M.stop()
+    state.direction = 1
+    state.suspend = true
+    vim.cmd("normal! viw")
+    M.start_cycle(word, "word")
+    vim.schedule(function()
+        state.suspend = false
+    end)
+end
+
+-- Backward-compatible alias
+M.trigger_word_delete = M.trigger_word_select
 
 function M.setup(opts)
     cfg = vim.tbl_extend("force", cfg, opts or {})

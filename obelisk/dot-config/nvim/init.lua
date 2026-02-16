@@ -889,8 +889,10 @@ require("avy").setup({
 -----------------------------------------------------------------------
 vim.keymap.set({ "n", "v" }, "<Space>", "<Nop>", { silent = true })
 
--- Your "select word" remaps (kept)
-vim.keymap.set("n", "w", "viw")
+-- Word select + avy overlay
+vim.keymap.set("n", "w", function()
+	require("avy").trigger_word_select()
+end, { desc = "Select word + avy jump" })
 vim.keymap.set("n", "W", "viW")
 
 -- Highlight on yank
