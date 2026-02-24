@@ -7,14 +7,17 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "base_keymap": "VSCode",
+  "terminal": {
+    "keep_selection_on_copy": false,
+    "copy_on_select": true,
+    "option_as_meta": true,
+  },
+  "which_key": {
+    "delay_ms": 100,
+    "enabled": true,
+  },
+  "base_keymap": "Emacs",
   "ssh_connections": [
-    {
-      "host": "192.168.222.215",
-      "username": "digiwest",
-      "args": [],
-      "projects": []
-    },
     {
       "host": "192.168.222.171",
       "username": "digiwest",
@@ -26,49 +29,75 @@
           ]
         }
       ]
+    },
+    {
+      "host": "100.64.0.60",
+      "username": "digiwest",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/digiwest/camera-car-counting-smartparking"
+          ]
+        }
+      ]
+    },
+    {
+      "host": "100.64.0.60",
+      "username": "digiwest",
+      "args": [],
+      "projects": []
+    },
+    {
+      "host": "100.64.0.60",
+      "username": "digiwest",
+      "args": [],
+      "projects": []
     }
   ],
   "agent": {
-    "always_allow_tool_actions": true,
+    "tool_permissions": {
+      "default": "allow",
+    },
     "default_model": {
       "provider": "copilot_chat",
-      "model": "claude-sonnet-4.5"
+      "model": "claude-opus-4.6",
     },
-    "model_parameters": []
+    "model_parameters": [],
   },
   "vim_mode": true,
   "cursor_blink": false,
   // use relative line numbers
   "relative_line_numbers": "enabled",
   "tab_bar": {
-    "show": false
+    "show": false,
   },
   "scrollbar": {
-    "show": "never"
+    "show": "never",
   },
   // Indentation, rainbow indentation
   "indent_guides": {
     "enabled": true,
-    "coloring": "indent_aware"
+    "coloring": "indent_aware",
   },
   // Inlay hints preconfigured by Zed: Go, Rust, Typescript and Svelte
   "inlay_hints": {
-    "enabled": true
+    "enabled": true,
   },
   // Theme and font size
   "ui_font_size": 13,
   "buffer_font_size": 12,
-  "ui_font_family": "FiraCode Nerd Font",
-  "buffer_font_family": "FiraCode Nerd Font",
+  "ui_font_family": "Iosevka",
+  "buffer_font_family": "Iosevka",
   "theme": {
     "mode": "dark",
     "light": "One Light",
     // "dark": "Oxocarbon Dark (IBM Carbon)"
-    "dark": "Oxocarbon Dark (Variant II)"
+    "dark": "Oxocarbon Dark (Variant II)",
   },
   // Turn off telemetry
   "telemetry": {
     "diagnostics": false,
-    "metrics": false
-  }
+    "metrics": false,
+  },
 }
