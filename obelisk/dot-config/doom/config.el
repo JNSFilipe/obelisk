@@ -45,8 +45,11 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
-;; Set Projectile path
-(setq projectile-project-search-path '("~/Documents/GitHub/"))
+;; Set Projectile project roots
+(after! projectile
+  (setq projectile-project-search-path
+        '("~/Documents/GitHub/"
+          "~/Documents/Probe/")))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
@@ -90,7 +93,8 @@
   (map! :n "<escape>" #'keyboard-escape-quit
         :n "j" "gj" ;; Enable easier navigation in wrapped lines
         :n "k" "gk" ;; Enable easier navigation in wrapped lines
-        :n "C-h C-h" #'evil-window-left ;; TODO: This is not working in C files
+        ;; :n "C-h C-h" #'evil-window-left ;; TODO: This is not working in C files
+        :n "C-h" #'evil-window-left ;; TODO: This is not working in C files
         :n "C-l" #'evil-window-right
         :n "C-j" #'evil-window-down
         :n "C-k" #'evil-window-up
@@ -172,7 +176,7 @@
   :config
   ;; Enable breakpoint global mode
   (dape-breakpoint-global-mode +1)
-  
+
   ;; Better terminal compatibility - use text indicators instead of fringe
   (setq dape-buffer-window-arrangement 'gud
         dape-inlay-hints t
@@ -187,15 +191,15 @@
   (when (not (display-graphic-p))
     ;; Use text-based breakpoint indicators
     (setq dape-breakpoint-margin-string "●")
-    
+
     ;; Custom function to highlight breakpoint lines
     (defun dape-highlight-breakpoint-line ()
       "Highlight the entire line where a breakpoint is set."
       (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
         (overlay-put overlay 'face '(:background "#3c1f1e" :extend t))
-        (overlay-put overlay 'before-string 
+        (overlay-put overlay 'before-string
                      (propertize "● " 'face '(:foreground "red" :weight bold)))))
-    
+
     ;; Override the default breakpoint display
     (advice-add 'dape-breakpoint-place :after
                 (lambda (&rest _)
