@@ -100,6 +100,14 @@ alias brewall="brewup && caskup && brewcl && brewrm-msupdate"
 
 export PATH="$PATH:"/Applications/microchip/xc8/v3.00/bin""
 
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
 # Function to find and activate a Python virtual environment
 activate() {
     # If there is a currently active environment, deactivate it
