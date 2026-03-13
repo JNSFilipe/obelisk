@@ -22,7 +22,7 @@
 
   ;; name        default   256       16
   ((bg         '("#161616" "black"   "black"))
-   (bg-alt     '("#262626" "#262626" "brightblack"))
+   (bg-alt     '("#161616" "black"   "black"))
    (base0      '("#0f0f0f" "black"   "black"))
    (base1      '("#161616" "#1c1c1c" "black"))
    (base2      '("#262626" "#262626" "brightblack"))
