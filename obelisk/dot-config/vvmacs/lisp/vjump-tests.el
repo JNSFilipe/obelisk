@@ -62,4 +62,49 @@
        (should (eq node-a
                    (vjump-node-parent (cadr (vjump-node-children node-a)))))))))
 
+(ert-deftest vjump-go-back-moves-to-parent ()
+  "vjump-go-back moves vjump--current to parent and jumps there."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (insert "line1\nline2\n")
+     (goto-char (point-min))
+     (vjump--push (point) (current-buffer))    ; root -> A (line 1)
+     (let ((node-a vjump--current))
+       (forward-line 1)
+       (vjump--push (point) (current-buffer))  ; A -> B (line 2)
+       (vjump-go-back)
+       (should (eq vjump--current node-a))
+       (should (= (marker-position (vjump-node-marker node-a)) (point)))))))
+
+(ert-deftest vjump-go-back-stops-at-sentinel-child ()
+  "vjump-go-back does not move past the first real node."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (vjump--push (point) (current-buffer))   ; root -> A
+     (let ((node-a vjump--current))
+       (vjump-go-back)
+       ;; Still at A — parent of A is the sentinel root (no marker)
+       (should (eq vjump--current node-a))))))
+
+(ert-deftest vjump-go-forward-moves-to-first-child ()
+  "vjump-go-forward moves vjump--current to the first child."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (vjump--push (point) (current-buffer))   ; root -> A
+     (let ((node-a vjump--current))
+       (vjump--push (point) (current-buffer)) ; A -> B
+       (let ((node-b vjump--current))
+         (setq vjump--current node-a)
+         (vjump-go-forward)
+         (should (eq vjump--current node-b)))))))
+
+(ert-deftest vjump-go-forward-noop-at-leaf ()
+  "vjump-go-forward does nothing when current has no children."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (vjump--push (point) (current-buffer))   ; root -> A (leaf)
+     (let ((node-a vjump--current))
+       (vjump-go-forward)
+       (should (eq vjump--current node-a))))))
+
 ;;; vjump-tests.el ends here

@@ -142,5 +142,35 @@ are never discarded."
           (append (vjump-node-children vjump--current) (list node)))
     (setq vjump--current node)))
 
+(defun vjump--jump-to-current ()
+  "Visit the buffer and position stored in `vjump--current'.
+Does nothing if current is the sentinel root or its marker is dead."
+  (when-let* ((node vjump--current)
+              (marker (vjump-node-marker node))
+              (buf (marker-buffer marker))
+              ((buffer-live-p buf)))
+    (switch-to-buffer buf)
+    (goto-char (marker-position marker))))
+
+(defun vjump-go-back ()
+  "Move to the parent node (tree-aware C-o).
+Does not move past the first real node (child of sentinel root)."
+  (interactive)
+  (when-let* ((parent (and vjump--current
+                           (vjump-node-parent vjump--current)))
+              ;; Parent must have a marker — sentinel root does not
+              ((vjump-node-marker parent)))
+    (setq vjump--current parent)
+    (vjump--jump-to-current)))
+
+(defun vjump-go-forward ()
+  "Move to the first child node (tree-aware C-i)."
+  (interactive)
+  (when-let* ((children (and vjump--current
+                             (vjump-node-children vjump--current)))
+              (first-child (car children)))
+    (setq vjump--current first-child)
+    (vjump--jump-to-current)))
+
 (provide 'vjump)
 ;;; vjump.el ends here
