@@ -527,5 +527,26 @@ Press RET to confirm the new position or q/C-g to roll back."
     (when (vjump-node-point vjump--current)
       (goto-char (vjump-node-point vjump--current)))))
 
+;;; Global minor mode
+
+;;;###autoload
+(define-minor-mode vjump-mode
+  "Global minor mode that records jump history as a tree.
+When enabled, advises `push-mark' and `pop-to-mark-command', and
+installs `pre-command-hook' / `post-command-hook' handlers to
+detect large movements and buffer switches."
+  :global t
+  :group  'vjump
+  (if vjump-mode
+      (progn
+        (advice-add 'push-mark          :before #'vjump--push-mark-advice)
+        (advice-add 'pop-to-mark-command :after  #'vjump--pop-mark-advice)
+        (add-hook 'pre-command-hook  #'vjump--pre-command)
+        (add-hook 'post-command-hook #'vjump--post-command))
+    (advice-remove 'push-mark          #'vjump--push-mark-advice)
+    (advice-remove 'pop-to-mark-command #'vjump--pop-mark-advice)
+    (remove-hook 'pre-command-hook  #'vjump--pre-command)
+    (remove-hook 'post-command-hook #'vjump--post-command)))
+
 (provide 'vjump)
 ;;; vjump.el ends here
