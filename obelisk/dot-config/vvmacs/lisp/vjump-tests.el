@@ -107,4 +107,46 @@
        (vjump-go-forward)
        (should (eq vjump--current node-a))))))
 
+(ert-deftest vjump--post-command-dedup-flag ()
+  "When vjump--push-mark-called is t, post-command resets it without pushing."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (let ((vjump--push-mark-called t)
+           (vjump--pre-command-buffer (current-buffer))
+           (vjump--pre-command-point (point)))
+       (vjump--post-command)
+       (should (null vjump--push-mark-called))
+       ;; No push happened
+       (should (null vjump--root))))))
+
+(ert-deftest vjump--post-command-buffer-change ()
+  "Post-command records a jump when buffer changes."
+  (vjump--with-clean-state
+   (let* ((buf-a (get-buffer-create " *vjump-test-a*"))
+          (buf-b (get-buffer-create " *vjump-test-b*"))
+          (vjump--push-mark-called nil)
+          (vjump--pre-command-buffer buf-a)
+          (vjump--pre-command-point 1))
+     (unwind-protect
+         (with-current-buffer buf-b
+           (vjump--post-command)
+           (should (not (null vjump--root)))
+           (should (= 1 (length (vjump-node-children vjump--root)))))
+       (kill-buffer buf-a)
+       (kill-buffer buf-b)))))
+
+(ert-deftest vjump--post-command-distance ()
+  "Post-command records a jump when point moves more than threshold lines."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     ;; Insert enough lines to exceed the threshold
+     (dotimes (_ (+ vjump-distance-threshold 5))
+       (insert "x\n"))
+     (goto-char (point-min))
+     (let ((vjump--push-mark-called nil)
+           (vjump--pre-command-buffer (current-buffer))
+           (vjump--pre-command-point (point-max)))
+       (vjump--post-command)
+       (should (not (null vjump--root)))))))
+
 ;;; vjump-tests.el ends here

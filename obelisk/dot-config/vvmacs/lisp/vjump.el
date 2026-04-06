@@ -172,5 +172,52 @@ Does not move past the first real node (child of sentinel root)."
     (setq vjump--current first-child)
     (vjump--jump-to-current)))
 
+;;; Jump detection
+
+(defvar vjump--pre-command-point nil
+  "Value of `point' before the current command, set by `vjump--pre-command'.")
+
+(defvar vjump--pre-command-buffer nil
+  "Current buffer before the current command, set by `vjump--pre-command'.")
+
+(defvar vjump--push-mark-called nil
+  "Non-nil when `push-mark' fired during the current command.
+Used to prevent double-recording between the push-mark advice and
+`vjump--post-command'.")
+
+(defun vjump--pre-command ()
+  "Record current point and buffer before every command."
+  (setq vjump--pre-command-point  (point)
+        vjump--pre-command-buffer (current-buffer)))
+
+(defun vjump--post-command ()
+  "After each command, record a jump if warranted."
+  (cond
+   ;; push-mark advice already recorded this — just clear the flag
+   (vjump--push-mark-called
+    (setq vjump--push-mark-called nil))
+   ;; Buffer changed
+   ((and vjump--pre-command-buffer
+         (not (eq (current-buffer) vjump--pre-command-buffer)))
+    (vjump--push (point) (current-buffer)))
+   ;; Large distance movement in the same buffer
+   ((and vjump--pre-command-point
+         (> (abs (- (line-number-at-pos (point))
+                    (line-number-at-pos vjump--pre-command-point)))
+            vjump-distance-threshold))
+    (vjump--push (point) (current-buffer)))))
+
+(defun vjump--push-mark-advice (&rest _)
+  "Advice for `push-mark': record a jump and set the dedup flag."
+  (setq vjump--push-mark-called t)
+  (vjump--push (point) (current-buffer)))
+
+(defun vjump--pop-mark-advice (&rest _)
+  "Advice for `pop-to-mark-command': move vjump--current to its parent."
+  (when (and vjump--current
+             (vjump-node-parent vjump--current)
+             (vjump-node-marker (vjump-node-parent vjump--current)))
+    (setq vjump--current (vjump-node-parent vjump--current))))
+
 (provide 'vjump)
 ;;; vjump.el ends here
