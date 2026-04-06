@@ -497,5 +497,35 @@ current when `vjump-visualize' was called."
     (when (window-live-p orig-window)
       (select-window orig-window))))
 
+;;; Public entry point
+
+;;;###autoload
+(defun vjump-visualize ()
+  "Open the *vjump-tree* buffer to browse and navigate the jump history.
+Navigation keys (f/b/n/p/a/e) move through the tree and jump live.
+Press RET to confirm the new position or q/C-g to roll back."
+  (interactive)
+  (unless vjump--root
+    (user-error "No jump history yet"))
+  (let ((orig-window (selected-window))
+        (vjump-buf   (vjump--buffer)))
+    (with-current-buffer vjump-buf
+      (unless (derived-mode-p 'vjump-tree-mode)
+        (vjump-tree-mode))
+      (setq vjump--orig-window      orig-window
+            vjump--roll-back-to-this vjump--current))
+    (vjump--refresh-buffer)
+    (select-window
+     (display-buffer
+      vjump-buf
+      `(display-buffer-in-side-window
+        (side          . ,vjump-window-side)
+        (window-height . ,vjump-window-max-height))))
+    (set-window-dedicated-p nil t)
+    (let ((window-min-height 3))
+      (fit-window-to-buffer nil vjump-window-max-height))
+    (when (vjump-node-point vjump--current)
+      (goto-char (vjump-node-point vjump--current)))))
+
 (provide 'vjump)
 ;;; vjump.el ends here
