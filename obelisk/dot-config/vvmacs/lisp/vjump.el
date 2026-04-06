@@ -108,5 +108,39 @@ this node's glyph inside the *vjump-tree* buffer (set by the draw engine)."
   point     ; integer: text position of this node's glyph in *vjump-tree*
   timestamp) ; float-time, for display
 
+;;; Global state
+
+(defvar vjump--root nil
+  "Sentinel root node.  Has no marker.  All recorded jumps hang off its children.")
+
+(defvar vjump--current nil
+  "Pointer to the node representing the current position in the jump tree.")
+
+;;; Core tree operations
+
+(defun vjump--make-sentinel ()
+  "Create and return a new sentinel root node."
+  (make-vjump-node :marker nil :parent nil :children nil
+                   :timestamp (float-time)))
+
+(defun vjump--push (pos buffer)
+  "Record a jump to POS in BUFFER as a new child of `vjump--current'.
+Initialises the tree on first call.  When `vjump--current' already has
+children, the new node becomes a new sibling branch — existing children
+are never discarded."
+  (unless vjump--root
+    (setq vjump--root    (vjump--make-sentinel)
+          vjump--current vjump--root))
+  (let* ((marker (with-current-buffer buffer
+                   (copy-marker pos)))
+         (node (make-vjump-node
+                :marker    marker
+                :parent    vjump--current
+                :children  nil
+                :timestamp (float-time))))
+    (setf (vjump-node-children vjump--current)
+          (append (vjump-node-children vjump--current) (list node)))
+    (setq vjump--current node)))
+
 (provide 'vjump)
 ;;; vjump.el ends here
