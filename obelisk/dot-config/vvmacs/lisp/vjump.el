@@ -104,7 +104,7 @@ If vundo is loaded, you can set this to `vundo-glyph-alist'."
 this node's glyph inside the *vjump-tree* buffer (set by the draw engine)."
   marker    ; Emacs marker (buffer + position); nil for sentinel root
   parent    ; parent vjump-node or nil (sentinel root has nil parent)
-  children  ; list of child vjump-nodes, newest last
+  children  ; list of child vjump-nodes, newest first
   point     ; integer: text position of this node's glyph in *vjump-tree*
   timestamp) ; float-time, for display
 
@@ -139,7 +139,7 @@ are never discarded."
                 :children  nil
                 :timestamp (float-time))))
     (setf (vjump-node-children vjump--current)
-          (append (vjump-node-children vjump--current) (list node)))
+          (cons node (vjump-node-children vjump--current)))
     (setq vjump--current node)))
 
 (defun vjump--jump-to-current ()

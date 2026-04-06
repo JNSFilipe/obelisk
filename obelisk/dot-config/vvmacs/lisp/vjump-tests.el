@@ -58,9 +58,9 @@
        (setq vjump--current node-a)
        (vjump--push (point) (current-buffer)) ; A -> C (new branch)
        (should (= 2 (length (vjump-node-children node-a))))
-       (should (eq vjump--current (cadr (vjump-node-children node-a))))
+       (should (eq vjump--current (car (vjump-node-children node-a))))
        (should (eq node-a
-                   (vjump-node-parent (cadr (vjump-node-children node-a)))))))))
+                   (vjump-node-parent (car (vjump-node-children node-a)))))))))
 
 (ert-deftest vjump-go-back-moves-to-parent ()
   "vjump-go-back moves vjump--current to parent and jumps there."
