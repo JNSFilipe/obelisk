@@ -225,16 +225,17 @@ Used to prevent double-recording between the push-mark advice and
   "Translate each character in TEXT using `vjump-glyph-alist'."
   (seq-mapcat
    (lambda (ch)
-     (char-to-string
-      (alist-get
-       (pcase ch
-         (?○ 'node)
-         (?● 'selected-node)
-         (?─ 'horizontal-stem)
-         (?│ 'vertical-stem)
-         (?├ 'branch)
-         (?└ 'last-branch))
-       vjump-glyph-alist)))
+     (let ((key (pcase ch
+                  (?○ 'node)
+                  (?● 'selected-node)
+                  (?─ 'horizontal-stem)
+                  (?│ 'vertical-stem)
+                  (?├ 'branch)
+                  (?└ 'last-branch)
+                  (_ nil))))
+       (if key
+           (char-to-string (alist-get key vjump-glyph-alist))
+         (char-to-string ch))))
    text 'string))
 
 (defun vjump--next-line-at-column (col)
@@ -253,7 +254,7 @@ Used to prevent double-recording between the push-mark advice and
 
 (defun vjump--get-node-at-point ()
   "Return the `vjump-node' text property at point, or nil."
-  (plist-get (text-properties-at (1- (point))) 'vjump-node))
+  (get-text-property (1- (point)) 'vjump-node))
 
 (defun vjump--node-label (node)
   "Return a short label for NODE: \"buffer-name:line\" or nil if dead."

@@ -163,7 +163,10 @@
      (vjump--push 1 (current-buffer))  ; root -> A
      (with-temp-buffer
        (vjump--draw-tree vjump--root)
-       (should (> (buffer-size) 0))))))
+       (should (> (buffer-size) 0))
+       ;; Should contain exactly 2 node glyphs: root + one child
+       (should (= 2 (how-many (regexp-quote (vjump--translate "○"))
+                              (point-min) (point-max))))))))
 
 (ert-deftest vjump--node-label-live-buffer ()
   "vjump--node-label returns buffer:line for a live marker."
