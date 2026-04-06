@@ -327,5 +327,168 @@ navigate to it."
         ;; Enqueue children (depth-first, matching vundo's traversal order)
         (setq node-queue (append children node-queue))))))
 
+;;; Visualization buffer
+
+(defvar-local vjump--orig-window nil
+  "The window vjump-visualize was invoked from.")
+
+(defvar-local vjump--roll-back-to-this nil
+  "The node that was current when vjump-visualize was called.
+Used by `vjump-quit' to roll back if `vjump-roll-back-on-quit' is non-nil.")
+
+(defvar-local vjump--highlight-overlay nil
+  "Overlay used to show the selected node as ●.")
+
+(defvar vjump-tree-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "f")       #'vjump-forward)
+    (define-key map (kbd "<right>") #'vjump-forward)
+    (define-key map (kbd "b")       #'vjump-backward)
+    (define-key map (kbd "<left>")  #'vjump-backward)
+    (define-key map (kbd "n")       #'vjump-next)
+    (define-key map (kbd "<down>")  #'vjump-next)
+    (define-key map (kbd "p")       #'vjump-previous)
+    (define-key map (kbd "<up>")    #'vjump-previous)
+    (define-key map (kbd "a")       #'vjump-stem-root)
+    (define-key map (kbd "e")       #'vjump-stem-end)
+    (define-key map (kbd "q")       #'vjump-quit)
+    (define-key map (kbd "C-g")     #'vjump-quit)
+    (define-key map (kbd "RET")     #'vjump-confirm)
+    map)
+  "Keymap for `vjump-tree-mode'.")
+
+(define-derived-mode vjump-tree-mode special-mode "VJump"
+  "Major mode for the vjump tree buffer."
+  (setq mode-line-format nil
+        truncate-lines    t
+        cursor-type       nil)
+  (jit-lock-mode nil)
+  (face-remap-add-relative 'default 'vjump-default))
+
+(defun vjump--buffer ()
+  "Return (creating if needed) the *vjump-tree* buffer."
+  (get-buffer-create " *vjump-tree*"))
+
+(defun vjump--highlight-node (node)
+  "Highlight NODE as the current node (display ● at its glyph position)."
+  (when (vjump-node-point node)
+    (with-current-buffer (vjump--buffer)
+      (unless vjump--highlight-overlay
+        (setq vjump--highlight-overlay
+              (make-overlay (1- (vjump-node-point node))
+                            (vjump-node-point node)))
+        (overlay-put vjump--highlight-overlay 'display
+                     (vjump--translate "●"))
+        (overlay-put vjump--highlight-overlay 'face 'vjump-highlight))
+      (move-overlay vjump--highlight-overlay
+                    (1- (vjump-node-point node))
+                    (vjump-node-point node)))))
+
+(defun vjump--refresh-buffer ()
+  "Redraw the vjump tree buffer and highlight `vjump--current'."
+  (with-current-buffer (vjump--buffer)
+    (unless (derived-mode-p 'vjump-tree-mode)
+      (vjump-tree-mode))
+    (when vjump--root
+      (vjump--draw-tree vjump--root)
+      (vjump--highlight-node vjump--current)
+      (goto-char (vjump-node-point vjump--current)))))
+
+;;; Navigation commands (used inside *vjump-tree* buffer)
+
+(defmacro vjump--with-orig-window (&rest body)
+  "Execute BODY in `vjump--orig-window', if it is still live."
+  `(when (window-live-p vjump--orig-window)
+     (with-selected-window vjump--orig-window
+       ,@body)))
+
+(defun vjump--move-to-node (node)
+  "Set `vjump--current' to NODE, jump the original window, refresh tree."
+  (setq vjump--current node)
+  ;; Jump the originating window live
+  (vjump--with-orig-window
+   (when-let* ((marker (vjump-node-marker node))
+               (buf    (marker-buffer marker))
+               ((buffer-live-p buf)))
+     (switch-to-buffer buf)
+     (goto-char (marker-position marker))))
+  ;; Echo the label
+  (when-let ((label (vjump--node-label node)))
+    (message "vjump: %s" label))
+  ;; Redraw + highlight in tree buffer
+  (vjump--refresh-buffer))
+
+(defun vjump-forward ()
+  "Move forward to the first child of the current node."
+  (interactive)
+  (when-let ((child (car (vjump-node-children vjump--current))))
+    (vjump--move-to-node child)))
+
+(defun vjump-backward ()
+  "Move backward to the parent of the current node.
+Stops at the first real node (child of sentinel root)."
+  (interactive)
+  (when-let* ((parent (vjump-node-parent vjump--current))
+              ((vjump-node-marker parent)))  ; sentinel root has no marker
+    (vjump--move-to-node parent)))
+
+(defun vjump-next (arg)
+  "Move to the next sibling node (ARG steps downward)."
+  (interactive "p")
+  (when-let* ((parent   (vjump-node-parent vjump--current))
+              (siblings (vjump-node-children parent))
+              (idx      (seq-position siblings vjump--current))
+              (new-idx  (max 0 (min (+ idx arg) (1- (length siblings)))))
+              (dest     (nth new-idx siblings))
+              ((not (eq dest vjump--current))))
+    (vjump--move-to-node dest)))
+
+(defun vjump-previous (arg)
+  "Move to the previous sibling node (ARG steps upward)."
+  (interactive "p")
+  (vjump-next (- arg)))
+
+(defun vjump-stem-root ()
+  "Move back to the nearest branching point (or root of current stem)."
+  (interactive)
+  (let ((node vjump--current))
+    (while (and (vjump-node-parent node)
+                (vjump-node-marker (vjump-node-parent node))
+                (= 1 (length (vjump-node-children (vjump-node-parent node)))))
+      (setq node (vjump-node-parent node)))
+    (unless (eq node vjump--current)
+      (vjump--move-to-node node))))
+
+(defun vjump-stem-end ()
+  "Move forward to the tip of the current branch."
+  (interactive)
+  (let ((node vjump--current))
+    (while (= 1 (length (vjump-node-children node)))
+      (setq node (car (vjump-node-children node))))
+    (unless (eq node vjump--current)
+      (vjump--move-to-node node))))
+
+(defun vjump-quit ()
+  "Quit the vjump tree buffer.
+If `vjump-roll-back-on-quit' is non-nil, return to the node that was
+current when `vjump-visualize' was called."
+  (interactive)
+  (when (and vjump-roll-back-on-quit
+             vjump--roll-back-to-this
+             (not (eq vjump--roll-back-to-this vjump--current)))
+    (vjump--move-to-node vjump--roll-back-to-this))
+  (let ((orig-window vjump--orig-window))
+    (kill-buffer-and-window)
+    (when (window-live-p orig-window)
+      (select-window orig-window))))
+
+(defun vjump-confirm ()
+  "Confirm the current position and close the vjump tree buffer."
+  (interactive)
+  (let ((orig-window vjump--orig-window))
+    (kill-buffer-and-window)
+    (when (window-live-p orig-window)
+      (select-window orig-window))))
+
 (provide 'vjump)
 ;;; vjump.el ends here
