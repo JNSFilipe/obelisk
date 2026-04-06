@@ -553,7 +553,8 @@
 (vjump-mode 1)
 (global-set-key (kbd "C-x j") #'vjump-visualize)
 (global-set-key (kbd "C-o")   #'vjump-go-back)
-(global-set-key (kbd "C-i")   #'vjump-go-forward)
+(when (display-graphic-p)
+  (global-set-key (kbd "C-i") #'vjump-go-forward))
 
 
 ;;; TRAMP (remote editing)
