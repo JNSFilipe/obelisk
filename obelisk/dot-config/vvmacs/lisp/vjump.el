@@ -138,6 +138,11 @@ are never discarded."
                 :parent    vjump--current
                 :children  nil
                 :timestamp (float-time))))
+    ;; Prepend so children are newest-first.  This makes `vjump-go-forward'
+    ;; (C-i) return to the most recently visited branch after a C-o, which
+    ;; mirrors the feel of Vim's C-i/C-o.  The spec originally specified
+    ;; newest-last; the ordering was intentionally reversed during
+    ;; implementation for better UX.
     (setf (vjump-node-children vjump--current)
           (cons node (vjump-node-children vjump--current)))
     (setq vjump--current node)))
@@ -152,6 +157,7 @@ Does nothing if current is the sentinel root or its marker is dead."
     (switch-to-buffer buf)
     (goto-char (marker-position marker))))
 
+;;;###autoload
 (defun vjump-go-back ()
   "Move to the parent node (tree-aware C-o).
 Does not move past the first real node (child of sentinel root)."
@@ -163,6 +169,7 @@ Does not move past the first real node (child of sentinel root)."
     (setq vjump--current parent)
     (vjump--jump-to-current)))
 
+;;;###autoload
 (defun vjump-go-forward ()
   "Move to the first child node (tree-aware C-i)."
   (interactive)
