@@ -86,7 +86,7 @@ If vundo is loaded, you can set this to `vundo-glyph-alist'."
   "Face for stems between nodes."
   :group 'vjump)
 
-(defface vjump-branch-stem '((t (:inherit vjump-stem :weight bold)))
+(defface vjump-branch-stem '((t . (:inherit vjump-stem :weight bold)))
   "Face for stems at branching points."
   :group 'vjump)
 

@@ -11,6 +11,7 @@
     (should (null (vjump-node-marker node)))
     (should (null (vjump-node-parent node)))
     (should (null (vjump-node-children node)))
+    (should (null (vjump-node-point node)))
     (should (equal 1.0 (vjump-node-timestamp node)))))
 
 (ert-deftest vjump-node-setf ()
@@ -18,3 +19,5 @@
   (let ((node (make-vjump-node)))
     (setf (vjump-node-point node) 42)
     (should (= 42 (vjump-node-point node)))))
+
+;;; vjump-tests.el ends here
