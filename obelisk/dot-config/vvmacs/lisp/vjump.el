@@ -390,6 +390,9 @@ Used by `vjump-quit' to roll back if `vjump-roll-back-on-quit' is non-nil.")
     (unless (derived-mode-p 'vjump-tree-mode)
       (vjump-tree-mode))
     (when vjump--root
+      ;; Nil the overlay before erase-buffer (called inside vjump--draw-tree)
+      ;; destroys it, so vjump--highlight-node always creates a fresh one.
+      (setq vjump--highlight-overlay nil)
       (vjump--draw-tree vjump--root)
       (vjump--highlight-node vjump--current)
       (goto-char (vjump-node-point vjump--current)))))
@@ -476,7 +479,11 @@ current when `vjump-visualize' was called."
   (when (and vjump-roll-back-on-quit
              vjump--roll-back-to-this
              (not (eq vjump--roll-back-to-this vjump--current)))
-    (vjump--move-to-node vjump--roll-back-to-this))
+    ;; Roll back: update current pointer and jump the window directly,
+    ;; without triggering a full tree redraw that is immediately discarded.
+    (setq vjump--current vjump--roll-back-to-this)
+    (vjump--with-orig-window
+     (vjump--jump-to-current)))
   (let ((orig-window vjump--orig-window))
     (kill-buffer-and-window)
     (when (window-live-p orig-window)
