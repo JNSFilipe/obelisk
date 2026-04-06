@@ -219,5 +219,112 @@ Used to prevent double-recording between the push-mark advice and
              (vjump-node-marker (vjump-node-parent vjump--current)))
     (setq vjump--current (vjump-node-parent vjump--current))))
 
+;;; Draw engine (ported from vundo by Yuan Fu, GPL-3+)
+
+(defun vjump--translate (text)
+  "Translate each character in TEXT using `vjump-glyph-alist'."
+  (seq-mapcat
+   (lambda (ch)
+     (char-to-string
+      (alist-get
+       (pcase ch
+         (?○ 'node)
+         (?● 'selected-node)
+         (?─ 'horizontal-stem)
+         (?│ 'vertical-stem)
+         (?├ 'branch)
+         (?└ 'last-branch))
+       vjump-glyph-alist)))
+   text 'string))
+
+(defun vjump--next-line-at-column (col)
+  "Move point to the next line at column COL, inserting a newline if needed."
+  (unless (and (eq 0 (forward-line)) (not (eobp)))
+    (goto-char (point-max))
+    (insert "\n"))
+  (move-to-column col)
+  (unless (eq (current-column) col)
+    (let ((indent-tabs-mode nil))
+      (indent-to-column col))))
+
+(defun vjump--put-node-at-point (node)
+  "Store NODE as a `vjump-node' text property at point."
+  (put-text-property (1- (point)) (point) 'vjump-node node))
+
+(defun vjump--get-node-at-point ()
+  "Return the `vjump-node' text property at point, or nil."
+  (plist-get (text-properties-at (1- (point))) 'vjump-node))
+
+(defun vjump--node-label (node)
+  "Return a short label for NODE: \"buffer-name:line\" or nil if dead."
+  (when-let* ((marker (vjump-node-marker node))
+              (buf    (marker-buffer marker))
+              ((buffer-live-p buf))
+              (pos    (marker-position marker)))
+    (with-current-buffer buf
+      (format "%s:%d" (buffer-name buf) (line-number-at-pos pos)))))
+
+(defun vjump--draw-tree (root)
+  "Draw the jump tree rooted at ROOT into the current buffer.
+ROOT is typically `vjump--root' (the sentinel).  Each node's `point'
+field is set to the text position of its glyph so later commands can
+navigate to it."
+  (let ((node-queue (list root))
+        (inhibit-read-only t)
+        (inhibit-modification-hooks t))
+    (erase-buffer)
+    (while node-queue
+      (let* ((node              (pop node-queue))
+             (children          (vjump-node-children node))
+             (parent            (vjump-node-parent node))
+             (siblings          (and parent (vjump-node-children parent)))
+             (only-child-p      (and parent (= (length siblings) 1)))
+             (last-child-p      (and parent (eq node (car (last siblings)))))
+             (stem-face         (if only-child-p 'vjump-stem 'vjump-branch-stem)))
+        ;; Navigate to parent's glyph position in the buffer
+        (when parent
+          (goto-char (vjump-node-point parent)))
+        (let ((room-rx (rx-to-string
+                        `(or (>= ,(if vjump-compact-display 3 4) ?\s) eol))))
+          (if (null parent)
+              ;; Sentinel root: just insert the root glyph
+              (insert (propertize (vjump--translate "○") 'face 'vjump-node))
+            (let ((planned-point (point)))
+              ;; Find room on the same line, or break to next line
+              (while (not (looking-at room-rx))
+                (vjump--next-line-at-column (max 0 (1- (current-column))))
+                (let ((replace-char
+                       (if (looking-at
+                            (rx-to-string
+                             `(or ,(vjump--translate "├")
+                                  ,(vjump--translate "└"))))
+                           (vjump--translate "├")
+                         (vjump--translate "│"))))
+                  (unless (eolp) (delete-char 1))
+                  (insert (propertize replace-char 'face stem-face))))
+              (unless (looking-at "$")
+                (delete-char (if vjump-compact-display 2 3)))
+              (if (eq (point) planned-point)
+                  ;; Inline child: ──○
+                  (progn
+                    (insert (propertize
+                             (vjump--translate (if vjump-compact-display "─" "──"))
+                             'face stem-face))
+                    (insert (propertize (vjump--translate "○") 'face 'vjump-node)))
+                ;; Broke to new line: └──○ or ├──○
+                (delete-char -1)
+                (insert (propertize
+                         (vjump--translate
+                          (if last-child-p
+                              (if vjump-compact-display "└─" "└──")
+                            (if vjump-compact-display "├─" "├──")))
+                         'face stem-face))
+                (insert (propertize (vjump--translate "○") 'face 'vjump-node))))))
+        ;; Record this node's glyph position and store text property
+        (setf (vjump-node-point node) (point))
+        (vjump--put-node-at-point node)
+        ;; Enqueue children (depth-first, matching vundo's traversal order)
+        (setq node-queue (append children node-queue))))))
+
 (provide 'vjump)
 ;;; vjump.el ends here

@@ -149,4 +149,29 @@
        (vjump--post-command)
        (should (not (null vjump--root)))))))
 
+(ert-deftest vjump--translate-unicode ()
+  "vjump--translate converts glyphs via glyph alist."
+  (should (stringp (vjump--translate "○")))
+  (should (stringp (vjump--translate "●──○")))
+  ;; Result should be non-empty
+  (should (> (length (vjump--translate "○")) 0)))
+
+(ert-deftest vjump--draw-tree-single-node ()
+  "Drawing a tree with only the sentinel root and one child produces output."
+  (vjump--with-clean-state
+   (with-temp-buffer
+     (vjump--push 1 (current-buffer))  ; root -> A
+     (with-temp-buffer
+       (vjump--draw-tree vjump--root)
+       (should (> (buffer-size) 0))))))
+
+(ert-deftest vjump--node-label-live-buffer ()
+  "vjump--node-label returns buffer:line for a live marker."
+  (with-temp-buffer
+    (insert "line1\nline2\n")
+    (goto-char (point-min))
+    (let* ((marker (copy-marker (point)))
+           (node (make-vjump-node :marker marker)))
+      (should (string-match-p ":[0-9]+" (vjump--node-label node))))))
+
 ;;; vjump-tests.el ends here
