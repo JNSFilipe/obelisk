@@ -548,13 +548,21 @@
 
 ;;; Vjump (visual jump tree)
 
-(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
-(require 'vjump)
-(vjump-mode 1)
-(global-set-key (kbd "C-x j") #'vjump-visualize)
-(global-set-key (kbd "C-o")   #'vjump-go-back)
-(when (display-graphic-p)
-  (global-set-key (kbd "C-i") #'vjump-go-forward))
+(use-package vjump
+  :vc (:url "https://github.com/JNSFilipe/vjump" :rev :newest)
+  :config
+  (vjump-mode 1)
+  :bind (("C-x j" . vjump-visualize)
+         ("C-§"   . vjump-visualize)))
+
+
+;;; Avy (quick navigation)
+
+(use-package avy
+  :ensure t
+  :bind (("M-a a" . avy-goto-char-timer)
+         ("M-a l" . avy-goto-line)
+         ("M-a w" . avy-goto-word-1)))
 
 
 ;;; TRAMP (remote editing)
