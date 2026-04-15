@@ -96,6 +96,7 @@
 (save-place-mode 1)
 
 ;; Keep a list of recently opened files
+(require 'recentf)
 (recentf-mode 1)
 (setq recentf-max-saved-items 50)
 
