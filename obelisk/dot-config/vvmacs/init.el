@@ -15,9 +15,32 @@
             ;; Return GC to a more sensible (but still high) 20MB
             (setq gc-cons-threshold 20000000)))
 
-;; Increase the amount of data read from processes to 1MB (default is 4KB)
+;; Increase the amount of data read from processes to 4MB (default is 4KB)
 ;; This is CRITICAL for vterm and lsp (eglot) performance.
-(setq read-process-output-max (* 1024 1024))
+(setq read-process-output-max (* 4 1024 1024))
+
+;;; FORM https://emacsredux.com/blog/2026/04/07/stealing-from-the-best-emacs-configs/
+
+
+;; Disable Bidirectional Text Scanning (Doom Emacs)
+;; If you don’t edit right-to-left languages (Arabic, Hebrew, etc.), Emacs is doing a bunch of work on every redisplay cycle for nothing.
+;; These settings tell Emacs to assume left-to-right text everywhere and skip the bidirectional parenthesis algorithm:
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
+
+;; Skip Fontification During Input (Doom Emacs)
+;; Emacs normally fontifies (syntax-highlights) text even while you’re actively typing.
+;; This can cause micro-stutters, especially in tree-sitter modes or large buffers.
+;; One setting fixes it:
+(setq redisplay-skip-fontification-on-input t)
+
+;; Don’t Render Cursors in Non-Focused Windows (Doom Emacs)
+;; If you have several windows visible, Emacs draws a cursor in each of them – even the ones you’re not working in.
+;; It also highlights selections in non-focused windows.
+;; Two settings to stop that:
+(setq-default cursor-in-non-selected-windows nil)
+(setq highlight-nonselected-windows nil)
 
 ;; =============================================================================
 
@@ -172,7 +195,8 @@
   :config
   (setq which-key-idle-delay 0.5
         which-key-idle-secondary-delay 0.05)
-  (which-key-mode))
+  (which-key-mode)
+  (which-key-enable-god-mode-support))
 
 
 ;;; Vertico + Marginalia
@@ -346,10 +370,10 @@
 
 (use-package flyspell
   :ensure nil
-  :hook
-  ((text-mode . flyspell-mode)
-   (org-mode  . flyspell-mode)
-   (prog-mode . flyspell-prog-mode))  ; checks comments/strings in code
+  ;; :hook
+  ;; ((text-mode . flyspell-mode)
+  ;;  (org-mode  . flyspell-mode)
+  ;;  (prog-mode . flyspell-prog-mode))  ; checks comments/strings in code
   :config
   (setq ispell-program-name (or (executable-find "aspell")
                                 (executable-find "hunspell")
@@ -390,15 +414,18 @@
 
 ;;; AI Code Interface
 
-(use-package ai-code-interface
-  :vc (:url "https://github.com/tninja/ai-code-interface.el" :branch "main")
-  :bind (("C-c a i" . ai-code-interface-task)
-         ("C-c a e" . ai-code-interface-explain)
-         ("C-c a c" . ai-code-interface-chat))
-  :config
-  ;; You can customize the backend here if needed, defaults to openapi/gpt-4o
-  ;; (setq ai-code-interface-backend 'openai)
-  )
+;; (use-package ai-code-interface
+;;   :vc (:url "https://github.com/tninja/ai-code-interface.el" :branch "main")
+;;   :bind (("C-c a i" . ai-code-interface-task)
+;;          ("C-c a e" . ai-code-interface-explain)
+;;          ("C-c a c" . ai-code-interface-chat))
+;;   :config
+;;   ;; You can customize the backend here if needed, defaults to openapi/gpt-4o
+;;   ;; (setq ai-code-interface-backend 'openai)
+;;   )
+;; (use-package codex-ide
+;;   :vc (:url "https://github.com/dgillis/codex-ide" :rev :newest)
+;;   :bind ("C-c C-;" . codex-ide-menu))
 
 
 ;;; Rust support
@@ -560,9 +587,44 @@
 
 (use-package avy
   :ensure t
-  :bind (("M-a a" . avy-goto-char-timer)
+  :init
+  (global-unset-key (kbd "M-a"))
+  :bind (("M-a c" . avy-goto-char-timer)
+         ("M-a a" . avy-goto-word-0)
          ("M-a l" . avy-goto-line)
          ("M-a w" . avy-goto-word-1)))
+
+
+;;; God Mode
+
+(use-package god-mode
+  :ensure t
+  :init
+  (god-mode)
+  :config
+  (custom-set-faces
+   '(god-mode-lighter ((t (:inherit error)))))
+
+  (defun my-god-mode-update-cursor-type ()
+    (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
+  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type)
+
+  (require 'god-mode-isearch)
+  (define-key isearch-mode-map (kbd "<escape>") #'god-mode-isearch-activate)
+  (define-key god-mode-isearch-map (kbd "<escape>") #'god-mode-isearch-disable)
+
+  (define-key god-local-mode-map (kbd "i") #'god-local-mode)
+  (global-set-key (kbd "<escape>") #'(lambda () (interactive) (god-local-mode 1)))
+
+  (define-key god-local-mode-map (kbd ".") #'repeat)
+
+  (global-set-key (kbd "C-x C-1") #'delete-other-windows)
+  (global-set-key (kbd "C-x C-2") #'split-window-below)
+  (global-set-key (kbd "C-x C-3") #'split-window-right)
+  (global-set-key (kbd "C-x C-0") #'delete-window)
+
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph))
 
 
 ;;; TRAMP (remote editing)
@@ -597,4 +659,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(god-mode-lighter ((t (:inherit error)))))
