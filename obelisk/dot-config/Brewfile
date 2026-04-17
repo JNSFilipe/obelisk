@@ -6,15 +6,18 @@ tap "oven-sh/bun" # bun
 
 # Terminal utils
 brew "tree-sitter"
+# cask "ollama-app" # Local LLMs
 brew "coreutils"
 brew "moreutils"
 brew "tailscale" # Tailscale CLI
+# brew "zeroclaw"
 brew "pygments"
 brew "ripgrep"
 brew "autossh"
 brew "sshpass"
 brew "lazygit"
 # brew "euporie" # View Jupyter Notebooks in terminal
+brew "picocom" # Serial terminal
 brew "zoxide"
 brew "portal" # Send files to other devices
 brew "aspell"
@@ -34,9 +37,10 @@ brew "fd"
 brew "jq"
 
 # Window Management
+cask "karabiner-elements" # For remapping keys
 cask "leader-key"
 cask "dockdoor" # App switcher
-brew "kanata" # For homerow-style mods
+# brew "kanata" # For homerow-style mods
 
 # Programming Languages
 brew "llvm"# , args: ["with-toolchain"]
@@ -54,6 +58,7 @@ cask "mactex"
 brew "boost"
 brew "cmake"
 brew "black"
+brew "gopls"
 brew "opam"
 brew "node"
 brew "rust"
@@ -66,19 +71,18 @@ brew "ty"
 
 # Terms
 cask "wezterm"
-brew "libvterm"
+# brew "libvterm"
 cask "ghostty"
-# cask "kitty"
+cask "kitty"
 
 # Browsers
-cask "chatgpt-atlas"
+cask "firefox"
 
 # AI
 cask "claude-code"
 cask "copilot-cli"
+cask "gemini-cli"
 brew "codex-acp"
-cask "chatgpt"
-cask "claude"
 cask "codex"
 
 # Editors/Git
@@ -112,7 +116,7 @@ cask "font-iosevka"
 cask "microsoft-powerpoint"
 cask "raspberry-pi-imager"
 cask "nvidia-geforce-now"
-# cask "grandperspective"
+cask "microsoft-outlook"
 cask "microsoft-teams"
 cask "microsoft-excel"
 cask "notion-calendar"
@@ -123,7 +127,7 @@ cask "hp-easy-start"
 # cask "tailscale-app"
 cask "google-drive"
 # cask "tradingview"
-cask "notion-mail"
+# cask "notion-mail"
 # cask "epic-games"
 cask "codex-app"
 cask "daisydisk" # Disk space analyzer
@@ -135,9 +139,9 @@ cask "postman"
 cask "raycast"
 cask "spotify"
 cask "clickup"
-cask "notion"
+# cask "notion"
 brew "docker"
-cask "mqttx"
+# cask "mqttx"
 cask "marta" # File manager
 cask "steam"
 cask "zoom"
