@@ -50,7 +50,7 @@
 (setq org-directory "~/org/")
 
 ;; Doom reads this while building Evil's insert-state bindings.
-(setq evil-disable-insert-state-bindings nil)
+(setq evil-disable-insert-state-bindings t)
 
 ;; Set Projectile project roots
 (after! projectile
