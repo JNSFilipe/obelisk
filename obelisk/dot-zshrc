@@ -1,8 +1,8 @@
 # Automatically attach or create a tmux session named "main"
 # Only when using Ghostty terminal
-if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ "$TERM_PROGRAM" = "ghostty" ]; then
-  tmux attach-session -t main || tmux new-session -s main
-fi
+# if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ "$TERM_PROGRAM" = "ghostty" ]; then
+#   tmux attach-session -t main || tmux new-session -s main
+# fi
 
 # Setup zsh history
 HISTFILE=~/.zsh_history
@@ -142,11 +142,16 @@ em() {
             uv add "python-lsp-server[pyflakes]" # Add pep8 to style linting
         fi
         # Now run emacs within the environment
-        emacs -nw "$@"
+        emacs --init-directory ~/.config/emacs/ -nw "$@"
     else
         # If no environment is found, just run emacs
-        emacs -nw "$@"
+        emacs --init-directory ~/.config/emacs/ -nw "$@"
     fi
+}
+
+# Define the vem function to launch doom emacs (demacs) in terminal mode
+vem() {
+    emacs --init-directory ~/.config/vemacs/ -nw "$@"
 }
 
 # Define the essh function to launch GUI Emacs with TRAMP for remote editing
@@ -265,3 +270,5 @@ pssh() {
 }
 
 export PATH="$PATH:"/Applications/microchip/xc8/v3.10/bin""
+
+export PATH="$PATH:/Applications/microchip/xc8/v3.10/bin"
