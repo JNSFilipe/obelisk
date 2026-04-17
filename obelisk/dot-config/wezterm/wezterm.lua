@@ -4,15 +4,6 @@ local config = {}
 local act = wezterm.action
 
 -- ============================================================================
--- GLOBAL STATE INITIALIZATION
--- ============================================================================
--- We use wezterm.GLOBAL to store variables that persist across all windows.
--- This allows us to track UI toggles and history without losing state.
-if wezterm.GLOBAL.show_workspaces == nil then
-	wezterm.GLOBAL.show_workspaces = false
-end
-
--- ============================================================================
 -- THEME AND COLOR CONFIGURATION
 -- ============================================================================
 local color_scheme_name = "oxocarbon"
@@ -166,57 +157,31 @@ wezterm.on("update-status", function(window, pane)
 		wezterm.GLOBAL.current_workspace = current_workspace
 	end
 
-	-- 3. Render the UI based on the Option+§ toggle state
+	-- Render workspaces as pills
+	local workspaces = wezterm.mux.get_workspace_names()
+	table.sort(workspaces)
 	local status_elements = {}
 
-	if wezterm.GLOBAL.show_workspaces then
-		-- >> WORKSPACE VIEW ACTIVE <<
-		-- Fetch all workspaces, sort them alphabetically, and display them as pills.
-		local workspaces = wezterm.mux.get_workspace_names()
-		table.sort(workspaces)
+	for index, name in ipairs(workspaces) do
+		local is_active = (name == current_workspace)
+		local bg_color = is_active and palette.success or palette.surface_alt
+		local fg_color = is_active and palette.bg or palette.text
 
-		for index, name in ipairs(workspaces) do
-			local is_active = (name == current_workspace)
-			-- Highlight the active workspace in 'success' color, mute the others
-			local bg_color = is_active and palette.success or palette.surface_alt
-			local fg_color = is_active and palette.bg or palette.text
-
-			table.insert(status_elements, { Background = { Color = palette.bg } })
-			table.insert(status_elements, { Foreground = { Color = bg_color } })
-			table.insert(status_elements, { Text = rounded_left })
-
-			table.insert(status_elements, { Background = { Color = bg_color } })
-			table.insert(status_elements, { Foreground = { Color = fg_color } })
-			table.insert(status_elements, { Attribute = { Intensity = is_active and "Bold" or "Normal" } })
-
-			-- Include the number shortcut (1-9) so the user knows what Option+Number to press
-			local prefix = is_active and (workspace_icon .. index) or tostring(index)
-			table.insert(status_elements, { Text = " " .. prefix .. ": " .. name .. " " })
-
-			table.insert(status_elements, { Background = { Color = palette.bg } })
-			table.insert(status_elements, { Foreground = { Color = bg_color } })
-			table.insert(status_elements, { Text = rounded_right })
-
-			table.insert(status_elements, { Background = { Color = palette.bg } })
-			table.insert(status_elements, { Text = pill_gap })
-		end
-	else
-		-- >> DEFAULT TAB VIEW ACTIVE <<
-		-- Only show the current active workspace pill on the far left. The standard tabs follow it.
 		table.insert(status_elements, { Background = { Color = palette.bg } })
-		table.insert(status_elements, { Text = pill_gap })
-		table.insert(status_elements, { Foreground = { Color = palette.success } })
-		table.insert(status_elements, { Background = { Color = palette.bg } })
+		table.insert(status_elements, { Foreground = { Color = bg_color } })
 		table.insert(status_elements, { Text = rounded_left })
-		table.insert(status_elements, { Background = { Color = palette.success } })
-		table.insert(status_elements, { Foreground = { Color = palette.bg } })
-		table.insert(status_elements, { Text = " " .. workspace_icon .. " " })
-		table.insert(status_elements, { Background = { Color = palette.surface_alt } })
-		table.insert(status_elements, { Foreground = { Color = palette.text } })
-		table.insert(status_elements, { Text = " " .. current_workspace .. " " })
-		table.insert(status_elements, { Foreground = { Color = palette.surface_alt } })
+
+		table.insert(status_elements, { Background = { Color = bg_color } })
+		table.insert(status_elements, { Foreground = { Color = fg_color } })
+		table.insert(status_elements, { Attribute = { Intensity = is_active and "Bold" or "Normal" } })
+
+		local prefix = is_active and (workspace_icon .. index) or tostring(index)
+		table.insert(status_elements, { Text = " " .. prefix .. ": " .. name .. " " })
+
 		table.insert(status_elements, { Background = { Color = palette.bg } })
+		table.insert(status_elements, { Foreground = { Color = bg_color } })
 		table.insert(status_elements, { Text = rounded_right })
+
 		table.insert(status_elements, { Background = { Color = palette.bg } })
 		table.insert(status_elements, { Text = pill_gap })
 	end
@@ -226,56 +191,12 @@ wezterm.on("update-status", function(window, pane)
 	window:set_right_status("")
 end)
 
--- Custom styling for the actual tabs
-wezterm.on("format-tab-title", function(tab, _tabs, _panes, _cfg, _hover, max_width)
-	-- Instant visual override: If Workspace view is active, camouflage the tabs entirely
-	-- so they blend into the background and "disappear" without causing lag.
-	if wezterm.GLOBAL.show_workspaces then
-		return {
-			{ Background = { Color = palette.bg } },
-			{ Foreground = { Color = palette.bg } },
-			{ Text = " " },
-		}
-	end
-
-	-- Format the title and truncate if it gets too long
-	local title = tab_title(tab)
-	local title_width = math.max(8, max_width - 7)
-	if #title > title_width then
-		title = wezterm.truncate_right(title, title_width)
-	end
-
-	-- Determine colors based on whether this tab is currently active
-	local index_bg = palette.inactive_badge_bg
-	local index_fg = palette.inactive_badge_fg
-	local tab_bg = palette.surface
-	local tab_fg = palette.muted
-
-	if tab.is_active then
-		index_bg = palette.active_badge_bg
-		index_fg = palette.active_badge_fg
-		tab_bg = palette.surface_alt
-		tab_fg = palette.text
-	end
-
-	-- Build and return the styled tab pill
+-- Hide tabs — workspace pills in the status bar are the only navigation UI
+wezterm.on("format-tab-title", function(_tab, _tabs, _panes, _cfg, _hover, _max_width)
 	return {
 		{ Background = { Color = palette.bg } },
-		{ Text = pill_gap },
-		{ Foreground = { Color = index_bg } },
-		{ Background = { Color = palette.bg } },
-		{ Text = rounded_left },
-		{ Background = { Color = index_bg } },
-		{ Foreground = { Color = index_fg } },
-		{ Text = " " .. (tab.tab_index + 1) .. " " },
-		{ Background = { Color = tab_bg } },
-		{ Foreground = { Color = tab_fg } },
-		{ Text = " " .. title .. " " },
-		{ Foreground = { Color = tab_bg } },
-		{ Background = { Color = palette.bg } },
-		{ Text = rounded_right },
-		{ Background = { Color = palette.bg } },
-		{ Text = pill_gap },
+		{ Foreground = { Color = palette.bg } },
+		{ Text = " " },
 	}
 end)
 
@@ -331,17 +252,6 @@ config.keys = {
 	{ key = "j", mods = "LEADER", action = act.ActivatePaneDirection("Down") },
 	{ key = "k", mods = "LEADER", action = act.ActivatePaneDirection("Up") },
 	{ key = "l", mods = "LEADER", action = act.ActivatePaneDirection("Right") },
-
-	-- OPTION + §: Toggle Workspace/Tab Bar View (Instant/Zero-Lag)
-	-- Flips the global boolean and forces a fast UI refresh.
-	{
-		key = "§",
-		mods = "OPT",
-		action = wezterm.action_callback(function(window, pane)
-			wezterm.GLOBAL.show_workspaces = not wezterm.GLOBAL.show_workspaces
-			window:set_left_status("")
-		end),
-	},
 
 	-- OPTION + 0: Close Current Workspace Safely
 	{
@@ -411,26 +321,17 @@ for i = 1, 9 do
 	})
 end
 
--- OPTION + 1-9: Context-Aware Navigation
--- If the UI is showing workspaces, these keys jump to workspaces.
--- If the UI is showing tabs, these keys jump to tabs.
+-- OPTION + 1-9: Switch to workspace by index
 for i = 1, 9 do
+	local idx = i
 	table.insert(config.keys, {
 		key = tostring(i),
 		mods = "OPT",
 		action = wezterm.action_callback(function(window, pane)
-			if wezterm.GLOBAL.show_workspaces then
-				-- Workspaces view is toggled ON: Switch workspaces
-				local workspaces = wezterm.mux.get_workspace_names()
-				table.sort(workspaces)
-				local target_workspace = workspaces[i]
-				if target_workspace then
-					window:perform_action(act.SwitchToWorkspace({ name = target_workspace }), pane)
-				end
-			else
-				-- Default view is ON: Switch tabs
-				window:perform_action(act.ActivateTab(i - 1), pane)
-			end
+			local workspaces = wezterm.mux.get_workspace_names()
+			table.sort(workspaces)
+			local target = workspaces[idx]
+			if target then window:perform_action(act.SwitchToWorkspace({ name = target }), pane) end
 		end),
 	})
 end
