@@ -1,0 +1,23 @@
+(defcfg
+  process-unmapped-keys no
+)
+
+(defsrc
+  fn lctl
+  s a d f e r c v
+)
+
+(deflayer base
+  ;; fn -> lctl, lctl -> fn
+  lctl fn
+
+  ;; s: tap = s, hold = s_layer
+  (tap-hold 200 200 s (layer-while-held s_layer))
+  a d f e r c v
+)
+
+(deflayer s_layer
+  ;; 10 items, matching defsrc order:
+  ;; fn   lctl   s     a      d     f     e        r        c      v
+  fn     lctl   _     RA-2   S-8   S-9   S-RA-8   S-RA-9   RA-8   RA-9
+)
