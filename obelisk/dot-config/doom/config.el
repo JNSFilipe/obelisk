@@ -149,7 +149,7 @@
     :desc "Compile" "M" #'compile
     :desc "Vertical Split" "s" #'evil-window-vsplit
     :desc "Horizontal Split" "S" #'evil-window-split
-    :desc "Undo Tree" "u" #'undo-tree-visualize
+    :desc "Vundo" "u" #'vundo
     :desc "Yanks" :n "y" #'consult-yank-pop
     :desc "Yanks" :v "y" #'consult-yank-replace
     :desc "Switch Project" "p" #'projectile-switch-project))
@@ -228,3 +228,6 @@
 ;;                 ;; In terminal mode, ensure left margin is available
 ;;                 (setq left-margin-width 3)
 ;;                 (set-window-buffer (selected-window) (current-buffer))))))
+
+(use-package! vundo
+  :bind ("C-x u" . vundo))
