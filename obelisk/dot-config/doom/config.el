@@ -232,8 +232,12 @@
 (use-package! vundo
   :bind ("C-x u" . vundo))
 
-;; Flyspell: disable auto-activation, trigger manually via SPC t S
+;; Flyspell: disable auto-activation, toggle manually via SPC - s
 (remove-hook! (text-mode-hook org-mode-hook markdown-mode-hook) #'flyspell-mode)
 (after! flyspell
   (setq flyspell-issue-welcome-flag nil
         flyspell-issue-message-flag nil))
+
+(map! :leader
+  (:prefix ("-" . "toggle")
+   :desc "Flyspell" "s" #'flyspell-mode))
