@@ -12,6 +12,9 @@
 ;; Setting it to 100mb seems to strike a nice balance between GC pauses and performance.
 (setq gc-cons-threshold (* 100 1024 1024))
 
+;; Increase the amount of data Emacs reads from a process (default is 4k)
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
+
 ;; Doom exposes five (optional) variables for controlling fonts in Doom:
 ;;
 ;; - `doom-font' -- the primary font to use
@@ -26,6 +29,8 @@
 ;;
 ;;(setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
 ;;      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+
+(setq doom-font (font-spec :family "Iosevka" :size 14))
 ;;
 ;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
 ;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
@@ -33,9 +38,8 @@
 ;; wasn't installed correctly. Font issues are rarely Doom issues!
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-tokyo-night)
+;; available. Themes in $DOOMDIR/themes are picked up automatically by Doom.
+(setq doom-theme 'doom-oxocarbon)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -44,6 +48,9 @@
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
+
+;; Doom reads this while building Evil's insert-state bindings.
+(setq evil-disable-insert-state-bindings nil)
 
 ;; Set Projectile project roots
 (after! projectile
@@ -107,9 +114,6 @@
   ;; Keep the selection active after shifting with <> (nice QoL)
   (setq evil-keep-visual-state-on-shift t)
 
-  ;; Enable Emacs keybinds in Evil insert mode
-  (setq evil-disable-insert-state-bindings t)
-
   ;; Jump through git hunks
   (map! :n "ç" #'+vc-gutter/next-hunk
         :n "Ç" #'+vc-gutter/previous-hunk)
@@ -167,50 +171,60 @@
 ;; Config custom packages
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
-  :hook (prog-mode . copilot-mode)
+  ;; :hook (prog-mode . copilot-mode) # I decided to not enable it globally, since it is slow to start, I will enable it manually when I need it
   :bind (:map copilot-completion-map
               ("C-l" . 'copilot-accept-completion)))
 
-;; Configure dape for better terminal visibility
-(use-package! dape
+;; (use-package! consult-gh
+;;   :after consult)
+(use-package! consult-gh
+  :after consult
   :config
-  ;; Enable breakpoint global mode
-  (dape-breakpoint-global-mode +1)
+  ;; (require 'consult-gh) is not needed inside :config, use-package handles it!
+  
+  ;; Set your default clone path
+  (setq consult-gh-default-clone-directory "~/Documents/GitHub/"))
 
-  ;; Better terminal compatibility - use text indicators instead of fringe
-  (setq dape-buffer-window-arrangement 'gud
-        dape-inlay-hints t
-        dape-cwd-function #'projectile-project-root)
+;; Configure dape for better terminal visibility
+;; (use-package! dape
+;;   :config
+;;   ;; Enable breakpoint global mode
+;;   (dape-breakpoint-global-mode +1)
 
-  ;; Custom breakpoint display for terminal
-  (defface dape-breakpoint-face
-    '((t :background "red" :foreground "white" :weight bold))
-    "Face for breakpoint indicators in terminal.")
+;;   ;; Better terminal compatibility - use text indicators instead of fringe
+;;   (setq dape-buffer-window-arrangement 'gud
+;;         dape-inlay-hints t
+;;         dape-cwd-function #'projectile-project-root)
 
-  ;; Make breakpoints more visible in terminal
-  (when (not (display-graphic-p))
-    ;; Use text-based breakpoint indicators
-    (setq dape-breakpoint-margin-string "●")
+;;   ;; Custom breakpoint display for terminal
+;;   (defface dape-breakpoint-face
+;;     '((t :background "red" :foreground "white" :weight bold))
+;;     "Face for breakpoint indicators in terminal.")
 
-    ;; Custom function to highlight breakpoint lines
-    (defun dape-highlight-breakpoint-line ()
-      "Highlight the entire line where a breakpoint is set."
-      (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
-        (overlay-put overlay 'face '(:background "#3c1f1e" :extend t))
-        (overlay-put overlay 'before-string
-                     (propertize "● " 'face '(:foreground "red" :weight bold)))))
+;;   ;; Make breakpoints more visible in terminal
+;;   (when (not (display-graphic-p))
+;;     ;; Use text-based breakpoint indicators
+;;     (setq dape-breakpoint-margin-string "●")
 
-    ;; Override the default breakpoint display
-    (advice-add 'dape-breakpoint-place :after
-                (lambda (&rest _)
-                  (when (not (display-graphic-p))
-                    (save-excursion
-                      (dape-highlight-breakpoint-line))))))
+;;     ;; Custom function to highlight breakpoint lines
+;;     (defun dape-highlight-breakpoint-line ()
+;;       "Highlight the entire line where a breakpoint is set."
+;;       (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
+;;         (overlay-put overlay 'face '(:background "#3c1f1e" :extend t))
+;;         (overlay-put overlay 'before-string
+;;                      (propertize "● " 'face '(:foreground "red" :weight bold)))))
 
-  ;; Enhanced breakpoint visibility in terminal
-  (add-hook 'dape-breakpoint-global-mode-hook
-            (lambda ()
-              (when (not (display-graphic-p))
-                ;; In terminal mode, ensure left margin is available
-                (setq left-margin-width 3)
-                (set-window-buffer (selected-window) (current-buffer))))))
+;;     ;; Override the default breakpoint display
+;;     (advice-add 'dape-breakpoint-place :after
+;;                 (lambda (&rest _)
+;;                   (when (not (display-graphic-p))
+;;                     (save-excursion
+;;                       (dape-highlight-breakpoint-line))))))
+
+;;   ;; Enhanced breakpoint visibility in terminal
+;;   (add-hook 'dape-breakpoint-global-mode-hook
+;;             (lambda ()
+;;               (when (not (display-graphic-p))
+;;                 ;; In terminal mode, ensure left margin is available
+;;                 (setq left-margin-width 3)
+;;                 (set-window-buffer (selected-window) (current-buffer))))))
