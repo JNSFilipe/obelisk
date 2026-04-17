@@ -143,7 +143,7 @@
     :desc "Files" "f" #'projectile-find-file
     :desc "Buffers" "b" #'consult-buffer
     :desc "Toggle Comment" "c" #'comment-line
-    :desc "LSP Diagnostics" "D" #'consult-lsp-diagnostics
+    :desc "LSP Diagnostics" "D" #'consult-eglot-symbols
     :desc "Run" "r" #'async-shell-command
     :desc "Make" "m" #'+make/run
     :desc "Compile" "M" #'compile
@@ -185,52 +185,12 @@
   ;; Set your default clone path
   (setq consult-gh-default-clone-directory "~/Documents/GitHub/"))
 
-;; Configure dape for better terminal visibility
-;; (use-package! dape
-;;   :config
-;;   ;; Enable breakpoint global mode
-;;   (dape-breakpoint-global-mode +1)
-
-;;   ;; Better terminal compatibility - use text indicators instead of fringe
-;;   (setq dape-buffer-window-arrangement 'gud
-;;         dape-inlay-hints t
-;;         dape-cwd-function #'projectile-project-root)
-
-;;   ;; Custom breakpoint display for terminal
-;;   (defface dape-breakpoint-face
-;;     '((t :background "red" :foreground "white" :weight bold))
-;;     "Face for breakpoint indicators in terminal.")
-
-;;   ;; Make breakpoints more visible in terminal
-;;   (when (not (display-graphic-p))
-;;     ;; Use text-based breakpoint indicators
-;;     (setq dape-breakpoint-margin-string "●")
-
-;;     ;; Custom function to highlight breakpoint lines
-;;     (defun dape-highlight-breakpoint-line ()
-;;       "Highlight the entire line where a breakpoint is set."
-;;       (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
-;;         (overlay-put overlay 'face '(:background "#3c1f1e" :extend t))
-;;         (overlay-put overlay 'before-string
-;;                      (propertize "● " 'face '(:foreground "red" :weight bold)))))
-
-;;     ;; Override the default breakpoint display
-;;     (advice-add 'dape-breakpoint-place :after
-;;                 (lambda (&rest _)
-;;                   (when (not (display-graphic-p))
-;;                     (save-excursion
-;;                       (dape-highlight-breakpoint-line))))))
-
-;;   ;; Enhanced breakpoint visibility in terminal
-;;   (add-hook 'dape-breakpoint-global-mode-hook
-;;             (lambda ()
-;;               (when (not (display-graphic-p))
-;;                 ;; In terminal mode, ensure left margin is available
-;;                 (setq left-margin-width 3)
-;;                 (set-window-buffer (selected-window) (current-buffer))))))
 
 (use-package! vundo
   :bind ("C-x u" . vundo))
+
+;; Native smooth scrolling, no package needed
+(pixel-scroll-precision-mode 1)
 
 ;; Flyspell: disable auto-activation, toggle manually via SPC - s
 (remove-hook! (text-mode-hook org-mode-hook markdown-mode-hook) #'flyspell-mode)
