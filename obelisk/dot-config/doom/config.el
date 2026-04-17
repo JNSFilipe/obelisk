@@ -189,6 +189,19 @@
 (use-package! vundo
   :bind ("C-x u" . vundo))
 
+(after! evil-mc
+  (map! :nv "gzz" #'+multiple-cursors/evil-mc-toggle-cursor-here
+        :nv "gzd" #'evil-mc-make-and-goto-next-match
+        :nv "gzD" #'evil-mc-make-and-goto-prev-match
+        :nv "gzm" #'evil-mc-make-all-cursors
+        :nv "gzu" #'evil-mc-undo-all-cursors
+        :v  "gzA" #'evil-mc-make-cursor-in-visual-selection-end))
+
+(after! evil-multiedit
+  (map! :nv "M-d" #'evil-multiedit-match-and-next
+        :nv "M-D" #'evil-multiedit-match-and-prev
+        :v  "R"   #'evil-multiedit-match-all))
+
 ;; Native smooth scrolling, no package needed
 (pixel-scroll-precision-mode 1)
 
