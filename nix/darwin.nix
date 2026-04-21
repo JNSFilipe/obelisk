@@ -36,8 +36,8 @@
   system.defaults = {
     dock = {
       autohide                  = true;
-      show-recents              = false;
-      minimize-to-application   = true;
+      show-recents              = true;
+      minimize-to-application   = false;
     };
     NSGlobalDomain = {
       AppleInterfaceStyle       = "Dark";
