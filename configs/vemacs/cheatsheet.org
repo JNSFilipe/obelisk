@@ -1,0 +1,96 @@
+#+TITLE: vvmacs Keybindings Cheatsheet
+#+STARTUP: showall
+
+* Essential Emacs
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-x C-f | find-file              | Open a file or directory             |
+| C-x b   | persp-switch-to-buffer*| Switch buffer (project isolated)     |
+| C-x k   | kill-buffer            | Close current buffer                 |
+| C-x s   | save-some-buffers      | Save all modified buffers            |
+| C-x C-s | save-buffer            | Save current buffer                  |
+| C-x 0   | delete-window          | Close current window                 |
+| C-x 1   | delete-other-windows   | Close all other windows              |
+| C-x 2   | split-window-below     | Split window horizontally            |
+| C-x 3   | split-window-right     | Split window vertically              |
+| C-x o   | other-window           | Switch focus to other window         |
+| C-g     | keyboard-quit          | Cancel current command               |
+| M-x     | execute-extended-cmd   | Run command by name                  |
+
+* General / Navigation
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-SPC   | set-mark-command       | Set the mark (selection)             |
+| M-SPC   | set-mark-command       | Alternative for setting mark         |
+| C-m     | newline                | Insert a newline (Return)            |
+| C-l     | mark-current-line      | Select the entire current line       |
+| M-m     | mark-word-at-point     | Select the word at point             |
+| C-c C-c | comment-line           | Toggle comment on line or region     |
+| C-c C-m | compile                | Run compilation command              |
+| C-x u   | vundo                  | Visual undo tree                     |
+| C-x j   | vjump-visualize        | Visual jump tree                     |
+| C-c g   | magit-status           | Open Magit status                    |
+| C-c t   | ghostel                | Open Ghostel terminal                |
+
+* Avy (Jump Navigation)
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| M-a c   | avy-goto-char-timer    | Jump to char (with timer)            |
+| M-a a   | avy-goto-word-0        | Jump to any word (no char prompt)    |
+| M-a l   | avy-goto-line          | Jump to line                         |
+| M-a w   | avy-goto-word-1        | Jump to word                         |
+
+* God Mode (Modal Editing)
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| ESC     | god-local-mode (1)     | Enter God Mode                       |
+| i       | god-local-mode         | Exit God Mode (Insert mode)          |
+| .       | repeat                 | Repeat last command                  |
+| [       | backward-paragraph     | Move up one paragraph                |
+| ]       | forward-paragraph      | Move down one paragraph              |
+| ESC     | (during isearch)       | Activate God Mode in search          |
+| C-x C-1 | delete-other-windows   | Close other windows (modal)          |
+| C-x C-2 | split-window-below     | Split window (modal)                 |
+| C-x C-3 | split-window-right     | Split window (modal)                 |
+| C-x C-0 | delete-window          | Close window (modal)                 |
+
+* Projectile (Project Management)
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-c C-f | projectile-find-file   | Find file in project                 |
+| C-c p p | proj-persp-switch-proj | Switch project & perspective         |
+| C-c p f | projectile-find-file   | Find file in project                 |
+| C-c p s g | projectile-grep      | Grep in project                      |
+
+* Perspectives (Workspaces)
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-x x x | persp-switch           | Switch perspective                   |
+| C-x x k | persp-kill             | Kill current perspective             |
+| C-x b   | persp-switch-to-buffer*| Switch buffer (project isolated)     |
+
+* Multiple Cursors
+| Key         | Command                | Description                          |
+|-------------+------------------------+--------------------------------------|
+| C-.         | mc/mark-next-like-this | Mark next occurrence                 |
+| C-,         | mc/mark-prev-like-this | Mark previous occurrence             |
+| C-c C-.     | mc/mark-all-like-this  | Mark all occurrences                 |
+| C-S-c C-S-c | mc/edit-lines          | Edit all lines in region             |
+
+* AI / Code Interface
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-c a i | ai-code-interface-task | Run AI task                          |
+| C-c a e | ai-code-interface-expl | Explain code                         |
+| C-c a c | ai-code-interface-chat | Chat with AI                         |
+
+* Org Mode
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| C-c o a | org-agenda             | Show Org agenda                      |
+| C-c o c | org-capture            | New capture entry                    |
+| C-c o l | org-store-link         | Store link to current location       |
+| C-c n f | org-roam-node-find     | Find/Create Roam node                |
+| C-c n i | org-roam-node-insert   | Insert link to Roam node             |
+| C-c n l | org-roam-buffer-toggle | Toggle Roam sidebar                  |
+| C-c /   | deft                   | Fast note search (Deft)              |

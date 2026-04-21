@@ -23,6 +23,23 @@ configs/karabiner/automatic_backups
 configs/nvim/.nvimlog
 configs/nvim/lazy-lock.json
 
+# Vanilla Emacs auto-generated state
+configs/vemacs/eln-cache/
+configs/vemacs/elpa/
+configs/vemacs/history
+configs/vemacs/init.elc
+configs/vemacs/org-roam.db
+configs/vemacs/places
+configs/vemacs/projectile-bookmarks.eld
+configs/vemacs/projects
+configs/vemacs/recentf
+configs/vemacs/tramp
+
+# Zed auto-generated state
+configs/zed/keymap_backup.json
+configs/zed/settings_backup.json
+configs/zed/prompts/
+
 # Exceptions — track these specific files even if parent is ignored
 !configs/vemacs/init.el
 !configs/vemacs/oblsk.el
