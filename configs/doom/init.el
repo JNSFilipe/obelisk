@@ -22,23 +22,23 @@
 
        :completion
        ;;company           ; the ultimate code completion backend
-       ;; (corfu +orderless)  ; complete with cap(f), cape and a flying feather!
+       ;;(corfu +orderless)  ; complete with cap(f), cape and a flying feather!
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
-       ;; ivy               ; a search engine for love and life
+       ;;ivy               ; a search engine for love and life
        vertico           ; the search engine of the future
 
        :ui
        ;;deft              ; notational velocity for Emacs
        doom              ; what makes DOOM look the way it does
-       doom-dashboard    ; a nifty splash screen for Emacs
-       ;;doom-quit         ; DOOM quit-message prompts when you quit Emacs
+       ;;doom-dashboard    ; a nifty splash screen for Emacs
+       doom-quit         ; DOOM quit-message prompts when you quit Emacs
        (emoji +unicode)  ; 🙂
        hl-todo           ; highlight TODO/FIXME/NOTE/DEPRECATED/HACK/REVIEW
        ;;indent-guides     ; highlighted indent columns
        ligatures         ; ligatures and symbols to make your code pretty again
        ;;minimap           ; show a map of the code on the side
-       modeline          ; snazzy, Atom-inspired modeline, plus API
+       ;;modeline          ; snazzy, Atom-inspired modeline, plus API
        ;;nav-flash         ; blink cursor line after big motions
        ;;neotree           ; a project drawer, like NERDTree for vim
        ophints           ; highlight the region an operation acts on
@@ -56,7 +56,7 @@
        :editor
        (evil +everywhere); come to the dark side, we have cookies
        file-templates    ; auto-snippets for empty files
-       ;; fold              ; (nigh) universal code folding
+       ;;fold              ; (nigh) universal code folding
        ;;(format +onsave)  ; automated prettiness
        ;;god               ; run Emacs commands without modifier keys
        ;;lispy             ; vim for lisp, for people who don't like vim
@@ -69,7 +69,7 @@
 
        :emacs
        dired             ; making dired pretty [functional]
-       ;; electric          ; smarter, keyword-based electric-indent
+       ;;electric          ; smarter, keyword-based electric-indent
        ;;eww               ; the internet is gross
        ;;ibuffer           ; interactive buffer management
        ;;undo              ; persistent, smarter undo for your inevitable mistakes
@@ -153,8 +153,8 @@
        ;;markdown          ; writing docs for people to ignore
        ;;nim               ; python + lisp at the speed of c
        ;;nix               ; I hereby declare "nix geht mehr!"
-       ocaml             ; an objective camel
-       ;; org               ; organize your plain life in plain text
+       ;;ocaml             ; an objective camel
+       org               ; organize your plain life in plain text
        ;;php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;graphviz          ; diagrams for confusing yourself even more

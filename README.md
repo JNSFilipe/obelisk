@@ -1,195 +1,134 @@
-# Obelisk Dotfiles
+# Obelisk
 
-A comprehensive macOS dotfiles configuration featuring modern development tools, editors, and terminal setup optimized for productivity.
+Declarative macOS system configuration.
+[nix-darwin](https://github.com/nix-darwin/nix-darwin) manages the system,
+[home-manager](https://github.com/nix-community/home-manager) manages the user environment,
+and [homebrew](https://brew.sh) (via nix-darwin) handles GUI apps.
 
-## =€ Quick Start
-
-### Prerequisites
-
-- macOS (primary target platform)
-- Git
-- Homebrew (will be used for package installation)
-
-### Installation
-
-**Important:** This repository uses Git submodules. Always clone with the `--recurse-submodules` flag:
+## Bootstrap
 
 ```bash
-git clone --recurse-submodules https://github.com/jfilipe/obelisk.git ~/.dotfiles
-cd ~/.dotfiles
+# Clone (Doom Emacs is a submodule)
+git clone --recurse-submodules https://github.com/jfilipe/obelisk.git
+cd obelisk
+
+# Install Nix (Determinate Systems installer)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# First-time activation
+make bootstrap
+
+# Install tmux plugins
+make tpm-install    # then inside tmux: Ctrl-z + I
 ```
 
-If you already cloned without submodules, initialize them:
+## Usage
+
+```
+make help
+```
+
+```
+  bootstrap       First-time nix-darwin install (run after installing nix)
+  brew-orphans    List homebrew formulae not declared in homebrew.nix
+  build           Build without activating (dry run)
+  check           Evaluate the flake and run checks (no build)
+  diff            Show what changed between current and built config
+  doom-update     Pull latest Doom Emacs
+  gc              Garbage-collect old nix store paths (keeps 7 days)
+  gc-all          Garbage-collect ALL unused nix store paths
+  generations     List all system generations
+  packages        List all nix-managed packages in the current profile
+  rollback        Roll back to the previous generation
+  store-size      Show nix store disk usage
+  switch          Build and activate the system configuration
+  tpm-install     Install tmux plugin manager
+  uninstall-nix   Completely remove nix from the system
+  update          Update all flake inputs (nixpkgs, home-manager, nix-darwin)
+  upgrade         Update inputs and activate in one step
+```
+
+Common workflow:
 
 ```bash
-git submodule update --init --recursive
+# Edit a nix file, then apply
+make switch
+
+# Update everything (nixpkgs, home-manager, nix-darwin) and activate
+make upgrade
+
+# Something broke? Roll back instantly
+make rollback
+
+# Reclaim disk space
+make gc
 ```
 
-### Setting Up the Environment
+## Structure
 
-1. **Install Homebrew packages:**
-   ```bash
-   brew bundle --file=obelisk/dot-config/Brewfile
-   ```
+```
+flake.nix                  Entry point
+nix/
+  darwin.nix               System: nix settings, macOS defaults, users
+  homebrew.nix             GUI casks + CLI exceptions not in nixpkgs
+  home.nix                 User: zsh, programs, config symlinks
+  packages.nix             CLI packages from nixpkgs
+configs/
+  tmux.conf                tmux (prefix: Ctrl-z)
+  doom/                    Doom Emacs user config
+  emacs/                   Doom Emacs install (git submodule)
+  vemacs/                  Vanilla Emacs config
+  nvim/                    Neovim
+  helix/                   Helix
+  zed/                     Zed
+  ghostty/                 Ghostty terminal
+  kitty/                   Kitty terminal
+  wezterm/                 WezTerm terminal
+  aerospace/               AeroSpace window tiling
+  karabiner/               Key remapping
+  kanata/                  Keyboard remapper
+  atuin/                   Shell history
+  lazygit/                 Git TUI
+  scripts/                 Shell scripts (zzz, ttt, fzflauncher, ...)
+  wallpapers/              Desktop backgrounds
+  git/ignore               Global gitignore
+```
 
-2. **Deploy configurations using GNU Stow:**
-   ```bash
-   cd obelisk
-   stow dot-config dot-tmux.conf dot-zshrc
-   ```
+## Where packages live
 
-## =Á Configuration Overview
+| What | Where | Why |
+|------|-------|-----|
+| CLI tools | `nix/packages.nix` | Reproducible, pinned via flake.lock |
+| GUI apps | `nix/homebrew.nix` casks | macOS .app bundles, no nix equivalent |
+| CLI not in nixpkgs | `nix/homebrew.nix` brews | `doxx`, `codex-acp`, `ty` |
+| Shell config | `nix/home.nix` `programs.zsh` | Declarative, managed by home-manager |
+| App configs | `configs/` | Symlinked live into `~/.config/` |
 
-### Core Configurations
+Editing files under `configs/` takes effect immediately (live symlinks).
+Editing files under `nix/` requires `make switch` to apply.
 
-- **Shell**: Zsh with modern enhancements
-  - History optimization (10M entries)
-  - Auto tmux session management
-  - Fast package management with `znap`
-  - Fish-like autocompletion
-  - fzf integration
+## tmux
 
-- **Terminal Multiplexer**: tmux
-  - Custom key bindings (prefix: `Ctrl-z`)
-  - Vim-like pane navigation
-  - Catppuccin theme with Oxocarbon color scheme
-  - Smart editor integration (Vim/Emacs/Neovim)
+| Key | Action |
+|-----|--------|
+| `Ctrl-z` | Prefix (replaces Ctrl-b) |
+| `Ctrl-h/j/k/l` | Pane navigation (passes through to vim/emacs/fzf) |
+| `prefix + s` / `S` | Split horizontal / vertical |
+| `prefix + Space` | Sessionizer (project picker) |
+| `prefix + Ctrl-z` | Session switcher |
+| `prefix + Tab` | Last window |
+| `prefix + r` | Reload config |
 
-- **Package Management**: Homebrew
-  - Comprehensive package list in `Brewfile`
-  - Development tools, editors, fonts, and utilities
+## Adding a new tool
 
-### Editors & Development
+1. **CLI tool in nixpkgs**: add to `nix/packages.nix`, run `make switch`
+2. **GUI app**: add cask name to `nix/homebrew.nix`, run `make switch`
+3. **Config file**: add to `configs/`, add `home.file` entry in `nix/home.nix`, run `make switch`
 
-- **Doom Emacs**: Modern Emacs configuration (submodule)
-- **Neovim**: Advanced Vim configuration
-- **Zed**: Lightning-fast code editor
-- **Visual Studio Code**: Cross-platform development
-
-### Terminal Applications
-
-- **Ghostty**: Modern terminal emulator
-- **tmux**: Terminal multiplexer with plugins
-- **Starship**: Cross-shell prompt
-- **fzf**: Fuzzy finder
-- **ripgrep**: Fast text search
-- **lazygit**: Git TUI
-
-### Utilities & Scripts
-
-Located in `dot-config/scripts/`:
-- `zzz`: tmux sessionizer
-- `ttt`: secondary tmux tool
-- `fzflauncher`: fzf-based application launcher
-- `preview`: File preview utility
-- Various connection and utility scripts
-
-## =' tmux Setup
-
-### Installing TPM (Tmux Plugin Manager)
-
-The tmux configuration uses several plugins managed by TPM. Install it:
+## Uninstall
 
 ```bash
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+make uninstall-nix
 ```
 
-### Installing tmux Plugins
-
-After installing TPM, launch tmux and install plugins:
-
-```bash
-tmux
-# Inside tmux, press: Ctrl-z + I (capital i)
-```
-
-### Key tmux Plugins
-
-- **tpm**: Plugin manager
-- **tmux-navigate**: Smart pane navigation
-- **tmux-yank**: System clipboard integration
-- **catppuccin/tmux**: Beautiful theme
-
-### tmux Key Bindings
-
-- **Prefix**: `Ctrl-z` (instead of default `Ctrl-b`)
-- **Pane Navigation**: `Ctrl-h/j/k/l` (Vim-style)
-- **Split Panes**: `prefix + s` (horizontal), `prefix + S` (vertical)
-- **Sessionizer**: `prefix + Space` (launches custom script)
-- **Reload Config**: `prefix + r`
-
-## =æ Package Management
-
-### Homebrew Integration
-
-Install all packages at once:
-
-```bash
-brew bundle --file=obelisk/dot-config/Brewfile
-```
-
-Key categories:
-- **Terminal Tools**: tmux, fzf, ripgrep, starship
-- **Editors**: Emacs, Neovim, Zed, VS Code
-- **Languages**: Python, Rust, Go, Node.js
-- **Fonts**: Nerd Fonts collection
-- **Development**: Git tools, LaTeX, various SDKs
-
-## = Git Submodules
-
-### Updating Doom Emacs
-
-The Doom Emacs configuration is included as a Git submodule. To update it:
-
-```bash
-git submodule update --remote
-```
-
-This will pull the latest changes from the upstream Doom Emacs repository.
-
-### Working with Submodules
-
-- **Check submodule status**: `git submodule status`
-- **Update all submodules**: `git submodule update --remote --recursive`
-- **Pull changes including submodules**: `git pull --recurse-submodules`
-
-## <¨ Theming
-
-The configuration uses a consistent Oxocarbon-inspired color scheme across:
-- tmux status bar
-- Terminal applications
-- Editor themes (where available)
-
-## =à Customization
-
-### Adding New Configurations
-
-1. Place new config files in `obelisk/dot-config/`
-2. Use the `dot-` prefix for dotfiles (handled by Stow)
-3. Update the Brewfile for new packages
-4. Test with `stow --dry-run` before applying
-
-### Modifying Existing Configs
-
-All configurations are organized by application in `dot-config/`. Edit the relevant files and re-run `stow` to apply changes.
-
-## = Troubleshooting
-
-### Common Issues
-
-1. **Submodules not found**: Ensure you cloned with `--recurse-submodules`
-2. **tmux plugins not working**: Install TPM and run `prefix + I`
-3. **Zsh completions slow**: Rebuild completions with `rm ~/.zcompdump && compinit`
-4. **Stow conflicts**: Remove existing dotfiles or use `stow --adopt`
-
-### Dependencies
-
-Some configurations assume specific directory structures:
-- Scripts expect `~/.config/scripts/` to be in PATH
-- tmux sessionizer scripts require certain project directory layouts
-- Emacs configuration may need initial setup after first launch
-
-## =Ä License
-
-This configuration is provided as-is for personal use and customization.
-
+Removes nix, the daemon, and all store paths. Homebrew and GUI apps are untouched.

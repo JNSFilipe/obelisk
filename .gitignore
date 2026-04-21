@@ -1,53 +1,32 @@
-# macOS stuff
+# macOS
 *.DS_Store
 
-# Emacs stuff
+# Emacs
 *.~undo-tree~
 
-# Files that I don't want to track
+# Nix build output
+result
+
+# Secrets / keys
 *.pub
-node_modules
-obelisk/dot-config/gh/*
-obelisk/dot-config/zed/*
-obelisk/dot-config/htop/*
-obelisk/dot-hammerspoon/*
-obelisk/dot-config/pudb/*
-obelisk/dot-config/vemacs/*
-obelisk/dot-config/marimo/*
-obelisk/dot-config/zellij/*
-obelisk/dot-config/portal/*
-obelisk/dot-config/gtk-2.0/*
-obelisk/dot-config/raycast/*
-obelisk/dot-config/lazygit/*
-obelisk/dot-config/joyride/*
-obelisk/dot-config/psppirerc
-/obelisk/dot-config/containers
-obelisk/dot-config/configstore
-obelisk/dot-config/copilot-chat
-obelisk/dot-config/nvim/.nvimlog
-obelisk/dot-config/github-copilot/*
-obelisk/dot-config/nvim/lazy-lock.json
-obelisk/dot-config/karabiner/automatic_backups
+ccounter_mercado_rsa
+camera-counter-0-mercado
 
-# Exceptions
-!obelisk/dot-config/vemacs/init.el
-!obelisk/dot-config/vemacs/oblsk.el
-!obelisk/dot-config/vemacs/early-init.el
-!obelisk/dot-config/vemacs/*-framework.el
-!obelisk/dot-config/zed/keymap.json
-!obelisk/dot-config/zed/settings.json
-
-# AI/Aider stuff
+# AI / editor state
 .aider*
 /**/.copilot
 /**/.claude
-obelisk/dot-config/emacs
-ccounter_mercado_rsa
-camera-counter-0-mercado
-/obelisk/dot-config/cagent
-/obelisk/dot-config/cmux
-obelisk/dot-config/emacs
-/obelisk/dot-config/gh-dash
-/obelisk/dot-config/git
-/obelisk/dot-config/superpowers
-obelisk/dot-config/emacs
+node_modules
+
+# Config dirs with auto-generated content (not tracked)
+configs/karabiner/automatic_backups
+configs/nvim/.nvimlog
+configs/nvim/lazy-lock.json
+
+# Exceptions — track these specific files even if parent is ignored
+!configs/vemacs/init.el
+!configs/vemacs/oblsk.el
+!configs/vemacs/early-init.el
+!configs/vemacs/*-framework.el
+!configs/zed/keymap.json
+!configs/zed/settings.json
