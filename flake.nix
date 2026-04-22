@@ -26,8 +26,9 @@
           home-manager.users.jfilipe = import ./nix/home.nix;
           home-manager.extraSpecialArgs = {
             inherit inputs;
-            # Absolute path to this flake, used for mkOutOfStoreSymlink.
-            # Keep this in sync with wherever the repo lives on disk.
+            # On-disk path to this repo, needed for mkOutOfStoreSymlink
+            # (live symlinks that don't require rebuild on edit).
+            # Must match wherever the repo is cloned.
             flakeRoot = "/Users/jfilipe/Documents/GitHub/obelisk";
           };
         }

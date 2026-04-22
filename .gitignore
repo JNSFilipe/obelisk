@@ -7,6 +7,9 @@
 # Nix build output
 result
 
+# home-manager backup files
+*.bak-before-nix
+
 # Secrets / keys
 *.pub
 ccounter_mercado_rsa

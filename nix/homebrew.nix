@@ -14,7 +14,7 @@
       upgrade     = true;
       # "zap" removes anything not listed below; "cleanup" removes only
       # unlisted formulae/casks. Use "cleanup" while transitioning.
-      cleanup     = "none"; # switch to "uninstall" once fully migrated
+      cleanup     = "uninstall";
     };
 
     # ── Taps ─────────────────────────────────────────────────────────────────

@@ -1,9 +1,6 @@
 { pkgs, config, flakeRoot, ... }:
 
 let
-  # mkOutOfStoreSymlink creates a symlink to a live path rather than copying
-  # into the nix store.  Edits to the source files take effect immediately
-  # without a rebuild.  Requires the flakeRoot variable passed via extraSpecialArgs.
   link = path: config.lib.file.mkOutOfStoreSymlink "${flakeRoot}/configs/${path}";
 in
 {
@@ -19,23 +16,18 @@ in
   programs.home-manager.enable = true;
 
   # ── Config file symlinks ─────────────────────────────────────────────────────
-  # All configs are symlinked from the live repo so edits are reflected instantly.
+  # Configs managed by programs.* modules are NOT listed here.
+  # Only configs without a native home-manager module are symlinked.
 
   home.file = {
-    # ── Shell ──────────────────────────────────────────────────────────────
-    # .zshrc is managed by programs.zsh below; no entry needed here.
-
     # ── Editors ────────────────────────────────────────────────────────────
     ".config/doom".source       = link "doom";
     ".config/nvim".source       = link "nvim";
-    ".config/helix".source      = link "helix";
     ".config/emacs".source      = link "emacs";
     ".config/vemacs".source     = link "vemacs";
     ".config/zed".source        = link "zed";
 
     # ── Terminals ──────────────────────────────────────────────────────────
-    ".config/ghostty".source    = link "ghostty";
-    ".config/kitty".source      = link "kitty";
     ".config/wezterm".source    = link "wezterm";
 
     # ── Window / key management ────────────────────────────────────────────
@@ -43,16 +35,10 @@ in
     ".config/kanata".source     = link "kanata";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
-    ".config/lazygit".source    = link "lazygit";
-    ".config/atuin".source      = link "atuin";
-    # ── Scripts (keep executable via stow path; home-manager just links dir)
     ".config/scripts".source    = link "scripts";
 
     # ── Desktop ────────────────────────────────────────────────────────────
     ".config/wallpapers".source = link "wallpapers";
-
-    # ── Git global ignore ──────────────────────────────────────────────────
-    ".config/git/ignore".source = link "git/ignore";
   };
 
   # ── Zsh ─────────────────────────────────────────────────────────────────────
@@ -78,19 +64,11 @@ in
       setopt hist_save_no_dups
       setopt hist_ignore_dups
 
-      # ── PATH ─────────────────────────────────────────────────────────────
+      # ── PATH (only paths not already provided by nix or macOS) ──────────
       export PATH="$PATH:$HOME/.local/bin"
       export PATH="$PATH:$HOME/.cargo/bin"
       export PATH="$PATH:$HOME/.config/scripts"
-      export PATH="$PATH:/usr/local/bin"
-      export PATH="$PATH:/opt/homebrew/bin"
-      export PATH="$PATH:/opt/homebrew/sbin"
-      export PATH="$PATH:/System/Cryptexes/App/usr/bin"
-      export PATH="$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
-      export PATH="$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
-      export PATH="$PATH:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
       export PATH="$PATH:/Library/TeX/texbin"
-      export PATH="$PATH:/Applications/microchip/xc8/v3.10/bin"
 
       # ── Completions ────────────────────────────────────────────────────────
       autoload -Uz compinit
@@ -113,21 +91,7 @@ in
       [[ -n "$TMUX" && -n "$ATUIN_SESSION" ]] && \
         tmux setenv ATUIN_SESSION "$ATUIN_SESSION"
 
-      # ── OCaml (opam) ──────────────────────────────────────────────────────
-      [[ ! -r ~/.opam/opam-init/init.zsh ]] || \
-        source ~/.opam/opam-init/init.zsh > /dev/null 2>&1
-
       # ── Functions ─────────────────────────────────────────────────────────
-
-      # yazi: change cwd on exit
-      y() {
-        local tmp cwd
-        tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
-        command yazi "$@" --cwd-file="$tmp"
-        IFS= read -r -d "" cwd < "$tmp"
-        [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
-        rm -f -- "$tmp"
-      }
 
       # activate: find and source a Python venv in the current directory
       activate() {
@@ -230,8 +194,7 @@ in
       lsg  = "ls --color=auto -d -- *(/N)";
       lag  = "ls --color=auto -d -A -- *(/N) .*(/N)";
       llg  = "ls --color=auto -d -al -- *(/N) .*(/N)";
-      # Navigation
-      cd   = "z";
+      # Navigation (zoxide provides 'z'; cd alias not needed with enableZshIntegration)
       # Editors
       vi   = "nvim";
       vim  = "nvim";
@@ -259,6 +222,21 @@ in
   programs.atuin = {
     enable               = true;
     enableZshIntegration = true;
+    settings = {
+      search_mode                      = "daemon-fuzzy";
+      filter_mode                      = "global";
+      filter_mode_shell_up_key_binding = "global";
+      search_mode_shell_up_key_binding = "fuzzy";
+      style                            = "compact";
+      ctrl_n_shortcuts                 = true;
+      enter_accept                     = true;
+      sync.records                     = true;
+      daemon = {
+        enabled   = true;
+        autostart = true;
+      };
+      ai.enabled = true;
+    };
   };
 
   # ── Zoxide (smart cd) ────────────────────────────────────────────────────────
@@ -325,12 +303,215 @@ in
     extraConfig = builtins.readFile ../configs/tmux.conf;
   };
 
+  # ── Ghostty ──────────────────────────────────────────────────────────────────
+
+  programs.ghostty = {
+    enable          = true;
+    package         = null; # installed via homebrew cask
+    enableZshIntegration = true;
+    settings = {
+      theme                    = "Carbonfox";
+      background-opacity       = 1.0;
+      macos-option-as-alt      = "left";
+      window-padding-x         = "2,2";
+      window-padding-y         = "2,2";
+      shell-integration-features = "no-cursor";
+      cursor-style             = "block";
+      cursor-style-blink       = false;
+      macos-titlebar-style     = "hidden";
+      bold-is-bright           = true;
+      font-family              = "Iosevka";
+      font-size                = 13;
+      keybind                  = "unconsumed:ctrl+ç=reload_config";
+    };
+  };
+
+  # ── Kitty ───────────────────────────────────────────────────────────────────
+
+  programs.kitty = {
+    enable = true;
+    font = {
+      name = "Iosevka";
+      size = 13;
+    };
+    settings = {
+      bold_font                        = "Iosevka Bold";
+      italic_font                      = "Iosevka Italic";
+      bold_italic_font                 = "Iosevka Bold Italic";
+      disable_ligatures                = "never";
+      text_composition_strategy        = "legacy";
+      cursor_shape                     = "block";
+      cursor_blink_interval            = 0;
+      scrollback_lines                 = 20000;
+      scrollback_fill_enlarged_window  = "yes";
+      wheel_scroll_min_lines           = 2;
+      detect_urls                      = "yes";
+      copy_on_select                   = "clipboard";
+      strip_trailing_spaces            = "smart";
+      focus_follows_mouse              = "yes";
+      hide_window_decorations          = "titlebar-only";
+      enable_audio_bell                = "no";
+      background_opacity               = 1;
+      background_blur                  = 0;
+      shell                            = "zsh";
+      editor                           = "em";
+      clipboard_control                = "write-clipboard write-primary read-clipboard-ask read-primary-ask";
+      clipboard_max_size               = 512;
+      allow_hyperlinks                 = "yes";
+      shell_integration                = "enabled no-cursor";
+      allow_cloning                    = "ask";
+      term                             = "xterm-kitty";
+      macos_option_as_alt              = "yes";
+    };
+    keybindings = {
+      "cmd+q" = "quit";
+    };
+    extraConfig = builtins.readFile ../configs/kitty/tokyo-night.conf;
+  };
+
+  # ── Helix ───────────────────────────────────────────────────────────────────
+
+  programs.helix = {
+    enable = true;
+    settings = {
+      theme = "carbonfox";
+      editor = {
+        default-yank-register = "+";
+        line-number           = "relative";
+        mouse                 = true;
+        cursor-shape = {
+          insert = "bar";
+          normal = "block";
+          select = "block";
+        };
+        file-picker.hidden = false;
+      };
+      keys.normal = {
+        w     = "@miw";
+        "C-q" = "wclose";
+        space = {
+          F       = "no_op";
+          E       = "no_op";
+          e       = "no_op";
+          P       = "no_op";
+          R       = "no_op";
+          C       = "no_op";
+          D       = "no_op";
+          Y       = "no_op";
+          y       = "no_op";
+          "?"     = "no_op";
+          "/"     = "no_op";
+          "A-c"   = "no_op";
+          s       = ":vsplit";
+          S       = ":hsplit";
+          i       = "symbol_picker";
+          I       = "workspace_symbol_picker";
+          p       = "global_search";
+          d       = "workspace_diagnostics_picker";
+          w       = ":w";
+          o       = [
+            ":sh rm -f /tmp/unique-file"
+            ":insert-output yazi \"%{buffer_name}\" --chooser-file=/tmp/unique-file"
+            ":sh printf \"\\x1b[?1049h\\x1b[?2004h\" > /dev/tty"
+            ":open %sh{cat /tmp/unique-file}"
+            ":redraw"
+          ];
+          "space" = "command_palette";
+        };
+        "C-x" = {
+          "C-f" = "file_explorer";
+          "C-b" = "buffer_picker";
+          "C-s" = ":w";
+          "C-c" = ":q";
+          k     = ":bc";
+          u     = "undo";
+          h     = "select_all";
+        };
+      };
+      keys.insert = {
+        "C-q"   = "wclose";
+        "C-g"   = "normal_mode";
+        j       = { j = "normal_mode"; };
+        "C-a"   = "goto_line_start";
+        "C-e"   = "goto_line_end";
+        "C-f"   = "move_char_right";
+        "C-b"   = "move_char_left";
+        "C-n"   = "move_line_down";
+        "C-p"   = "move_line_up";
+        "A-f"   = "move_next_word_start";
+        "A-b"   = "move_prev_word_start";
+        "A-v"   = "page_up";
+        "C-v"   = "page_down";
+        "A-<"   = "goto_file_start";
+        "A->"   = "goto_file_end";
+        "C-l"   = "align_view_center";
+        "2"     = "hsplit";
+        "3"     = "vsplit";
+        "0"     = "wclose";
+        "1"     = "wonly";
+        "C-space" = "select_mode";
+        "S-C-f" = "extend_char_right";
+        "S-C-b" = "extend_char_left";
+        "S-C-n" = "extend_line_down";
+        "S-C-p" = "extend_line_up";
+        "S-A-f" = "extend_next_word_start";
+        "S-A-b" = "extend_prev_word_start";
+        "C-d"   = "delete_char_forward";
+        "C-h"   = "delete_char_backward";
+        "A-d"   = "delete_word_forward";
+        "C-w"   = "delete_word_backward";
+        "A-backspace" = "delete_word_backward";
+        "C-k"   = "kill_to_line_end";
+        "C-y"   = "paste_before";
+        "C-u"   = "kill_to_line_start";
+        "C-o"   = "open_below";
+        "C-j"   = "insert_newline";
+        "C-/"   = "undo";
+        "C-_"   = "undo";
+        "C-s"   = "search";
+        "C-x" = {
+          "C-f" = "file_explorer";
+          "C-b" = "buffer_picker";
+          "C-s" = ":w";
+          "C-c" = ":q";
+          k     = ":bc";
+          u     = "undo";
+          h     = "select_all";
+        };
+      };
+    };
+  };
+
+  # ── Lazygit ─────────────────────────────────────────────────────────────────
+
+  programs.lazygit = {
+    enable = true;
+  };
+
+  # ── Yazi (file manager) ─────────────────────────────────────────────────────
+
+  programs.yazi = {
+    enable               = true;
+    enableZshIntegration = true;
+    shellWrapperName     = "y";
+  };
+
+  # ── Opam (OCaml) ────────────────────────────────────────────────────────────
+
+  programs.opam = {
+    enable               = true;
+    enableZshIntegration = true;
+  };
+
   # ── Git ──────────────────────────────────────────────────────────────────────
 
   programs.git = {
     enable     = true;
     lfs.enable = true;
     signing.format = null; # silence stateVersion warning
+    ignores = [
+      "**/.claude/settings.local.json"
+    ];
     settings = {
       user.name       = "JNSFilipe";
       user.email      = "jose.filipe@ieee.org";

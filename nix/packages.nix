@@ -16,7 +16,6 @@
     fd
     ripgrep
     fzf
-    stow               # still needed during transition to nix-managed configs
     aspell
     aspellDicts.en
     aspellDicts.en-computers
