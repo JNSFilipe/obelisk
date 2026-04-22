@@ -53,11 +53,6 @@ brew-orphans: ## List homebrew formulae not declared in homebrew.nix
 doom-update: ## Pull latest Doom Emacs
 	git submodule update --remote configs/emacs
 
-# ── tmux ──────────────────────────────────────────────────────────��───────────
-
-tpm-install: ## Install tmux plugin manager
-	git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
 bootstrap: ## First-time nix-darwin install (run after installing nix)
@@ -95,4 +90,4 @@ help: ## Show this help
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans doom-update tpm-install bootstrap uninstall-nix help
+.PHONY: switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans doom-update bootstrap uninstall-nix help

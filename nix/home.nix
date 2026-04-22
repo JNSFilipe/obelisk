@@ -25,10 +25,6 @@ in
     # ── Shell ──────────────────────────────────────────────────────────────
     # .zshrc is managed by programs.zsh below; no entry needed here.
 
-    # ── Tmux ───────────────────────────────────────────────────────────────
-    ".tmux.conf".source = config.lib.file.mkOutOfStoreSymlink
-      "${flakeRoot}/configs/tmux.conf";
-
     # ── Editors ────────────────────────────────────────────────────────────
     ".config/doom".source       = link "doom";
     ".config/nvim".source       = link "nvim";
@@ -277,6 +273,56 @@ in
   programs.fzf = {
     enable               = true;
     enableZshIntegration = true;
+  };
+
+  # ── Tmux ─────────────────────────────────────────────────────────────────
+
+  programs.tmux = {
+    enable  = true;
+    plugins = with pkgs.tmuxPlugins; [
+      yank
+      {
+        plugin = catppuccin;
+        extraConfig = ''
+          # Theme Stuff
+          set -g @catppuccin_window_status_style "rounded"
+          run #{plugin}/share/tmux-plugins/catppuccin/catppuccin.tmux
+          set -g status-right-length 100
+          set -g status-left-length 100
+          set -g status-left ""
+          set -g status-left "#{E:@catppuccin_status_session}"
+          set -g status-right "#{E:@catppuccin_status_application}"
+          # --> Oxocarbon
+          set -g @thm_bg "#161616"
+          set -g @thm_fg "#dde1e6"
+          set -g @thm_rosewater "#ff7eb6"
+          set -g @thm_flamingo "#ffab91"
+          set -g @thm_pink "#ff7eb6"
+          set -g @thm_mauve "#be95ff"
+          set -g @thm_red "#ee5396"
+          set -g @thm_maroon "#08bdba"
+          set -g @thm_peach "#ff6f00"
+          set -g @thm_yellow "#82cfff"
+          set -g @thm_green "#42be65"
+          set -g @thm_teal "#3ddbd9"
+          set -g @thm_sky "#78a9ff"
+          set -g @thm_sapphire "#82cfff"
+          set -g @thm_blue "#33b1ff"
+          set -g @thm_lavender "#be95ff"
+          set -g @thm_subtext_1 "#f2f4f8"
+          set -g @thm_subtext_0 "#dde1e6"
+          set -g @thm_overlay_2 "#262626"
+          set -g @thm_overlay_1 "#393939"
+          set -g @thm_overlay_0 "#525252"
+          set -g @thm_surface_2 "#525252"
+          set -g @thm_surface_1 "#393939"
+          set -g @thm_surface_0 "#262626"
+          set -g @thm_mantle "#161616"
+          set -g @thm_crust "#121212"
+        '';
+      }
+    ];
+    extraConfig = builtins.readFile ../configs/tmux.conf;
   };
 
   # ── Git ──────────────────────────────────────────────────────────────────────

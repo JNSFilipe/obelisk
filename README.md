@@ -17,9 +17,6 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 
 # First-time activation
 make bootstrap
-
-# Install tmux plugins
-make tpm-install    # then inside tmux: Ctrl-z + I
 ```
 
 ## Usage
@@ -42,7 +39,6 @@ make help
   rollback        Roll back to the previous generation
   store-size      Show nix store disk usage
   switch          Build and activate the system configuration
-  tpm-install     Install tmux plugin manager
   uninstall-nix   Completely remove nix from the system
   update          Update all flake inputs (nixpkgs, home-manager, nix-darwin)
   upgrade         Update inputs and activate in one step
