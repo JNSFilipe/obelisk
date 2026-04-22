@@ -70,6 +70,29 @@ uninstall-nix: ## Completely remove nix from the system
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@printf "\n\033[1mWorkflows:\033[0m\n"
+	@printf "  \033[33mEdit nix config and apply\033[0m\n"
+	@printf "    edit nix/*.nix → make switch\n\n"
+	@printf "  \033[33mEdit app config (live symlink)\033[0m\n"
+	@printf "    edit configs/*  (takes effect immediately)\n\n"
+	@printf "  \033[33mAdd a new CLI tool\033[0m\n"
+	@printf "    edit nix/packages.nix → make switch\n\n"
+	@printf "  \033[33mAdd a new GUI app\033[0m\n"
+	@printf "    edit nix/homebrew.nix → make switch\n\n"
+	@printf "  \033[33mAdd a new config file\033[0m\n"
+	@printf "    add to configs/ → add home.file in nix/home.nix → make switch\n\n"
+	@printf "  \033[33mUpdate everything\033[0m\n"
+	@printf "    make upgrade  (= update + switch)\n\n"
+	@printf "  \033[33mUpdate Doom Emacs\033[0m\n"
+	@printf "    make doom-update → doom sync\n\n"
+	@printf "  \033[33mSafe test before applying\033[0m\n"
+	@printf "    make build → make diff → make switch\n\n"
+	@printf "  \033[33mSomething broke after switch\033[0m\n"
+	@printf "    make rollback\n\n"
+	@printf "  \033[33mReclaim disk space\033[0m\n"
+	@printf "    make gc  (or gc-all for aggressive cleanup)\n\n"
+	@printf "  \033[33mAudit homebrew drift\033[0m\n"
+	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
 .PHONY: switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans doom-update tpm-install bootstrap uninstall-nix help

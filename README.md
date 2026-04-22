@@ -48,20 +48,71 @@ make help
   upgrade         Update inputs and activate in one step
 ```
 
-Common workflow:
+## Workflows
 
+**Edit nix config and apply:**
 ```bash
-# Edit a nix file, then apply
+vim nix/packages.nix   # or darwin.nix, homebrew.nix, home.nix
 make switch
+```
 
-# Update everything (nixpkgs, home-manager, nix-darwin) and activate
+**Edit app config (live symlink):**
+```bash
+vim configs/ghostty/config   # takes effect immediately, no rebuild needed
+```
+
+**Add a new CLI tool:**
+```bash
+vim nix/packages.nix         # add package name
+make switch
+```
+
+**Add a new GUI app:**
+```bash
+vim nix/homebrew.nix         # add cask name
+make switch
+```
+
+**Add a new config file:**
+```bash
+cp myconfig configs/myapp/   # add config files
+vim nix/home.nix             # add home.file entry with mkOutOfStoreSymlink
+make switch
+```
+
+**Update everything (nixpkgs, home-manager, nix-darwin) and activate:**
+```bash
 make upgrade
+```
 
-# Something broke? Roll back instantly
-make rollback
+**Update Doom Emacs:**
+```bash
+make doom-update             # pull latest Doom
+doom sync                    # rebuild packages
+```
 
-# Reclaim disk space
-make gc
+**Safe test before applying:**
+```bash
+make build                   # build without activating
+make diff                    # inspect what changed
+make switch                  # apply if happy
+```
+
+**Something broke after switch:**
+```bash
+make rollback                # instant revert to previous generation
+```
+
+**Reclaim disk space:**
+```bash
+make gc                      # remove store paths older than 7 days
+make gc-all                  # aggressive: remove all unused paths
+make store-size              # check how much space nix uses
+```
+
+**Audit homebrew drift:**
+```bash
+make brew-orphans            # list formulae not declared in homebrew.nix
 ```
 
 ## Structure
