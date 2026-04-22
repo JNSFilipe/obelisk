@@ -93,6 +93,8 @@
     boost
     python3Packages.pybind11
     raylib
+    libusb1            # USB device access (needed for rpiboot, etc.)
+    rpiboot            # boot Raspberry Pi CM/Zero over USB
 
     # OCaml
     opam
