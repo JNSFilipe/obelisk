@@ -96,32 +96,17 @@ in
       export PATH="$PATH:/Library/TeX/texbin"
       export PATH="$PATH:/Applications/microchip/xc8/v3.10/bin"
 
-      # ── Plugin manager (znap) ─────────────────────────────────────────────
-      # Znap is kept here for a gradual migration.  To go fully nix-native,
-      # replace with home-manager's programs.zsh.plugins entries.
-      [[ -r ~/.znap/znap/znap.zsh ]] || \
-        git clone --depth 1 -- \
-          https://github.com/marlonrichert/zsh-snap.git ~/.znap/znap
-      source ~/.znap/znap/znap.zsh
-
+      # ── Completions ────────────────────────────────────────────────────────
       autoload -Uz compinit
       compinit
 
-      # fzf-tab — fuzzy tab completion
-      znap source Aloxaf/fzf-tab
-
-      # Fish-like completions (disabled inside Emacs eat buffer)
-      if [[ -z "$INSIDE_EMACS_EAT" ]]; then
-        znap source marlonrichert/zsh-autocomplete
-        znap source zsh-users/zsh-autosuggestions
+      # ── Disable fish-like completions inside Emacs eat ─────────────────
+      if [[ -n "$INSIDE_EMACS_EAT" ]]; then
+        ZSH_AUTOSUGGEST_DISABLE=1
+        zstyle ':autocomplete:*' enabled no
       fi
 
-      # Atuin (history search) — managed via programs.atuin; shell init injected below
-      znap source atuinsh/atuin
-
-      # Pure prompt
-      fpath+=($HOME/.znap/sindresorhus/pure)
-      znap source sindresorhus/pure
+      # ── Pure prompt ──────────────────────────────────────────────────────
       autoload -U promptinit; promptinit
       zstyle :prompt:pure:prompt:success color green
       zstyle :prompt:pure:prompt:error   color red
@@ -233,6 +218,14 @@ in
       }
     '';
 
+    plugins = [
+      { name = "fzf-tab";            src = "${pkgs.zsh-fzf-tab}/share/fzf-tab"; }
+      { name = "zsh-autocomplete";   src = "${pkgs.zsh-autocomplete}/share/zsh-autocomplete"; }
+      { name = "zsh-autosuggestions"; src = "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions"; }
+      { name = "pure";               src = "${pkgs.pure-prompt}/share/zsh/site-functions";
+        file = "prompt_pure_setup"; }
+    ];
+
     shellAliases = {
       # ls variants
       ls   = "ls --color=auto";
@@ -268,9 +261,8 @@ in
   # ── Atuin (shell history) ────────────────────────────────────────────────────
 
   programs.atuin = {
-    enable       = true;
-    enableZshIntegration = false; # znap loads atuin; avoid double-init
-    # Config sourced from the live repo file (home.file.".config/atuin" above)
+    enable               = true;
+    enableZshIntegration = true;
   };
 
   # ── Zoxide (smart cd) ────────────────────────────────────────────────────────
@@ -284,7 +276,7 @@ in
 
   programs.fzf = {
     enable               = true;
-    enableZshIntegration = false; # fzf-tab handles completions via znap
+    enableZshIntegration = true;
   };
 
   # ── Git ──────────────────────────────────────────────────────────────────────
