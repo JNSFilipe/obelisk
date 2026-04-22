@@ -56,12 +56,7 @@
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"
 
-      # ── AI tools (CLIs, but distributed only as casks) ─────────────────────
-      "claude-code"
-      "copilot-cli"
-      "gemini"           # CLI is bundled in the gemini cask
-      "codex"
-      "codex-app"
+      # AI coding assistants moved to packages.nix (nix-managed)
 
       # ── Fonts ──────────────────────────────────────────────────────────────
       "font-iosevka"

@@ -96,6 +96,12 @@
     libusb1            # USB device access (needed for rpiboot, etc.)
     rpiboot            # boot Raspberry Pi CM/Zero over USB
 
+    # AI coding assistants
+    claude-code
+    codex
+    copilot-cli
+    gemini-cli
+
     # OCaml
     opam
 
