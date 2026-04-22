@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# em: launch lightweight emacs with python-lsp-server auto-install
+
+# Try to activate a local venv
+venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
+activated=false
+for dir in "${venv_dirs[@]}"; do
+  if [ -d "$dir" ] && [ -f "$dir/bin/activate" ]; then
+    source "$dir/bin/activate"
+    activated=true
+    break
+  fi
+done
+
+if $activated; then
+  if ! uv pip show python-lsp-server &>/dev/null; then
+    echo "python-lsp-server not found. Installing..."
+    uv add "python-lsp-server[pyflakes]"
+  fi
+fi
+
+emacs --init-directory ~/.config/emacs/ -nw "$@"

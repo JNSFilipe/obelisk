@@ -15,6 +15,14 @@ in
   # Let home-manager manage itself
   programs.home-manager.enable = true;
 
+  # ── PATH (available to all shells, including non-interactive scripts) ────
+  home.sessionPath = [
+    "$HOME/.local/bin"
+    "$HOME/.cargo/bin"
+    "$HOME/.config/scripts"
+    "/Library/TeX/texbin"
+  ];
+
   # ── Config file symlinks ─────────────────────────────────────────────────────
   # Configs managed by programs.* modules are NOT listed here.
   # Only configs without a native home-manager module are symlinked.
@@ -64,12 +72,6 @@ in
       setopt hist_save_no_dups
       setopt hist_ignore_dups
 
-      # ── PATH (only paths not already provided by nix or macOS) ──────────
-      export PATH="$PATH:$HOME/.local/bin"
-      export PATH="$PATH:$HOME/.cargo/bin"
-      export PATH="$PATH:$HOME/.config/scripts"
-      export PATH="$PATH:/Library/TeX/texbin"
-
       # ── Completions ────────────────────────────────────────────────────────
       autoload -Uz compinit
       compinit
@@ -92,8 +94,9 @@ in
         tmux setenv ATUIN_SESSION "$ATUIN_SESSION"
 
       # ── Functions ─────────────────────────────────────────────────────────
+      # Most commands live in configs/scripts/ (on PATH).
+      # activate must be a function because it modifies the calling shell.
 
-      # activate: find and source a Python venv in the current directory
       activate() {
         if [ -n "$VIRTUAL_ENV" ]; then deactivate; fi
         local venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
@@ -106,75 +109,6 @@ in
         done
         echo "No Python virtual environment found."
         return 1
-      }
-
-      # em: launch lightweight emacs (auto-installs python-lsp-server in venv)
-      em() {
-        if activate 2>/dev/null; then
-          if ! uv pip show python-lsp-server &>/dev/null; then
-            echo "python-lsp-server not found. Installing..."
-            uv add "python-lsp-server[pyflakes]"
-          fi
-          emacs --init-directory ~/.config/emacs/ -nw "$@"
-        else
-          emacs --init-directory ~/.config/emacs/ -nw "$@"
-        fi
-      }
-
-      # vem: launch vanilla emacs config in terminal
-      vem() { emacs --init-directory ~/.config/vemacs/ -nw "$@"; }
-
-      # essh: open GUI Emacs via TRAMP on a remote host
-      essh() {
-        if [ $# -eq 0 ]; then
-          echo "Usage: essh [user@]hostname [-p port]"
-          return 1
-        fi
-        local ssh_args=() host="" port=""
-        while [[ $# -gt 0 ]]; do
-          case $1 in
-            -p) port="$2"; ssh_args+=("$1" "$2"); shift 2 ;;
-            -*) ssh_args+=("$1"); shift ;;
-            *)  [[ -z "$host" ]] && host="$1" || ssh_args+=("$1"); shift ;;
-          esac
-        done
-        [[ -z "$host" ]] && { echo "Error: no hostname"; return 1; }
-        local tramp_path="/ssh:$host:"
-        if [[ -n "$port" ]]; then
-          if [[ "$host" == *"@"* ]]; then
-            tramp_path="/ssh:''${host%@*}@''${host#*@}#$port:"
-          else
-            tramp_path="/ssh:$host#$port:"
-          fi
-        fi
-        echo "Opening Emacs TRAMP: $tramp_path"
-        nohup emacs "$tramp_path" >/dev/null 2>&1 &
-      }
-
-      # tramp: terminal Emacs eshell on a remote host
-      tramp() {
-        [[ -z "$1" ]] && { echo "Usage: tramp user@host [path]"; return 1; }
-        local userhost="$1" path="''${2:-~}"
-        emacs -nw --eval "(let ((default-directory \"/ssh:''${userhost}:''${path}/\")) (eshell t))"
-      }
-
-      # pssh: persistent SSH with auto-reconnect (uses autossh + sshpass)
-      pssh() {
-        if [[ -z "$1" ]]; then
-          echo "Usage: pssh user@host [ssh-args...]"
-          return 1
-        fi
-        local userhost="$1"; shift
-        local pw
-        read -rs "pw?Password for ''${userhost}: "
-        echo
-        SSHPASS="$pw" AUTOSSH_SSH="sshpass -e ssh" \
-        autossh -M 0 \
-          -o ServerAliveInterval=30 \
-          -o ServerAliveCountMax=3 \
-          -o StrictHostKeyChecking=accept-new \
-          "$userhost" "$@"
-        unset pw
       }
     '';
 

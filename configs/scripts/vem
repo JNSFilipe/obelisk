@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# vem: launch vanilla emacs config in terminal
+emacs --init-directory ~/.config/vemacs/ -nw "$@"

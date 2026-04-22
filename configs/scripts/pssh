@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# pssh: persistent SSH with auto-reconnect (uses autossh + sshpass)
+
+if [[ -z "$1" ]]; then
+  echo "Usage: pssh user@host [ssh-args...]"
+  exit 1
+fi
+
+userhost="$1"; shift
+
+read -rsp "Password for ${userhost}: " pw
+echo
+
+SSHPASS="$pw" AUTOSSH_SSH="sshpass -e ssh" \
+autossh -M 0 \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=accept-new \
+  "$userhost" "$@"
+
+unset pw

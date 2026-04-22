@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# tramp: terminal Emacs eshell on a remote host
+
+if [[ -z "$1" ]]; then
+  echo "Usage: tramp user@host [path]"
+  exit 1
+fi
+
+userhost="$1"
+rpath="${2:-~}"
+em --eval "(let ((default-directory \"/ssh:${userhost}:${rpath}/\")) (eshell t))"
