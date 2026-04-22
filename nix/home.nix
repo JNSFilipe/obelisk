@@ -244,7 +244,10 @@ in
   programs.zoxide = {
     enable               = true;
     enableZshIntegration = true;
+    options              = [ "--cmd cd" ]; # also aliases 'cd' to zoxide
   };
+
+  home.sessionVariables._ZO_DOCTOR = "0"; # suppress false-positive init order warning
 
   # ── Fzf ─────────────────────────────────────────────────────────────────────
 

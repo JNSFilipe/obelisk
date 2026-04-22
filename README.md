@@ -121,25 +121,22 @@ nix/
   home.nix                 User: zsh, programs, config symlinks
   packages.nix             CLI packages from nixpkgs
 configs/
-  tmux.conf                tmux (prefix: Ctrl-z)
+  tmux.conf                tmux settings (loaded via programs.tmux)
   doom/                    Doom Emacs user config
   emacs/                   Doom Emacs install (git submodule)
   vemacs/                  Vanilla Emacs config
   nvim/                    Neovim
-  helix/                   Helix
   zed/                     Zed
-  ghostty/                 Ghostty terminal
-  kitty/                   Kitty terminal
+  kitty/                   Kitty theme files
   wezterm/                 WezTerm terminal
-  aerospace/               AeroSpace window tiling
   karabiner/               Key remapping
   kanata/                  Keyboard remapper
-  atuin/                   Shell history
-  lazygit/                 Git TUI
   scripts/                 Shell scripts (zzz, ttt, fzflauncher, ...)
   wallpapers/              Desktop backgrounds
-  git/ignore               Global gitignore
 ```
+
+Configs managed declaratively by home-manager modules (no files in `configs/`):
+atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
 
 ## Where packages live
 
@@ -148,11 +145,11 @@ configs/
 | CLI tools | `nix/packages.nix` | Reproducible, pinned via flake.lock |
 | GUI apps | `nix/homebrew.nix` casks | macOS .app bundles, no nix equivalent |
 | CLI not in nixpkgs | `nix/homebrew.nix` brews | `doxx`, `codex-acp`, `ty` |
-| Shell config | `nix/home.nix` `programs.zsh` | Declarative, managed by home-manager |
-| App configs | `configs/` | Symlinked live into `~/.config/` |
+| Shell / tool config | `nix/home.nix` `programs.*` | Declarative, managed by home-manager |
+| App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
 Editing files under `configs/` takes effect immediately (live symlinks).
-Editing files under `nix/` requires `make switch` to apply.
+Editing `nix/` or `programs.*` settings requires `make switch` to apply.
 
 ## tmux
 
