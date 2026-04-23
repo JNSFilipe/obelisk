@@ -1,12 +1,75 @@
 #!/bin/bash
 
-# tramp: terminal Emacs eshell on a remote host
+# tramp: open remote directory/terminal in Emacs via TRAMP
+#
+# Usage: tramp [options] [user@]host [path]
+#        tramp [options] user host [path]
+#
+# Options:
+#   -t    Open eshell instead of dired
+#   -x    Open in GUI Emacs (drop -nw)
+#   -h    Show this help message
 
-if [[ -z "$1" ]]; then
-  echo "Usage: tramp user@host [path]"
+usage() {
+  echo "Usage: tramp [-t] [-x] [-h] [user@]host [path]"
+  echo "       tramp [-t] [-x] [-h] user host [path]"
+  echo ""
+  echo "Options:"
+  echo "  -t    Open eshell instead of dired"
+  echo "  -x    Open in GUI Emacs (drop -nw)"
+  echo "  -h    Show this help message"
+}
+
+terminal=false
+gui=false
+positional=()
+
+# Parse flags and positional args in any order
+for arg in "$@"; do
+  case $arg in
+    -t)  terminal=true ;;
+    -x)  gui=true ;;
+    -tx|-xt) terminal=true; gui=true ;;
+    -h)  usage; exit 0 ;;
+    -*)  echo "Unknown option: $arg"; usage; exit 1 ;;
+    *)   positional+=("$arg") ;;
+  esac
+done
+
+if [[ ${#positional[@]} -eq 0 ]]; then
+  usage
   exit 1
 fi
 
-userhost="$1"
-rpath="${2:-~}"
-em --eval "(let ((default-directory \"/ssh:${userhost}:${rpath}/\")) (eshell t))"
+# Parse user@host or user host
+if [[ "${positional[0]}" == *"@"* ]]; then
+  userhost="${positional[0]}"
+  rpath="${positional[1]:-}"
+else
+  [[ ${#positional[@]} -lt 2 ]] && { usage; exit 1; }
+  userhost="${positional[0]}@${positional[1]}"
+  rpath="${positional[2]:-}"
+fi
+
+# Build TRAMP path
+if [[ -n "$rpath" ]]; then
+  tramp_dir="/ssh:${userhost}:${rpath}"
+else
+  tramp_dir="/ssh:${userhost}:"
+fi
+
+# Build elisp action
+if $terminal; then
+  action='(let ((default-directory "'"${tramp_dir}"'/")) (eshell t))'
+else
+  action='(dired "'"${tramp_dir}"'")'
+fi
+elisp='(run-with-timer 0.5 nil (lambda () '"${action}"'))'
+
+# Launch
+emacs_args=(--init-directory ~/.config/emacs/ --eval "$elisp")
+if $gui; then
+  emacs "${emacs_args[@]}" &
+else
+  emacs -nw "${emacs_args[@]}"
+fi

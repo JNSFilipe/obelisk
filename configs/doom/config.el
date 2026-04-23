@@ -9,6 +9,15 @@
 (setq user-full-name "JNSFilipe"
       user-mail-address "jose.filipe@ieee.org")
 
+;; ── TRAMP (remote editing) ───────────────────────────────────────────────────
+(after! tramp
+  (setq tramp-default-method "ssh")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
+;; Persist TRAMP passwords across sessions via auth-source
+(setq auth-sources '("~/.authinfo.gpg" "~/.authinfo")
+      auth-source-save-behavior t)
+
 ;; Setting it to 100mb seems to strike a nice balance between GC pauses and performance.
 (setq gc-cons-threshold (* 100 1024 1024))
 
