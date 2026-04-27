@@ -31,6 +31,10 @@
   # Make zsh the default system shell (home-manager configures the user shell)
   programs.zsh.enable = true;
 
+  # ── Tailscale ────────────────────────────────────────────────────────────────
+
+  services.tailscale.enable = true;
+
   # ── macOS defaults ──────────────────────────────────────────────────────────
 
   system.defaults = {

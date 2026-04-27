@@ -163,6 +163,35 @@ Editing `nix/` or `programs.*` settings requires `make switch` to apply.
 | `prefix + Tab` | Last window |
 | `prefix + r` | Reload config |
 
+## Managing nix-darwin services
+
+Services enabled via `services.<name>.enable = true` in `darwin.nix` (e.g. Tailscale)
+are managed by `launchctl` on macOS.
+
+```bash
+# List all nix-managed daemons
+sudo launchctl list | grep org.nix
+
+# Check status of a specific service (e.g. Tailscale)
+sudo launchctl print system/org.nixos.tailscaled
+
+# Restart a service
+sudo launchctl kickstart -k system/org.nixos.tailscaled
+
+# Stop a service (modern / legacy)
+sudo launchctl bootout system/org.nixos.tailscaled
+sudo launchctl stop org.nixos.tailscaled
+
+# Start a stopped service (modern / legacy)
+sudo launchctl bootstrap system /Library/LaunchDaemons/org.nixos.tailscaled.plist
+sudo launchctl start org.nixos.tailscaled
+```
+
+The service name pattern is `org.nixos.<daemon>`. To find the exact name:
+```bash
+ls /Library/LaunchDaemons/org.nixos.*
+```
+
 ## Adding a new tool
 
 1. **CLI tool in nixpkgs**: add to `nix/packages.nix`, run `make switch`

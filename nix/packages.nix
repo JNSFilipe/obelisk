@@ -59,6 +59,7 @@
 
     # ── CI / containers ───────────────────────────────────────────────────────
     docker             # CLI only — docker-desktop cask provides the daemon
+    postgresql         # Postgres tooling
 
     # ── Tailscale ─────────────────────────────────────────────────────────────
     tailscale

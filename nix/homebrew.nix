@@ -92,6 +92,7 @@
       "google-drive"
       "daisydisk"
       "the-unarchiver"
+      "paragon-extfs"
 
       # ── Development tools ──────────────────────────────────────────────────
       "docker-desktop"
