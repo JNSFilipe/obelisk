@@ -28,10 +28,10 @@ generations: ## List all system generations
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 
-gc: ## Garbage-collect old nix store paths (keeps 7 days)
+gc: switch ## Activate, then garbage-collect old nix store paths (keeps 7 days)
 	nix-collect-garbage --delete-older-than 7d
 
-gc-all: ## Garbage-collect ALL unused nix store paths
+gc-all: switch ## Activate, then garbage-collect ALL unused nix store paths
 	nix-collect-garbage -d
 
 store-size: ## Show nix store disk usage

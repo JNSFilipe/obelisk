@@ -55,6 +55,7 @@
 
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"
+      "helium-browser"
 
       # AI coding assistants moved to packages.nix (nix-managed)
 
@@ -108,7 +109,7 @@
       "nvidia-geforce-now"
 
       # ── Utilities ──────────────────────────────────────────────────────────
-      "marta"           # file manager
+      # Look into Tokie file manager in the future
       "adguard"
       "raspberry-pi-imager"
       "hp-easy-start"

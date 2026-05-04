@@ -59,7 +59,7 @@
 (setq org-directory "~/org/")
 
 ;; Doom reads this while building Evil's insert-state bindings.
-(setq evil-disable-insert-state-bindings t)
+(setq evil-disable-insert-state-bindings nil)
 
 ;; Set Projectile project roots
 (after! projectile
@@ -203,10 +203,12 @@
 (pixel-scroll-precision-mode 1)
 
 ;; Flyspell: disable auto-activation, toggle manually via SPC - s
-(remove-hook! (text-mode-hook org-mode-hook markdown-mode-hook) #'flyspell-mode)
 (after! flyspell
   (setq flyspell-issue-welcome-flag nil
         flyspell-issue-message-flag nil))
+;; Remove flyspell from every hook Doom's spell module adds it to
+(remove-hook! (text-mode-hook prog-mode-hook conf-mode-hook) #'flyspell-mode)
+(remove-hook! (text-mode-hook prog-mode-hook conf-mode-hook) #'flyspell-prog-mode)
 
 (map! :leader
   (:prefix ("-" . "toggle")

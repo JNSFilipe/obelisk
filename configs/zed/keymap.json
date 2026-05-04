@@ -93,7 +93,7 @@
       // Projects
       "space p": "projects::OpenRecent",
       // Agent
-      "space a": ["agent::NewExternalAgentThread", { "agent": "codex" }],
+      // "spaceA":["agent::newExternalAgentThread",{"agent":"codex"}],
       // LSP stuff - https://gist.github.com/adibhanna/896257e6c2c501186221312fd9fd1b9c
       "space l a": "editor::ToggleCodeActions",
       "space l r": "editor::Rename",
