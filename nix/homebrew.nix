@@ -28,15 +28,17 @@
       "doxx"       # view .docx in terminal
       "codex-acp"  # GitHub Copilot ACP
       "ty"         # Astral ty type checker
+      "rtk"        # For saving tokes: Yields chewedup output for common terminal tools
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────
 
     casks = [
       # ── Terminals ──────────────────────────────────────────────────────────
-      "ghostty"
-      "kitty"
+      # "ghostty"
+      # "kitty"
       "wezterm"
+      "warp"
 
       # ── Editors ────────────────────────────────────────────────────────────
       "emacs-plus-app"   # from d12frosted/emacs-plus tap
@@ -52,6 +54,7 @@
       "karabiner-elements"
       "leader-key"
       "dockdoor"
+      "wooshy" # For navigation whith keyboard... still experimenting with this
 
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"
@@ -60,6 +63,7 @@
       # AI coding assistants moved to packages.nix (nix-managed)
 
       # ── Fonts ──────────────────────────────────────────────────────────────
+      # TODO: The fonts should be managed on the nix side of things
       "font-iosevka"
       "font-jetbrains-mono-nerd-font"
       "font-fira-code-nerd-font"
@@ -111,6 +115,7 @@
       # ── Utilities ──────────────────────────────────────────────────────────
       # Look into Tokie file manager in the future
       "adguard"
+      "rustdesk" # The free TeamViewer/AnyDesk solution
       "raspberry-pi-imager"
       "hp-easy-start"
     ];
