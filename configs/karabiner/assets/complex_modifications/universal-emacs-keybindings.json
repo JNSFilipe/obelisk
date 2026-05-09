@@ -62,6 +62,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -142,6 +143,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -223,6 +225,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -311,6 +314,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -423,7 +427,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -465,7 +473,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             },
             {
@@ -495,6 +507,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -588,6 +601,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -668,6 +682,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -748,6 +763,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -828,6 +844,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -909,6 +926,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -989,6 +1007,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1082,6 +1101,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1162,6 +1182,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1242,6 +1263,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1322,6 +1344,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1356,7 +1379,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -1416,6 +1443,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1443,7 +1471,11 @@
             {
               "type": "frontmost_application_unless",
               "bundle_identifiers": [
-                "^org\\.mozilla\\.firefox$"
+                "^org\\.mozilla\\.firefox$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -1503,6 +1535,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1590,6 +1623,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1617,7 +1651,11 @@
             {
               "type": "frontmost_application_unless",
               "bundle_identifiers": [
-                "^org\\.mozilla\\.firefox$"
+                "^org\\.mozilla\\.firefox$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -1677,6 +1715,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1764,6 +1803,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1791,7 +1831,11 @@
             {
               "type": "frontmost_application_unless",
               "bundle_identifiers": [
-                "^org\\.mozilla\\.firefox$"
+                "^org\\.mozilla\\.firefox$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -1851,6 +1895,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -1968,6 +2013,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2055,6 +2101,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2137,6 +2184,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2218,6 +2266,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2300,6 +2349,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2378,6 +2428,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2465,6 +2516,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2547,6 +2599,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2628,6 +2681,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2710,6 +2764,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2789,6 +2844,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2870,6 +2926,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2904,7 +2961,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -2965,6 +3026,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -2999,7 +3061,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -3056,6 +3122,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3150,6 +3217,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3244,6 +3312,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3278,7 +3347,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -3339,6 +3412,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3373,7 +3447,11 @@
                 "^com\\.microsoft\\.edgemac",
                 "^com\\.google\\.Chrome$",
                 "^com\\.brave\\.Browser$",
-                "^com\\.apple\\.Safari$"
+                "^com\\.apple\\.Safari$",
+                "^org\\.gnu\\.Emacs$",
+                "^com\\.github\\.wez\\.wezterm$",
+                "^net\\.kovidgoyal\\.kitty$",
+                "^com\\.mitchellh\\.ghostty$"
               ]
             }
           ]
@@ -3430,6 +3508,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3524,6 +3603,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3610,6 +3690,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3683,6 +3764,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3767,6 +3849,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3846,6 +3929,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -3933,6 +4017,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4006,6 +4091,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4039,8 +4125,10 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
-                "^com\\.mitchellh\\.ghostty$"
+                "^com\\.mitchellh\\.ghostty$",
+                "^org\\.gnu\\.Emacs$"
               ]
             }
           ]
@@ -4096,6 +4184,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4129,6 +4218,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$"
               ]
@@ -4182,6 +4272,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4263,6 +4354,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4344,6 +4436,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4420,6 +4513,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4495,6 +4589,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4570,6 +4665,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4642,6 +4738,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4723,6 +4820,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4793,6 +4891,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4863,6 +4962,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -4938,6 +5038,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
@@ -5013,6 +5114,7 @@
                 "^co\\.zeit\\.hyper$",
                 "^io\\.alacritty$",
                 "^org\\.alacritty$",
+                "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^org\\.vim\\.",
