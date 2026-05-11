@@ -54,7 +54,6 @@
       "karabiner-elements"
       "leader-key"
       "dockdoor"
-      "wooshy" # For navigation whith keyboard... still experimenting with this
 
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"
@@ -73,7 +72,8 @@
       "font-symbols-only-nerd-font"
 
       # ── LaTeX ──────────────────────────────────────────────────────────────
-      "mactex"
+      # "mactex" # The all emcompasing, space eater approach
+      "basictex" # The lightweight alternative
 
       # ── Productivity ───────────────────────────────────────────────────────
       "raycast"
