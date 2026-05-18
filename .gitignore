@@ -25,6 +25,7 @@ node_modules
 configs/karabiner/automatic_backups
 configs/nvim/.nvimlog
 configs/nvim/lazy-lock.json
+configs/nvim/nvim-pack-lock.json
 
 # Vanilla Emacs auto-generated state
 configs/vemacs/eln-cache/
