@@ -110,6 +110,15 @@ in
         echo "No Python virtual environment found."
         return 1
       }
+
+      # Option+Space arrives as Meta-Space when the terminal sends Option as Alt.
+      cmux-sessionizer-widget() {
+        zle -I
+        "$HOME/.config/scripts/cmux_sesh.sh"
+        zle reset-prompt
+      }
+      zle -N cmux-sessionizer-widget
+      bindkey $'\e ' cmux-sessionizer-widget
     '';
 
     plugins = [
@@ -249,7 +258,6 @@ in
     settings = {
       theme                    = "Carbonfox";
       background-opacity       = 1.0;
-      macos-option-as-alt      = "left";
       window-padding-x         = "2,2";
       window-padding-y         = "2,2";
       shell-integration-features = "no-cursor";
@@ -260,6 +268,7 @@ in
       font-family              = "Iosevka";
       font-size                = 13;
       keybind                  = "unconsumed:ctrl+ç=reload_config";
+      macos-option-as-alt      = true;
     };
   };
 
