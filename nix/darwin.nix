@@ -45,6 +45,8 @@
     };
     NSGlobalDomain = {
       AppleInterfaceStyle       = "Dark";
+      # Set "Icon & widget style" to dark (macOS Sequoia+)
+      AppleIconAppearanceTheme  = "RegularDark";
       AppleShowAllExtensions    = true;
       # Fast key repeat
       InitialKeyRepeat          = 15;
