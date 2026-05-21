@@ -38,7 +38,7 @@
       # "ghostty"
       # "kitty"
       "wezterm"
-      "warp"
+      "cmux"
 
       # ── Editors ────────────────────────────────────────────────────────────
       "emacs-plus-app"   # from d12frosted/emacs-plus tap
@@ -86,7 +86,6 @@
       "whatsapp"
       "zoom"
       "microsoft-teams"
-      "microsoft-outlook"
 
       # ── Microsoft Office ───────────────────────────────────────────────────
       "microsoft-word"
@@ -116,6 +115,7 @@
       # Look into Tokie file manager in the future
       "adguard"
       "rustdesk" # The free TeamViewer/AnyDesk solution
+      "betterdisplay" # For creating virtual displays and stuf
       "raspberry-pi-imager"
       "hp-easy-start"
     ];
