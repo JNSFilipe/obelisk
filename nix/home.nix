@@ -37,7 +37,6 @@ in
 
     # ── Terminals ──────────────────────────────────────────────────────────
     ".config/wezterm".source    = link "wezterm";
-
     # ── Window / key management ────────────────────────────────────────────
     ".config/karabiner".source  = link "karabiner";
     ".config/kanata".source     = link "kanata";
@@ -111,7 +110,11 @@ in
         return 1
       }
 
-      # Option+Space arrives as Meta-Space when the terminal sends Option as Alt.
+      if command -v opam >/dev/null 2>&1 && opam switch show >/dev/null 2>&1; then
+        eval "$(opam env --shell=zsh)"
+      fi
+
+      # Option+Space arrives as Meta-Space or NBSP depending on terminal Option handling.
       cmux-sessionizer-widget() {
         zle -I
         "$HOME/.config/scripts/cmux_sesh.sh"
@@ -119,6 +122,7 @@ in
       }
       zle -N cmux-sessionizer-widget
       bindkey $'\e ' cmux-sessionizer-widget
+      bindkey $'\xc2\xa0' cmux-sessionizer-widget
     '';
 
     plugins = [
@@ -254,7 +258,7 @@ in
   programs.ghostty = {
     enable          = true;
     package         = null; # installed via homebrew cask
-    enableZshIntegration = true;
+    enableZshIntegration = false;
     settings = {
       theme                    = "Carbonfox";
       background-opacity       = 1.0;
@@ -267,8 +271,12 @@ in
       bold-is-bright           = true;
       font-family              = "Iosevka";
       font-size                = 13;
-      keybind                  = "unconsumed:ctrl+ç=reload_config";
-      macos-option-as-alt      = true;
+      keybind                  = [
+        "unconsumed:ctrl+ç=reload_config"
+        "alt+space=text:\\x1b\\x20"
+        "alt+d=esc:d"
+      ];
+      macos-option-as-alt      = false;
     };
   };
 
@@ -446,7 +454,7 @@ in
 
   programs.opam = {
     enable               = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;
   };
 
   # ── Git ──────────────────────────────────────────────────────────────────────
