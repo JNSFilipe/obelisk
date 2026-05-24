@@ -43,7 +43,9 @@
       # ── Editors ────────────────────────────────────────────────────────────
       "emacs-plus-app"   # from d12frosted/emacs-plus tap
       "visual-studio-code"
+      "antigravity-cli"
       "sublime-text"
+      "antigravity"      # for google-ai stuff
       "datagrip"
       "zed"
 
