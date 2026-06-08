@@ -17,6 +17,7 @@ camera-counter-0-mercado
 
 # AI / editor state
 .aider*
+.antigravitycli/
 /**/.copilot
 /**/.claude
 node_modules

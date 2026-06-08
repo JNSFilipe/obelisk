@@ -64,6 +64,9 @@
     # ── Tailscale ─────────────────────────────────────────────────────────────
     tailscale
 
+    # ── AWS ------─────────────────────────────────────────────────────────────
+    # awscli2
+
     # ── Programming languages ─────────────────────────────────────────────────
     # Python (use `uv` for project venvs; system python for tooling)
     python313

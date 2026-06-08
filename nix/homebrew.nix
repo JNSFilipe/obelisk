@@ -29,6 +29,7 @@
       "codex-acp"  # GitHub Copilot ACP
       "ty"         # Astral ty type checker
       "rtk"        # For saving tokes: Yields chewedup output for common terminal tools
+      "biber"      # For bibliographies in LaTeX
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────
@@ -78,6 +79,7 @@
       "basictex" # The lightweight alternative
 
       # ── Productivity ───────────────────────────────────────────────────────
+      "claude"
       "raycast"
       "obsidian"
       "notion-calendar"
