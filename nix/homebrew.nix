@@ -3,7 +3,7 @@
   # ── nix-darwin homebrew integration ────────────────────────────────────────
   # GUI apps only.  All CLI tools live in nix/packages.nix.
   # Exceptions: brews[] holds CLI tools not yet packaged in nixpkgs;
-  #             some casks (claude-code, copilot-cli, …) are CLIs
+  #             some casks, such as claude, are CLIs
   #             distributed only as macOS casks — no nix alternative.
 
   homebrew = {
@@ -15,6 +15,7 @@
       # "zap" removes anything not listed below; "cleanup" removes only
       # unlisted formulae/casks. Use "cleanup" while transitioning.
       cleanup     = "uninstall";
+      extraFlags  = [ "--force-cleanup" ];
     };
 
     # ── Taps ─────────────────────────────────────────────────────────────────

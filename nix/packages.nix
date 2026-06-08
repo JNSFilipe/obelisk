@@ -103,7 +103,6 @@
     # AI coding assistants
     claude-code
     codex
-    copilot-cli
     gemini-cli
 
     # OCaml

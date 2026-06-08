@@ -1,9 +1,19 @@
-FLAKE  = $(HOME)/Documents/GitHub/obelisk\#gauss
+FLAKE  = $(CURDIR)\#gauss
+IS_ROOT := $(shell id -u)
+SUDO ?= sudo
+
+not-root:
+	@if [ "$(IS_ROOT)" = "0" ]; then \
+		printf '%s\n' "Do not run this target with sudo."; \
+		printf '%s\n' "Run: make update or make upgrade"; \
+		printf '%s\n' "The Makefile will call sudo only for system activation."; \
+		exit 1; \
+	fi
 
 # ── Core ──────────────────────────────────────────────────────────────────────
 
 switch: ## Build and activate the system configuration
-	darwin-rebuild switch --flake "$(FLAKE)"
+	$(SUDO) darwin-rebuild switch --flake "$(FLAKE)"
 
 build: ## Build without activating (dry run)
 	darwin-rebuild build --flake "$(FLAKE)"
@@ -13,15 +23,19 @@ check: ## Evaluate the flake and run checks (no build)
 
 # ── Updates ───────────────────────────────────────────────────────────────────
 
-update: ## Update all flake inputs (nixpkgs, home-manager, nix-darwin)
-	nix flake update
+update: not-root ## Update all flake inputs (nixpkgs, home-manager, nix-darwin)
+	@if command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1; then \
+		NIX_CONFIG="access-tokens = github.com=$$(gh auth token)" nix flake update; \
+	else \
+		nix flake update; \
+	fi
 
 upgrade: update switch ## Update inputs and activate in one step
 
 # ── History ───────────────────────────────────────────────────────────────────
 
 rollback: ## Roll back to the previous generation
-	darwin-rebuild switch --rollback
+	$(SUDO) darwin-rebuild switch --rollback
 
 generations: ## List all system generations
 	darwin-rebuild --list-generations
@@ -29,10 +43,10 @@ generations: ## List all system generations
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 
 gc: switch ## Activate, then garbage-collect old nix store paths (keeps 7 days)
-	nix-collect-garbage --delete-older-than 7d
+	$(SUDO) nix-collect-garbage --delete-older-than 7d
 
 gc-all: switch ## Activate, then garbage-collect ALL unused nix store paths
-	nix-collect-garbage -d
+	$(SUDO) nix-collect-garbage -d
 
 store-size: ## Show nix store disk usage
 	du -sh /nix/store
