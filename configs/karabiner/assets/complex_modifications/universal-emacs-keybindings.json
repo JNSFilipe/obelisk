@@ -66,6 +66,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -148,6 +149,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -231,6 +233,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -321,6 +324,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -436,7 +440,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -483,7 +488,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             },
             {
@@ -517,6 +523,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -612,6 +619,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -694,6 +702,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -776,6 +785,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -858,6 +868,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -941,6 +952,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1023,6 +1035,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1118,6 +1131,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1200,6 +1214,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1282,6 +1297,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1364,6 +1380,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1401,7 +1418,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -1465,6 +1483,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1495,7 +1514,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -1559,6 +1579,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1648,6 +1669,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1678,7 +1700,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -1742,6 +1765,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1831,6 +1855,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -1861,7 +1886,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -1925,6 +1951,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2044,6 +2071,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2133,6 +2161,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2217,6 +2246,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2300,6 +2330,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2384,6 +2415,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2464,6 +2496,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2553,6 +2586,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2637,6 +2671,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2720,6 +2755,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2804,6 +2840,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2885,6 +2922,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -2968,6 +3006,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3005,7 +3044,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -3070,6 +3110,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3107,7 +3148,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -3168,6 +3210,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3264,6 +3307,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3360,6 +3404,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3397,7 +3442,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -3462,6 +3508,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3499,7 +3546,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -3560,6 +3608,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3656,6 +3705,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3744,6 +3794,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3819,6 +3870,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3905,6 +3957,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -3986,6 +4039,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4075,6 +4129,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4150,6 +4205,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4185,6 +4241,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.gnu\\.Emacs$"
               ]
             }
@@ -4245,6 +4302,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4279,7 +4337,8 @@
                 "^com\\.github\\.wez\\.wezterm$",
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
-                "^com\\.cmuxterm\\.app$"
+                "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$"
               ]
             }
           ]
@@ -4335,6 +4394,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4418,6 +4478,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4501,6 +4562,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4579,6 +4641,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4656,6 +4719,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4733,6 +4797,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4807,6 +4872,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4890,6 +4956,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -4962,6 +5029,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -5034,6 +5102,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -5111,6 +5180,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
@@ -5188,6 +5258,7 @@
                 "^net\\.kovidgoyal\\.kitty$",
                 "^com\\.mitchellh\\.ghostty$",
                 "^com\\.cmuxterm\\.app$",
+                "^dev\\.zed\\.Zed$",
                 "^org\\.vim\\.",
                 "^com\\.qvacua\\.VimR$",
                 "^com\\.vmware\\.fusion$",
