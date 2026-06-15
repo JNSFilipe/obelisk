@@ -80,6 +80,7 @@
 
     # Go
     go
+    wails
     gopls
 
     # Node / JS
@@ -107,6 +108,9 @@
 
     # OCaml
     opam
+
+    # LaTeX
+    tectonic
 
   ];
 }

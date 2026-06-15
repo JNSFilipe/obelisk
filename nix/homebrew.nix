@@ -31,6 +31,7 @@
       "ty"         # Astral ty type checker
       "rtk"        # For saving tokes: Yields chewedup output for common terminal tools
       "biber"      # For bibliographies in LaTeX
+      "herdr"
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────
@@ -81,8 +82,10 @@
 
       # ── Productivity ───────────────────────────────────────────────────────
       "claude"
+      "codex-app"
       "raycast"
       "obsidian"
+      "notion-mail"
       "notion-calendar"
       "clickup"
       "bitwarden"
