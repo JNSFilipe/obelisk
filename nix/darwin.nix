@@ -31,6 +31,12 @@
   # Make zsh the default system shell (home-manager configures the user shell)
   programs.zsh.enable = true;
 
+  # nix-darwin does not add Homebrew to PATH. Append it so brew-only formulae
+  # (herdr, biber, …) are reachable in the shell. Casks are /Applications GUI
+  # apps and never need PATH. Appended (not prepended) so nix bins win on
+  # collisions (e.g. doxx/ty/rtk also live in packages.nix).
+  environment.systemPath = [ "/opt/homebrew/bin" "/opt/homebrew/sbin" ];
+
   # ── Tailscale ────────────────────────────────────────────────────────────────
 
   services.tailscale.enable = true;

@@ -19,6 +19,9 @@
     aspell
     aspellDicts.en
     aspellDicts.en-computers
+    doxx               # open word documents in terminal
+    xleak              # open excel documents in terminal
+    rtk                # For saving tokes: Yields chewedup output for common terminal tools
 
     # ── Shell history / navigation ────────────────────────────────────────────
     atuin
@@ -50,6 +53,7 @@
     act                # run GitHub Actions locally
 
     # ── Syntax / parsing ──────────────────────────────────────────────────────
+    ty
     tree-sitter
     python3Packages.pygments   # for syntax-highlighted previews
 
