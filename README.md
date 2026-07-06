@@ -129,8 +129,8 @@ configs/
   zed/                     Zed
   kitty/                   Kitty theme files
   wezterm/                 WezTerm terminal
-  karabiner/               Key remapping
-  kanata/                  Keyboard remapper
+  kanata/                  Physical keyboard remapping
+  hammerspoon/             App-aware GUI keybindings
   scripts/                 Shell scripts (zzz, ttt, fzflauncher, ...)
   wallpapers/              Desktop backgrounds
 ```

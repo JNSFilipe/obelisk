@@ -33,6 +33,9 @@
     # ── Multiplexer ───────────────────────────────────────────────────────────
     tmux
 
+    # ── Keyboard remapping ────────────────────────────────────────────────────
+    kanata
+
     # ── Version control ───────────────────────────────────────────────────────
     git-lfs
     lazygit
@@ -53,13 +56,11 @@
     act                # run GitHub Actions locally
 
     # ── Syntax / parsing ──────────────────────────────────────────────────────
-    ty
     tree-sitter
     python3Packages.pygments   # for syntax-highlighted previews
 
     # ── Editors (terminal) ────────────────────────────────────────────────────
     neovim
-    helix
 
     # ── CI / containers ───────────────────────────────────────────────────────
     docker             # CLI only — docker-desktop cask provides the daemon
@@ -69,12 +70,13 @@
     tailscale
 
     # ── AWS ------─────────────────────────────────────────────────────────────
-    # awscli2
+    awscli2
 
     # ── Programming languages ─────────────────────────────────────────────────
     # Python (use `uv` for project venvs; system python for tooling)
     python313
     uv
+    ty
     python3Packages.python-lsp-server
     ruff               # includes built-in LSP (replaces ruff-lsp)
     black

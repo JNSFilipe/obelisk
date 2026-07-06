@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+duration="${1:-20}"
+kanata_bin="/Applications/Kanata.app/Contents/MacOS/kanata"
+cfg="$(mktemp -t kanata-test.XXXXXX.kbd)"
+out_log="$(mktemp -t kanata-test.XXXXXX.out)"
+err_log="$(mktemp -t kanata-test.XXXXXX.err)"
+
+cleanup() {
+  sudo pkill -f "$kanata_bin --cfg $cfg" 2>/dev/null || true
+  rm -f "$cfg"
+}
+trap cleanup EXIT
+
+if [[ ! "$duration" =~ ^[0-9]+$ ]] || (( duration < 5 || duration > 120 )); then
+  printf >&2 'usage: kanata-safe-test [duration-seconds: 5..120]\n'
+  exit 2
+fi
+
+if [[ ! -x "$kanata_bin" ]]; then
+  printf >&2 'missing %s; run make switch first\n' "$kanata_bin"
+  exit 1
+fi
+
+if pgrep -f 'Karabiner-Core-Service|karabiner_console_user_server' >/dev/null 2>&1; then
+  printf >&2 'Karabiner-Elements is still grabbing the keyboard; Kanata cannot safely start.\n'
+  printf >&2 'Run kanata-vhid-setup, then rerun this test.\n'
+  exit 1
+fi
+
+if ! pgrep -f 'Karabiner-VirtualHIDDevice-Daemon' >/dev/null 2>&1; then
+  printf >&2 'Karabiner virtual HID daemon is not running.\n'
+  printf >&2 'Run kanata-vhid-setup, approve the Driver Extension if prompted, then rerun this test.\n'
+  exit 1
+fi
+
+cp "$HOME/.config/kanata/kanata.kbd" "$cfg"
+
+sudo -v
+sudo "$kanata_bin" --cfg "$cfg" --no-wait >"$out_log" 2>"$err_log" &
+sudo_pid=$!
+
+printf 'Kanata safe test started for %ss. Logs:\n  %s\n  %s\n' "$duration" "$out_log" "$err_log"
+
+for _ in $(seq 1 "$duration"); do
+  sleep 1
+  if grep -E 'IOHIDDeviceOpen error|connect_failed|failed to parse file|Permission denied|Operation not permitted' "$err_log" >/dev/null 2>&1 ||
+     grep -E 'connect_failed' "$out_log" >/dev/null 2>&1; then
+    printf >&2 'Kanata reported a HID/output failure; stopping it now.\n'
+    tail -40 "$err_log" >&2 || true
+    exit 1
+  fi
+
+  if ! kill -0 "$sudo_pid" 2>/dev/null; then
+    printf >&2 'Kanata exited during the test.\n'
+    tail -40 "$err_log" >&2 || true
+    exit 1
+  fi
+done
+
+printf 'Kanata survived %ss; stopping test instance.\n' "$duration"

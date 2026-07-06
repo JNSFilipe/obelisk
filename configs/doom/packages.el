@@ -9,6 +9,7 @@
 ;; (package! some-package)
 ;; (package! dape)
 (package! consult-gh)
+(package! ghostel)
 (package! vundo)
 
 ;; To install a package directly from a remote git repo, you must specify a
@@ -23,8 +24,8 @@
 ;; (package! this-package
 ;;   :recipe (:host github :repo "username/repo"
 ;;            :files ("some-file.el" "src/lisp/*.el")))
-(package! copilot
-  :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
+;; (package! copilot
+;;   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 
 ;; If you'd like to disable a package included with Doom, you can do so here
 ;; with the `:disable' property:

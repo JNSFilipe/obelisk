@@ -38,8 +38,8 @@ in
     # ── Terminals ──────────────────────────────────────────────────────────
     ".config/wezterm".source    = link "wezterm";
     # ── Window / key management ────────────────────────────────────────────
-    ".config/karabiner".source  = link "karabiner";
     ".config/kanata".source     = link "kanata";
+    ".hammerspoon".source       = link "hammerspoon";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
     ".config/scripts".source    = link "scripts";
@@ -276,7 +276,7 @@ in
         "alt+space=text:\\x1b\\x20"
         "alt+d=esc:d"
       ];
-      macos-option-as-alt      = false;
+      macos-option-as-alt      = true;
     };
   };
 

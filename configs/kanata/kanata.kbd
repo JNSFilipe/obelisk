@@ -1,0 +1,70 @@
+;; Kanata owns physical key behavior. App-aware Emacs emulation lives in
+;; Hammerspoon so terminals/editors can be excluded by frontmost app.
+
+(defcfg
+  process-unmapped-keys yes
+  macos-dev-names-include (
+    "Apple Internal Keyboard / Trackpad"
+  )
+)
+
+(defsrc
+  grv caps fn lctl spc s e r d f c v h j k l nubs
+)
+
+(defvar
+  tap-time 200
+  hold-time 250
+  fast-typing-time 357
+
+  left-hand-keys (
+    q w e r t
+    a s d f g
+    z x c v b
+  )
+)
+
+(deftemplate thrk-l (base-key action hold-time)
+  (switch
+    ((key-timing 3 less-than $fast-typing-time)) $base-key break
+    () (tap-hold-release-keys $tap-time $hold-time $base-key $action $left-hand-keys) break))
+
+;; S is a layer key, so its same-hand combos are intentional.
+(deftemplate thrk-layer (base-key action hold-time)
+  (switch
+    ((key-timing 3 less-than $fast-typing-time)) $base-key break
+    () (tap-hold-release $tap-time $hold-time $base-key $action) break))
+
+(defalias
+  symbols (layer-while-held symbols)
+
+  cap (t! thrk-l esc lctl $hold-time)
+  meta (t! thrk-l spc lalt $hold-time)
+  sym (t! thrk-layer s @symbols $hold-time)
+)
+
+(deflayermap (base)
+  caps @cap
+  fn lctl
+  lctl fn
+  spc @meta
+  s @sym
+
+  ;; ISO Mac keyboard correction: swap § and < physical positions.
+  grv nubs
+  nubs grv
+)
+
+(deflayermap (symbols)
+  h left
+  j down
+  k up
+  l rght
+
+  e S-A-8
+  r S-A-9
+  d S-8
+  f S-9
+  c A-8
+  v A-9
+)

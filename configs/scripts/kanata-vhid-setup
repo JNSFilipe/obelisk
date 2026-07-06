@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+driver_version="6.2.0"
+pkg_url="https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice/releases/download/v${driver_version}/Karabiner-DriverKit-VirtualHIDDevice-${driver_version}.pkg"
+pkg_path="${TMPDIR:-/tmp}/Karabiner-DriverKit-VirtualHIDDevice-${driver_version}.pkg"
+
+manager="/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager"
+daemon="/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon"
+karabiner_uninstall_core="/Library/Application Support/org.pqrs/Karabiner-Elements/uninstall_core.sh"
+
+if (( EUID == 0 )); then
+  printf >&2 'Do not run this script with sudo. Run: kanata-vhid-setup\n'
+  exit 2
+fi
+
+sudo -v
+
+if /opt/homebrew/bin/brew list --cask karabiner-elements >/dev/null 2>&1; then
+  printf 'Uninstalling Homebrew Karabiner-Elements cask...\n'
+  /opt/homebrew/bin/brew uninstall --cask karabiner-elements || true
+fi
+
+if [[ -f "$karabiner_uninstall_core" ]]; then
+  printf 'Removing Karabiner-Elements core service without removing the virtual HID driver...\n'
+  sudo /bin/bash "$karabiner_uninstall_core" || true
+fi
+
+sudo pkill -f 'Karabiner-Core-Service|karabiner_console_user_server|Karabiner-Menu|Karabiner-NotificationWindow|Karabiner-Elements' 2>/dev/null || true
+
+if [[ ! -x "$manager" || ! -x "$daemon" ]]; then
+  printf 'Installing Karabiner DriverKit VirtualHIDDevice %s...\n' "$driver_version"
+  curl -L --fail --output "$pkg_path" "$pkg_url"
+  sudo installer -pkg "$pkg_path" -target /
+fi
+
+printf 'Activating Karabiner virtual HID driver...\n'
+sudo "$manager" forceActivate
+
+printf 'Starting Karabiner virtual HID daemon...\n'
+if ! pgrep -f "$daemon" >/dev/null 2>&1; then
+  sudo "$daemon" >/tmp/kanata-vhid-daemon.log 2>/tmp/kanata-vhid-daemon.err &
+  sleep 1
+fi
+
+if pgrep -f 'Karabiner-Core-Service|karabiner_console_user_server' >/dev/null 2>&1; then
+  printf >&2 'Karabiner-Elements is still running and will conflict with Kanata.\n'
+  printf >&2 'Quit it from the menu bar, then rerun this script.\n'
+  exit 1
+fi
+
+if ! pgrep -f "$daemon" >/dev/null 2>&1; then
+  printf >&2 'Virtual HID daemon is not running.\n'
+  printf >&2 'Approve the Driver Extension in System Settings, then rerun this script.\n'
+  exit 1
+fi
+
+printf 'Kanata driver path is ready. Now run: kanata-safe-test 20\n'

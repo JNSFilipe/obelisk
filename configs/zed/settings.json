@@ -7,6 +7,26 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "proxy": "",
+  "title_bar": {
+    "show_branch_name": true
+  },
+  "status_bar": {
+    "show_active_file": false,
+    "line_endings_button": true,
+    "cursor_position_button": true
+  },
+  "vim": {
+    "use_smartcase_find": true
+  },
+  "toolbar": {
+    "selections_menu": true,
+    "quick_actions": true,
+    "breadcrumbs": true
+  },
+  "gutter": {
+    "folds": false
+  },
   "agent_servers": {
     "claude-acp": {
       "type": "registry"
@@ -22,6 +42,7 @@
     }
   },
   "project_panel": {
+    "button": true,
     "dock": "right"
   },
   "outline_panel": {
@@ -34,6 +55,7 @@
     "dock": "right"
   },
   "terminal": {
+    "button": true,
     "keep_selection_on_copy": false,
     "copy_on_select": true,
     "option_as_meta": true,
@@ -79,9 +101,34 @@
       "username": "digiwest",
       "args": [],
       "projects": []
+    },
+    {
+      "host": "192.168.222.112",
+      "username": "digiwest",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/etc/dme/dme-backend/machines/wp22-demo-creality-duet-rrf3.json"
+          ]
+        },
+        {
+          "paths": [
+            "/opt/dme"
+          ]
+        },
+        {
+          "paths": [
+            "/opt/dme/services/dme-frontend"
+          ]
+        }
+      ]
     }
   ],
   "agent": {
+    "auto_compact": {
+      "threshold": "95%"
+    },
     "dock": "left",
     "tool_permissions": {
       "default": "allow",

@@ -27,34 +27,35 @@
     # ── CLI exceptions (not in nixpkgs — move to packages.nix when available)
     brews = [
       "herdr"
+      "awscli"
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────
 
     casks = [
       # ── Terminals ──────────────────────────────────────────────────────────
-      # "ghostty"
       # "kitty"
-      "wezterm"
+      # "ghostty"
       "cmux"
+      "wezterm"
 
       # ── Editors ────────────────────────────────────────────────────────────
-      "emacs-plus-app"   # from d12frosted/emacs-plus tap
-      "visual-studio-code"
-      "antigravity-cli"
-      "sublime-text"
-      "antigravity"      # for google-ai stuff
+      "zed"
       "datagrip"
-      # "zed"
+      # "antigravity"      # for google-ai stuff
+      "sublime-text"
+      "emacs-plus-app"   # from d12frosted/emacs-plus tap
+      "antigravity-cli"
+      "visual-studio-code"
 
       # ── Version control ────────────────────────────────────────────────────
       "github"           # GitHub Desktop
 
       # ── Window / keyboard management ──────────────────────────────────────
-      "karabiner-elements"
-      "leader-key"
-      "dockdoor"
       # "kindavim"
+      "dockdoor"
+      "hammerspoon"
+      "leader-key"
 
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"
@@ -65,29 +66,28 @@
       # ── Fonts ──────────────────────────────────────────────────────────────
       # TODO: The fonts should be managed on the nix side of things
       "font-iosevka"
-      "font-jetbrains-mono-nerd-font"
+      "font-geist-mono"
+      "font-source-code-pro"
       "font-fira-code-nerd-font"
       "font-fira-mono-nerd-font"
-      "font-source-code-pro"
-      "font-geist-mono"
       "font-symbols-only-nerd-font"
+      "font-jetbrains-mono-nerd-font"
 
       # ── LaTeX ──────────────────────────────────────────────────────────────
       # "mactex" # The all emcompasing, space eater approach
       # "basictex" # The lightweight alternative
 
       # ── Productivity ───────────────────────────────────────────────────────
+      "notion"
       "claude"
-      "codex-app"
       "raycast"
-      "notion-mail"
-      "notion-calendar"
-      "clickup"
       "bitwarden"
+      "codex-app"
+      "notion-calendar"
 
       # ── Communication ──────────────────────────────────────────────────────
-      "whatsapp"
       "zoom"
+      "whatsapp"
       "microsoft-teams"
 
       # ── Microsoft Office ───────────────────────────────────────────────────
@@ -96,14 +96,14 @@
       "microsoft-powerpoint"
 
       # ── Storage / cloud ────────────────────────────────────────────────────
-      "google-drive"
       "daisydisk"
-      "the-unarchiver"
+      "google-drive"
       "paragon-extfs"
+      "the-unarchiver"
 
       # ── Development tools ──────────────────────────────────────────────────
-      "docker-desktop"
       "postman"
+      # "docker-desktop"
 
       # ── Media / creative ───────────────────────────────────────────────────
       "gimp"
@@ -119,8 +119,8 @@
       "adguard"
       "rustdesk" # The free TeamViewer/AnyDesk solution
       "betterdisplay" # For creating virtual displays and stuf
-      "raspberry-pi-imager"
       "hp-easy-start"
+      "raspberry-pi-imager"
     ];
   };
 }
