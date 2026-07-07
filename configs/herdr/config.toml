@@ -1,0 +1,18 @@
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[keys]
+prefix = "ctrl+a"
+previous_workspace = "prefix+p"
+next_workspace = "prefix+n"
+switch_workspace = "prefix+1..9"
+previous_tab = ""
+next_tab = ""
+
+[[keys.command]]
+key = "prefix+space"
+type = "pane"
+command = "/Users/jfilipe/.config/scripts/herdr_sesh.sh"

@@ -40,6 +40,7 @@ in
     # ── Window / key management ────────────────────────────────────────────
     ".config/kanata".source     = link "kanata";
     ".hammerspoon".source       = link "hammerspoon";
+    ".config/herdr/config.toml".source = link "herdr/config.toml";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
     ".config/scripts".source    = link "scripts";
