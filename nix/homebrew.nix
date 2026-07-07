@@ -55,7 +55,6 @@
       # "kindavim"
       "dockdoor"
       "hammerspoon"
-      "leader-key"
 
       # ── Browsers ───────────────────────────────────────────────────────────
       "firefox"

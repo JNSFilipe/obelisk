@@ -14,6 +14,7 @@
 
 (defvar
   tap-time 200
+  cap-hold-time 100
   hold-time 250
   fast-typing-time 357
 
@@ -38,7 +39,7 @@
 (defalias
   symbols (layer-while-held symbols)
 
-  cap (t! thrk-l esc lctl $hold-time)
+  cap (t! thrk-l esc lctl $cap-hold-time)
   meta (t! thrk-l spc lalt $hold-time)
   sym (t! thrk-layer s @symbols $hold-time)
 )
