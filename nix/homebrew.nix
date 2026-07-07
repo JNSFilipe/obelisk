@@ -53,7 +53,7 @@
 
       # ── Window / keyboard management ──────────────────────────────────────
       # "kindavim"
-      "dockdoor"
+      # "dockdoor"
       "hammerspoon"
 
       # ── Browsers ───────────────────────────────────────────────────────────
@@ -79,7 +79,6 @@
       # ── Productivity ───────────────────────────────────────────────────────
       "notion"
       "claude"
-      "raycast"
       "bitwarden"
       "codex-app"
       "notion-calendar"

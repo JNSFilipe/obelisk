@@ -2,6 +2,10 @@ local emacsMap = hs.hotkey.modal.new()
 
 hs.window.animationDuration = 0
 
+local obeliskState = rawget(_G, "obeliskState") or {}
+_G.obeliskState = obeliskState
+obeliskState.menubars = obeliskState.menubars or {}
+
 local ctrlXActive = false
 local markActive = false
 local currentAppName = nil
@@ -81,7 +85,6 @@ local keys = {
     s = {{"cmd"}, "s", false},
     u = {{"cmd"}, "z", false},
     w = {{"cmd"}, "s", false},
-    ["1"] = {{"cmd", "shift"}, "w", false},
     ["7"] = {{"cmd", "shift"}, "7", false},
     ["8"] = {{"cmd", "shift"}, "8", false},
   },
@@ -99,11 +102,230 @@ local keys = {
   },
 }
 
+local function focusedWindow()
+  local win = hs.window.focusedWindow()
+  if win == nil then
+    hs.alert.show("No focused window", 0.6)
+  end
+  return win
+end
+
+local function setFocusedWindow(unit)
+  return function()
+    local win = focusedWindow()
+    if win == nil then
+      return
+    end
+
+    local frame = win:screen():frame()
+    win:setFrame({
+      x = frame.x + frame.w * unit.x,
+      y = frame.y + frame.h * unit.y,
+      w = frame.w * unit.w,
+      h = frame.h * unit.h,
+    }, 0)
+  end
+end
+
+local function resizeFocusedWindow(delta)
+  return function()
+    local win = focusedWindow()
+    if win == nil then
+      return
+    end
+
+    local screenFrame = win:screen():frame()
+    local frame = win:frame()
+    local centerX = frame.x + frame.w / 2
+    local centerY = frame.y + frame.h / 2
+    local width = math.max(math.floor(screenFrame.w * 0.35), math.min(screenFrame.w, math.floor(frame.w + screenFrame.w * delta)))
+    local height = math.max(math.floor(screenFrame.h * 0.35), math.min(screenFrame.h, math.floor(frame.h + screenFrame.h * delta)))
+
+    win:setFrame({
+      x = math.max(screenFrame.x, math.min(screenFrame.x + screenFrame.w - width, math.floor(centerX - width / 2))),
+      y = math.max(screenFrame.y, math.min(screenFrame.y + screenFrame.h - height, math.floor(centerY - height / 2))),
+      w = width,
+      h = height,
+    }, 0)
+  end
+end
+
+local windowBindings = {
+  {key = "h", fn = setFocusedWindow({x = 0, y = 0, w = 0.5, h = 1})},
+  {key = "j", fn = setFocusedWindow({x = 0, y = 0.5, w = 1, h = 0.5})},
+  {key = "k", fn = setFocusedWindow({x = 0, y = 0, w = 1, h = 0.5})},
+  {key = "l", fn = setFocusedWindow({x = 0.5, y = 0, w = 0.5, h = 1})},
+  {key = "m", fn = setFocusedWindow({x = 0, y = 0, w = 1, h = 1})},
+  {key = "left", fn = resizeFocusedWindow(-0.10)},
+  {key = "right", fn = resizeFocusedWindow(0.10)},
+}
+
+local caffeineMenu = obeliskState.menubars.caffeine
+if caffeineMenu == nil then
+  caffeineMenu = hs.menubar.new()
+  obeliskState.menubars.caffeine = caffeineMenu
+end
+
+local function caffeineIcon(awake)
+  local color = {white = awake and 1.0 or 0.55, alpha = 1}
+  local elements = {
+    {
+      type = "rectangle",
+      action = "stroke",
+      strokeWidth = 1.8,
+      strokeColor = color,
+      roundedRectRadii = {xRadius = 2.5, yRadius = 2.5},
+      frame = {x = 5, y = 10, w = 11, h = 7},
+    },
+    {
+      type = "oval",
+      action = "stroke",
+      strokeWidth = 1.8,
+      strokeColor = color,
+      frame = {x = 14, y = 11, w = 5, h = 5},
+    },
+    {
+      type = "segments",
+      action = "stroke",
+      strokeWidth = 1.8,
+      strokeColor = color,
+      closed = false,
+      coordinates = {
+        {x = 4, y = 18},
+        {x = 18, y = 18},
+      },
+    },
+  }
+
+  if awake then
+    table.insert(elements, {
+      type = "segments",
+      action = "stroke",
+      strokeWidth = 1.5,
+      strokeColor = color,
+      closed = false,
+      coordinates = {
+        {x = 8, y = 8},
+        {x = 7, y = 6},
+        {x = 8, y = 4},
+        {x = 7, y = 2},
+      },
+    })
+    table.insert(elements, {
+      type = "segments",
+      action = "stroke",
+      strokeWidth = 1.5,
+      strokeColor = color,
+      closed = false,
+      coordinates = {
+        {x = 12, y = 8},
+        {x = 13, y = 6},
+        {x = 12, y = 4},
+        {x = 13, y = 2},
+      },
+    })
+  else
+    table.insert(elements, {
+      type = "segments",
+      action = "stroke",
+      strokeWidth = 1.4,
+      strokeColor = color,
+      closed = false,
+      coordinates = {
+        {x = 6, y = 8},
+        {x = 15, y = 8},
+      },
+    })
+  end
+
+  local canvas = hs.canvas.new({x = 0, y = 0, w = 22, h = 22})
+  if canvas == nil then
+    return nil
+  end
+
+  local ok, image = pcall(function()
+    canvas:replaceElements(elements)
+    return canvas:imageFromCanvas()
+  end)
+  canvas:delete()
+
+  if ok then
+    return image
+  end
+
+  return nil
+end
+
+local caffeineIcons = {
+  idle = caffeineIcon(false),
+  awake = caffeineIcon(true),
+}
+
+local function setMenuIconOrTitle(menu, icon, fallbackTitle)
+  menu:setTitle(fallbackTitle)
+
+  if icon == nil then
+    return
+  end
+
+  local ok = pcall(function()
+    menu:setIcon(icon, true)
+    menu:setTitle("")
+  end)
+
+  if not ok then
+    menu:setIcon(nil)
+    menu:setTitle(fallbackTitle)
+  end
+end
+
+local function caffeineEnabled()
+  return hs.caffeinate.get("displayIdle") or hs.caffeinate.get("systemIdle")
+end
+
+local function updateCaffeineMenu()
+  if caffeineMenu == nil then
+    return
+  end
+
+  if caffeineEnabled() then
+    setMenuIconOrTitle(caffeineMenu, caffeineIcons.awake, "Coffee")
+    caffeineMenu:setTooltip("Caffeinate is on")
+  else
+    setMenuIconOrTitle(caffeineMenu, caffeineIcons.idle, "Sleep")
+    caffeineMenu:setTooltip("Caffeinate is off")
+  end
+end
+
+local function setCaffeinate(enabled)
+  hs.caffeinate.set("displayIdle", enabled)
+  hs.caffeinate.set("systemIdle", enabled)
+  updateCaffeineMenu()
+end
+
+local function toggleCaffeinate()
+  local enabled = not caffeineEnabled()
+  setCaffeinate(enabled)
+  hs.alert.show(enabled and "Caffeinate on" or "Caffeinate off", 0.7)
+end
+
+if caffeineMenu ~= nil then
+  caffeineMenu:setClickCallback(toggleCaffeinate)
+  updateCaffeineMenu()
+end
+
+for _, binding in ipairs(windowBindings) do
+  hs.hotkey.bind({"cmd", "ctrl"}, binding.key, binding.fn)
+end
+
+hs.hotkey.bind({"cmd", "ctrl"}, "c", toggleCaffeinate)
+
 local leaderModal = hs.hotkey.modal.new({"cmd", "ctrl"}, "a")
 local leaderCanvas = nil
 
 local leaderItems = {
   {key = "b", label = "Firefox", bundleID = "org.mozilla.firefox", path = "/Applications/Firefox.app"},
+  {key = "c", label = "Caffeinate", detail = "Toggle keep-awake", action = "caffeinate"},
   {key = "n", label = "Notion", bundleID = "notion.id", path = "/Applications/Notion.app"},
   {key = "C", mods = {"shift"}, bind = "c", label = "Notion Calendar", bundleID = "com.cron.electron", path = "/Applications/Notion Calendar.app"},
   {key = "d", label = "DataGrip", bundleID = "com.jetbrains.datagrip", path = "/Applications/DataGrip.app"},
@@ -113,7 +335,6 @@ local leaderItems = {
   {key = "m", label = "Mail", bundleID = "com.apple.mail", path = "/System/Applications/Mail.app", action = "openBundle"},
   {key = "p", label = "Postman", bundleID = "com.postmanlabs.mac", path = "/Applications/Postman.app"},
   {key = "s", label = "Sublime Text", bundleID = "com.sublimetext.4", path = "/Applications/Sublime Text.app"},
-  {key = "space", bind = "space", label = "Spotlight", bundleID = "com.apple.Spotlight", path = "/System/Library/CoreServices/Spotlight.app", action = "spotlight"},
   {key = "T", mods = {"shift"}, bind = "t", label = "WezTerm", bundleID = "com.github.wez.wezterm", path = "/Applications/WezTerm.app"},
   {key = "t", label = "Microsoft Teams", bundleID = "com.microsoft.teams2", path = "/Applications/Microsoft Teams.app"},
   {key = "v", label = "Visual Studio Code", bundleID = "com.microsoft.VSCode", path = "/Applications/Visual Studio Code.app"},
@@ -187,7 +408,7 @@ local function leaderTextElement(text, frame, size, color, font, alignment)
 end
 
 local function leaderIcon(path)
-  if hs.image.iconForFile == nil then
+  if path == nil or hs.image.iconForFile == nil then
     return nil
   end
   return hs.image.iconForFile(path)
@@ -234,13 +455,9 @@ local function openBundle(bundleID)
   return true
 end
 
-local function openSpotlight()
-  hs.eventtap.keyStroke({"cmd"}, "space", 0)
-end
-
 local function openApplication(item)
-  if item.action == "spotlight" then
-    openSpotlight()
+  if item.action == "caffeinate" then
+    toggleCaffeinate()
     return
   end
 
@@ -350,7 +567,7 @@ local function createLeaderCanvas()
       ".AppleSystemUIFontSemibold"
     ))
     table.insert(elements, leaderTextElement(
-      item.path,
+      item.detail or item.path or "",
       {x = textX, y = y + 28, w = textWidth, h = 18},
       13,
       {white = 0.58, alpha = 1},
@@ -402,6 +619,9 @@ end
 
 leaderModal.exited = function()
   dismissLeader()
+  if shouldEnableForCurrentApp() then
+    emacsMap:enter()
+  end
 end
 
 leaderModal:bind({}, "escape", exitLeader)
@@ -503,13 +723,18 @@ local function bindKeys()
     emacsMap:bind({"alt"}, letter, processKey("alt", letter), nil)
   end
 
+  emacsMap:bind({"cmd", "ctrl"}, "a", function()
+    emacsMap:exit()
+    leaderModal:enter()
+  end, nil)
+
   emacsMap:bind({"ctrl"}, "space", processKey("ctrl", "space"), nil)
   emacsMap:bind({"ctrl"}, "/", processKey("ctrl", "/"), nil)
-  emacsMap:bind({"ctrl"}, "1", processKey("ctrl", "1"), nil)
   emacsMap:bind({"ctrl"}, "7", processKey("ctrl", "7"), nil)
   emacsMap:bind({"ctrl"}, "8", processKey("ctrl", "8"), nil)
   emacsMap:bind({"alt", "shift"}, ",", processKey("altShift", ","), nil)
   emacsMap:bind({"alt", "shift"}, ".", processKey("altShift", "."), nil)
+
 end
 
 local function bundleIsExcluded(bundleID)

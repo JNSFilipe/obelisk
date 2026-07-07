@@ -48,6 +48,17 @@ in
     ".config/wallpapers".source = link "wallpapers";
   };
 
+  launchd.agents.hammerspoon = {
+    enable = true;
+    domain = "gui";
+    config = {
+      ProgramArguments = [ "/usr/bin/open" "-a" "Hammerspoon" ];
+      RunAtLoad = true;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.error.log";
+    };
+  };
+
   # ── Zsh ─────────────────────────────────────────────────────────────────────
 
   programs.zsh = {
@@ -201,6 +212,7 @@ in
   programs.fzf = {
     enable               = true;
     enableZshIntegration = true;
+    historyWidget.command = "";
   };
 
   # ── Tmux ─────────────────────────────────────────────────────────────────

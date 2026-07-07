@@ -3,6 +3,7 @@ let
   kanataRuntimeApp = "/Applications/Kanata.app";
   kanataRuntimeBin = "${kanataRuntimeApp}/Contents/MacOS/kanata";
   kanataRuntimeCfg = "/Library/Application Support/Kanata/kanata.kbd";
+  karabinerVhidDaemon = "/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon";
 in
 {
   imports = [ ./homebrew.nix ];
@@ -37,7 +38,23 @@ in
     install -d -m 0755 "${kanataRuntimeApp}/Contents/MacOS"
     cat > "${kanataRuntimeBin}" <<'SH'
     #!/bin/sh
-    exec "${pkgs.kanata}/bin/kanata" "$@"
+    kanata_bin=/etc/profiles/per-user/jfilipe/bin/kanata
+    vhid_service=system/org.pqrs.Karabiner-VirtualHIDDevice-Daemon
+
+    if [ ! -x "$kanata_bin" ]; then
+      echo "Kanata binary is unavailable at $kanata_bin; refusing to start." >&2
+      exit 78
+    fi
+
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+      if launchctl print "$vhid_service" 2>/dev/null | grep -q "state = running"; then
+        exec "$kanata_bin" "$@"
+      fi
+      sleep 1
+    done
+
+    echo "Karabiner VHID daemon is not running; refusing to start Kanata." >&2
+    exit 75
     SH
     chmod 0755 "${kanataRuntimeBin}"
     cat > "${kanataRuntimeApp}/Contents/Info.plist" <<'PLIST'
@@ -65,8 +82,12 @@ in
   '';
 
   system.activationScripts.postActivation.text = lib.mkAfter ''
+    if [ -f /Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist ]; then
+      launchctl bootstrap system /Library/LaunchDaemons/org.pqrs.Karabiner-VirtualHIDDevice-Daemon.plist 2>/dev/null || true
+      launchctl kickstart -k system/org.pqrs.Karabiner-VirtualHIDDevice-Daemon 2>/dev/null || true
+    fi
+
     if [ -f /Library/LaunchDaemons/org.nix-community.kanata.plist ]; then
-      launchctl enable system/org.nix-community.kanata 2>/dev/null || true
       launchctl bootstrap system /Library/LaunchDaemons/org.nix-community.kanata.plist 2>/dev/null || true
       launchctl kickstart -k system/org.nix-community.kanata 2>/dev/null || true
     fi
@@ -82,12 +103,23 @@ in
         "--no-wait"
       ];
       RunAtLoad = true;
-      KeepAlive = {
-        SuccessfulExit = false;
-      };
+      KeepAlive = false;
       StandardOutPath = "/Library/Logs/kanata.log";
       StandardErrorPath = "/Library/Logs/kanata.error.log";
       ProcessType = "Interactive";
+    };
+  };
+
+  launchd.daemons.karabiner-vhid-daemon = {
+    serviceConfig = {
+      Label = "org.pqrs.Karabiner-VirtualHIDDevice-Daemon";
+      ProgramArguments = [
+        karabinerVhidDaemon
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardOutPath = "/Library/Logs/karabiner-vhid-daemon.log";
+      StandardErrorPath = "/Library/Logs/karabiner-vhid-daemon.error.log";
     };
   };
 
