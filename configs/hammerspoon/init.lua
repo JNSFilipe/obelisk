@@ -160,6 +160,22 @@ local windowBindings = {
   {key = "right", fn = resizeFocusedWindow(0.10)},
 }
 
+local function openScreenshot()
+  local task = hs.task.new("/usr/bin/open", nil, {"-b", "com.apple.screenshot.launcher"})
+  if task ~= nil then
+    task:start()
+    return
+  end
+
+  hs.application.open("/System/Applications/Utilities/Screenshot.app")
+end
+
+local function bindHotkeyIfValid(mods, key, fn)
+  pcall(function()
+    hs.hotkey.bind(mods, key, fn)
+  end)
+end
+
 local caffeineMenu = obeliskState.menubars.caffeine
 if caffeineMenu == nil then
   caffeineMenu = hs.menubar.new()
@@ -319,6 +335,8 @@ for _, binding in ipairs(windowBindings) do
 end
 
 hs.hotkey.bind({"cmd", "ctrl"}, "c", toggleCaffeinate)
+bindHotkeyIfValid({"cmd"}, "º", openScreenshot)
+bindHotkeyIfValid({"cmd"}, "§", openScreenshot)
 
 local leaderModal = hs.hotkey.modal.new({"cmd", "ctrl"}, "a")
 local leaderCanvas = nil
