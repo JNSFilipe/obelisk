@@ -62,10 +62,11 @@
   k up
   l rght
 
-  e S-A-8
-  r S-A-9
+  ;; Avoid unreliable Option chords through the macOS virtual HID keyboard.
+  e (unicode U+007B)
+  r (unicode U+007D)
   d S-8
   f S-9
-  c A-8
-  v A-9
+  c (unicode U+005B)
+  v (unicode U+005D)
 )

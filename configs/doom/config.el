@@ -1,7 +1,7 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;; Place your private configuration here! Remember, you do not need to run 'doom
-;; sync' after modifying this file!
+;; Place your private configuration here. Nix bundles this directory, so run
+;; `make switch` from the dotfiles repository after modifying this file.
 
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email

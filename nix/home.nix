@@ -1,10 +1,13 @@
-{ pkgs, config, flakeRoot, ... }:
+{ pkgs, config, flakeRoot, lib, inputs, ... }:
 
 let
   link = path: config.lib.file.mkOutOfStoreSymlink "${flakeRoot}/configs/${path}";
 in
 {
-  imports = [ ./packages.nix ];
+  imports = [
+    ./packages.nix
+    inputs.nix-doom-emacs-unstraightened.homeModule
+  ];
 
   # ── Identity ────────────────────────────────────────────────────────────────
 
@@ -15,12 +18,63 @@ in
   # Let home-manager manage itself
   programs.home-manager.enable = true;
 
+  # The Doom bundle is exposed through nix-darwin's /Applications/Nix Apps.
+  # Avoid duplicate store-path registrations from Home Manager Apps.
+  targets.darwin.linkApps.enable = false;
+
+  programs.doom-emacs = {
+    enable = true;
+    doomDir = ../configs/doom;
+    emacs = pkgs.emacs30;
+    experimentalFetchTree = true;
+    extraPackages = epkgs: [
+      (epkgs.treesit-grammars.with-grammars (grammars: with grammars; [
+        tree-sitter-bash
+        tree-sitter-c
+        tree-sitter-cpp
+        tree-sitter-css
+        tree-sitter-csv
+        tree-sitter-dockerfile
+        tree-sitter-elisp
+        tree-sitter-go
+        tree-sitter-gomod
+        tree-sitter-hcl
+        tree-sitter-html
+        tree-sitter-javascript
+        tree-sitter-json
+        tree-sitter-lua
+        tree-sitter-make
+        tree-sitter-nix
+        tree-sitter-org
+        tree-sitter-python
+        tree-sitter-rust
+        tree-sitter-toml
+        tree-sitter-tsx
+        tree-sitter-typescript
+        tree-sitter-yaml
+        tree-sitter-zig
+      ]))
+    ];
+    emacsPackageOverrides = eself: esuper: {
+      org-pdftools = esuper.org-pdftools.overrideAttrs {
+        # Byte compilation starts epdfinfo, which aborts inside the Nix sandbox.
+        ignoreCompilationError = true;
+      };
+    };
+  };
+
   # ── PATH (available to all shells, including non-interactive scripts) ────
   home.sessionPath = [
     "$HOME/.local/bin"
     "$HOME/.cargo/bin"
     "$HOME/.config/scripts"
     "/Library/TeX/texbin"
+  ];
+
+  home.packages = [
+    (pkgs.writeShellScriptBin "vanilla-emacs" ''
+      exec ${pkgs.emacs30}/bin/emacs "$@"
+    '')
   ];
 
   # ── Config file symlinks ─────────────────────────────────────────────────────
@@ -31,7 +85,6 @@ in
     # ── Editors ────────────────────────────────────────────────────────────
     ".config/doom".source       = link "doom";
     ".config/nvim".source       = link "nvim";
-    ".config/emacs".source      = link "emacs";
     ".config/vemacs".source     = link "vemacs";
     ".config/zed".source        = link "zed";
 
@@ -48,6 +101,15 @@ in
     # ── Desktop ────────────────────────────────────────────────────────────
     ".config/wallpapers".source = link "wallpapers";
   };
+
+  home.activation.registerEmacsApp = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    app="/Applications/Nix Apps/Emacs.app"
+    if [ -d "$app" ]; then
+      run /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$app"
+      run /usr/bin/mdimport -i "$app"
+      run /usr/bin/killall Dock || true
+    fi
+  '';
 
   launchd.agents.hammerspoon = {
     enable = true;

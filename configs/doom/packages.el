@@ -1,8 +1,8 @@
 ;; -*- no-byte-compile: t; -*-
 ;;; $DOOMDIR/packages.el
 
-;; To install a package with Doom you must declare them here and run 'doom sync'
-;; on the command line, then restart Emacs for the changes to take effect -- or
+;; Declare Doom packages here, then run `make switch` from the dotfiles
+;; repository to rebuild the Nix-managed Doom package.
 
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:

@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   # ── CLI packages from nixpkgs ───────────────────────────────────────────────
-  # GUI apps and homebrew-only formulae live in nix/homebrew.nix.
+  # Nix GUI apps live in nix/darwin.nix; Homebrew casks live in homebrew.nix.
 
   home.packages = with pkgs; [
 
@@ -63,7 +63,10 @@
     neovim
 
     # ── CI / containers ───────────────────────────────────────────────────────
-    docker             # CLI only — docker-desktop cask provides the daemon
+    # docker             # CLI only — docker-desktop cask provides the daemon
+    podman             # CLI only
+    krunkit            # for podman
+    kubectl
     postgresql         # Postgres tooling
 
     # ── Tailscale ─────────────────────────────────────────────────────────────
@@ -98,6 +101,7 @@
 
     # C / C++
     gcc
+    libgccjit
     llvm
     armadillo          # linear algebra
     openblas
@@ -111,6 +115,7 @@
     claude-code
     codex
     gemini-cli
+    openspec
 
     # OCaml
     opam

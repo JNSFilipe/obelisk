@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ config, pkgs, lib, ... }:
 let
   kanataRuntimeApp = "/Applications/Kanata.app";
   kanataRuntimeBin = "${kanataRuntimeApp}/Contents/MacOS/kanata";
@@ -29,34 +29,10 @@ in
     launchctl bootout system/org.nix-community.kanata 2>/dev/null || true
     pkill -f "/Applications/Kanata.app/Contents/MacOS/kanata" 2>/dev/null || true
 
-    if [ -x /opt/homebrew/bin/brew ]; then
-      sudo --user=jfilipe --set-home /opt/homebrew/bin/brew trust --tap d12frosted/emacs-plus
-    fi
-
-    # Stable app bundle for macOS Input Monitoring. The LaunchDaemon below runs
-    # this path so macOS permissions are tied to a stable app identity.
+    # Put the actual executable in the stable app bundle. A shell wrapper that
+    # execs a Nix-store binary makes TCC authorize the versioned store path.
     install -d -m 0755 "${kanataRuntimeApp}/Contents/MacOS"
-    cat > "${kanataRuntimeBin}" <<'SH'
-    #!/bin/sh
-    kanata_bin=/etc/profiles/per-user/jfilipe/bin/kanata
-    vhid_service=system/org.pqrs.Karabiner-VirtualHIDDevice-Daemon
-
-    if [ ! -x "$kanata_bin" ]; then
-      echo "Kanata binary is unavailable at $kanata_bin; refusing to start." >&2
-      exit 78
-    fi
-
-    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-      if launchctl print "$vhid_service" 2>/dev/null | grep -q "state = running"; then
-        exec "$kanata_bin" "$@"
-      fi
-      sleep 1
-    done
-
-    echo "Karabiner VHID daemon is not running; refusing to start Kanata." >&2
-    exit 75
-    SH
-    chmod 0755 "${kanataRuntimeBin}"
+    install -m 0755 "${pkgs.kanata}/bin/kanata" "${kanataRuntimeBin}"
     cat > "${kanataRuntimeApp}/Contents/Info.plist" <<'PLIST'
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -140,6 +116,12 @@ in
 
   # Make zsh the default system shell (home-manager configures the user shell)
   programs.zsh.enable = true;
+
+  # nix-darwin copies GUI bundles from system packages into
+  # /Applications/Nix Apps so Launch Services and Spotlight can index them.
+  environment.systemPackages = [
+    config.home-manager.users.jfilipe.programs.doom-emacs.finalEmacsPackage
+  ];
 
   # nix-darwin does not add Homebrew to PATH. Append it so brew-only formulae
   # (herdr, biber, …) are reachable in the shell. Casks are /Applications GUI

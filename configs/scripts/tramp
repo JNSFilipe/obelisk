@@ -67,7 +67,7 @@ fi
 elisp='(run-with-timer 0.5 nil (lambda () '"${action}"'))'
 
 # Launch
-emacs_args=(--init-directory ~/.config/emacs/ --eval "$elisp")
+emacs_args=(--eval "$elisp")
 if $gui; then
   emacs "${emacs_args[@]}" &
 else

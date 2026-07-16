@@ -5,8 +5,8 @@ SUDO ?= sudo
 not-root:
 	@if [ "$(IS_ROOT)" = "0" ]; then \
 		printf '%s\n' "Do not run this target with sudo."; \
-		printf '%s\n' "Run: make update or make upgrade"; \
-		printf '%s\n' "The Makefile will call sudo only for system activation."; \
+		printf '%s\n' "Run the make target as your normal user."; \
+		printf '%s\n' "The Makefile calls sudo only for system activation."; \
 		exit 1; \
 	fi
 
@@ -64,8 +64,12 @@ brew-orphans: ## List homebrew formulae not declared in homebrew.nix
 
 # ── Submodules ────────────────────────────────────────────────────────────────
 
-doom-update: ## Pull latest Doom Emacs
-	git submodule update --remote configs/emacs
+doom-update: not-root ## Update the pinned Nix Doom Emacs inputs
+	@if command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1; then \
+		NIX_CONFIG="access-tokens = github.com=$$(gh auth token)" nix flake update nix-doom-emacs-unstraightened; \
+	else \
+		nix flake update nix-doom-emacs-unstraightened; \
+	fi
 
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
@@ -83,7 +87,7 @@ help: ## Show this help
 	@printf "  \033[33mEdit nix config and apply\033[0m\n"
 	@printf "    edit nix/*.nix → make switch\n\n"
 	@printf "  \033[33mEdit app config (live symlink)\033[0m\n"
-	@printf "    edit configs/*  (takes effect immediately)\n\n"
+	@printf "    edit configs/*  (Doom requires make switch)\n\n"
 	@printf "  \033[33mAdd a new CLI tool\033[0m\n"
 	@printf "    edit nix/packages.nix → make switch\n\n"
 	@printf "  \033[33mAdd a new GUI app\033[0m\n"
@@ -93,7 +97,7 @@ help: ## Show this help
 	@printf "  \033[33mUpdate everything\033[0m\n"
 	@printf "    make upgrade  (= update + switch)\n\n"
 	@printf "  \033[33mUpdate Doom Emacs\033[0m\n"
-	@printf "    make doom-update → doom sync\n\n"
+	@printf "    make doom-update → make switch\n\n"
 	@printf "  \033[33mSafe test before applying\033[0m\n"
 	@printf "    make build → make diff → make switch\n\n"
 	@printf "  \033[33mSomething broke after switch\033[0m\n"

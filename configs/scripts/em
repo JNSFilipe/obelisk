@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# em: launch lightweight emacs with python-lsp-server auto-install
+# em: launch Doom Emacs with python-lsp-server auto-install
 
 # Try to activate a local venv
 venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
@@ -20,4 +20,4 @@ if $activated; then
   fi
 fi
 
-emacs --init-directory ~/.config/emacs/ -nw "$@"
+emacs -nw "$@"

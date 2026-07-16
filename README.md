@@ -3,7 +3,7 @@
 Declarative macOS system configuration.
 [nix-darwin](https://github.com/nix-darwin/nix-darwin) manages the system,
 [home-manager](https://github.com/nix-community/home-manager) manages the user environment,
-and [homebrew](https://brew.sh) (via nix-darwin) handles GUI apps.
+and [homebrew](https://brew.sh) (via nix-darwin) handles GUI apps not packaged through Nix.
 
 ## Bootstrap
 
@@ -31,7 +31,7 @@ make help
   build           Build without activating (dry run)
   check           Evaluate the flake and run checks (no build)
   diff            Show what changed between current and built config
-  doom-update     Pull latest Doom Emacs
+  doom-update     Update the pinned Nix Doom Emacs inputs
   gc              Garbage-collect old nix store paths (keeps 7 days)
   gc-all          Garbage-collect ALL unused nix store paths
   generations     List all system generations
@@ -83,8 +83,8 @@ make upgrade
 
 **Update Doom Emacs:**
 ```bash
-make doom-update             # pull latest Doom
-doom sync                    # rebuild packages
+make doom-update             # update Unstraightened and its Doom inputs
+make switch                  # rebuild Doom and activate it
 ```
 
 **Safe test before applying:**
@@ -123,7 +123,7 @@ nix/
 configs/
   tmux.conf                tmux settings (loaded via programs.tmux)
   doom/                    Doom Emacs user config
-  emacs/                   Doom Emacs install (git submodule)
+  emacs/                   Legacy Doom checkout (no longer linked or executed)
   vemacs/                  Vanilla Emacs config
   nvim/                    Neovim
   zed/                     Zed
@@ -143,12 +143,14 @@ atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
 | What | Where | Why |
 |------|-------|-----|
 | CLI tools | `nix/packages.nix` | Reproducible, pinned via flake.lock |
-| GUI apps | `nix/homebrew.nix` casks | macOS .app bundles, no nix equivalent |
+| Nix GUI apps | `nix/darwin.nix` `environment.systemPackages` | Copied into `/Applications/Nix Apps` |
+| Other GUI apps | `nix/homebrew.nix` casks | macOS apps not managed through Nix |
 | CLI not in nixpkgs | `nix/homebrew.nix` brews | `doxx`, `codex-acp`, `ty` |
 | Shell / tool config | `nix/home.nix` `programs.*` | Declarative, managed by home-manager |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
-Editing files under `configs/` takes effect immediately (live symlinks).
+Editing most files under `configs/` takes effect immediately (live symlinks).
+`configs/doom/` is bundled into the Nix Doom package and requires `make switch`.
 Editing `nix/` or `programs.*` settings requires `make switch` to apply.
 
 ## tmux

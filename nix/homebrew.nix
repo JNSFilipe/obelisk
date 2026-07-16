@@ -18,12 +18,6 @@
       extraFlags  = [ "--force-cleanup" ];
     };
 
-    # ── Taps ─────────────────────────────────────────────────────────────────
-
-    taps = [
-      "d12frosted/emacs-plus" # needed for emacs-plus-app cask
-    ];
-
     # ── CLI exceptions (not in nixpkgs — move to packages.nix when available)
     brews = [
       "herdr"
@@ -35,8 +29,8 @@
     casks = [
       # ── Terminals ──────────────────────────────────────────────────────────
       # "kitty"
+      # "cmux"
       # "wezterm"
-      "cmux"
       "ghostty"
 
       # ── Editors ────────────────────────────────────────────────────────────
@@ -44,9 +38,7 @@
       "datagrip"
       # "antigravity"      # for google-ai stuff
       "sublime-text"
-      "emacs-plus-app"   # from d12frosted/emacs-plus tap
-      "antigravity-cli"
-      "visual-studio-code"
+      # "visual-studio-code"
 
       # ── Version control ────────────────────────────────────────────────────
       "github"           # GitHub Desktop
@@ -101,6 +93,7 @@
 
       # ── Development tools ──────────────────────────────────────────────────
       "postman"
+      "podman-desktop"
       # "docker-desktop"
 
       # ── Media / creative ───────────────────────────────────────────────────
