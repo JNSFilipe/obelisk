@@ -1,4 +1,13 @@
-{ pkgs, config, flakeRoot, lib, inputs, ... }:
+{
+  config,
+  flakeRoot,
+  homeDirectory,
+  inputs,
+  lib,
+  pkgs,
+  userName,
+  ...
+}:
 
 let
   link = path: config.lib.file.mkOutOfStoreSymlink "${flakeRoot}/configs/${path}";
@@ -11,9 +20,9 @@ in
 
   # ── Identity ────────────────────────────────────────────────────────────────
 
-  home.username      = "jfilipe";
-  home.homeDirectory = "/Users/jfilipe";
-  home.stateVersion  = "24.11";
+  home.username = userName;
+  home.homeDirectory = homeDirectory;
+  home.stateVersion = "24.11";
 
   # Let home-manager manage itself
   programs.home-manager.enable = true;
@@ -24,38 +33,43 @@ in
 
   programs.doom-emacs = {
     enable = true;
+    # nix-darwin exposes the GUI and emacs binaries system-wide; Home Manager
+    # only needs to provide the Doom command wrappers.
+    provideEmacs = false;
     doomDir = ../configs/doom;
     emacs = pkgs.emacs30;
     experimentalFetchTree = true;
     extraPackages = epkgs: [
-      (epkgs.treesit-grammars.with-grammars (grammars: with grammars; [
-        tree-sitter-bash
-        tree-sitter-c
-        tree-sitter-cpp
-        tree-sitter-css
-        tree-sitter-csv
-        tree-sitter-dockerfile
-        tree-sitter-elisp
-        tree-sitter-go
-        tree-sitter-gomod
-        tree-sitter-hcl
-        tree-sitter-html
-        tree-sitter-javascript
-        tree-sitter-json
-        tree-sitter-lua
-        tree-sitter-make
-        tree-sitter-nix
-        tree-sitter-org
-        tree-sitter-python
-        tree-sitter-rust
-        tree-sitter-toml
-        tree-sitter-tsx
-        tree-sitter-typescript
-        tree-sitter-yaml
-        tree-sitter-zig
-      ]))
+      (epkgs.treesit-grammars.with-grammars (
+        grammars: with grammars; [
+          tree-sitter-bash
+          tree-sitter-c
+          tree-sitter-cpp
+          tree-sitter-css
+          tree-sitter-csv
+          tree-sitter-dockerfile
+          tree-sitter-elisp
+          tree-sitter-go
+          tree-sitter-gomod
+          tree-sitter-hcl
+          tree-sitter-html
+          tree-sitter-javascript
+          tree-sitter-json
+          tree-sitter-lua
+          tree-sitter-make
+          tree-sitter-nix
+          tree-sitter-org
+          tree-sitter-python
+          tree-sitter-rust
+          tree-sitter-toml
+          tree-sitter-tsx
+          tree-sitter-typescript
+          tree-sitter-yaml
+          tree-sitter-zig
+        ]
+      ))
     ];
-    emacsPackageOverrides = eself: esuper: {
+    emacsPackageOverrides = _: esuper: {
       org-pdftools = esuper.org-pdftools.overrideAttrs {
         # Byte compilation starts epdfinfo, which aborts inside the Nix sandbox.
         ignoreCompilationError = true;
@@ -83,20 +97,20 @@ in
 
   home.file = {
     # ── Editors ────────────────────────────────────────────────────────────
-    ".config/doom".source       = link "doom";
-    ".config/nvim".source       = link "nvim";
-    ".config/vemacs".source     = link "vemacs";
-    ".config/zed".source        = link "zed";
+    ".config/doom".source = link "doom";
+    ".config/nvim".source = link "nvim";
+    ".config/vemacs".source = link "vemacs";
+    ".config/zed".source = link "zed";
 
     # ── Terminals ──────────────────────────────────────────────────────────
-    ".config/wezterm".source    = link "wezterm";
+    ".config/wezterm".source = link "wezterm";
     # ── Window / key management ────────────────────────────────────────────
-    ".config/kanata".source     = link "kanata";
-    ".hammerspoon".source       = link "hammerspoon";
+    ".config/kanata".source = link "kanata";
+    ".hammerspoon".source = link "hammerspoon";
     ".config/herdr/config.toml".source = link "herdr/config.toml";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
-    ".config/scripts".source    = link "scripts";
+    ".config/scripts".source = link "scripts";
 
     # ── Desktop ────────────────────────────────────────────────────────────
     ".config/wallpapers".source = link "wallpapers";
@@ -115,7 +129,11 @@ in
     enable = true;
     domain = "gui";
     config = {
-      ProgramArguments = [ "/usr/bin/open" "-a" "Hammerspoon" ];
+      ProgramArguments = [
+        "/usr/bin/open"
+        "-a"
+        "Hammerspoon"
+      ];
       RunAtLoad = true;
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.error.log";
@@ -129,10 +147,10 @@ in
 
     # History
     history = {
-      size       = 10000000;
-      save       = 10000000;
-      path       = "${config.home.homeDirectory}/.zsh_history";
-      share      = true;
+      size = 10000000;
+      save = 10000000;
+      path = "${config.home.homeDirectory}/.zsh_history";
+      share = true;
       ignoreDups = true;
       ignoreAllDups = true;
     };
@@ -144,10 +162,6 @@ in
       setopt appendhistory
       setopt hist_save_no_dups
       setopt hist_ignore_dups
-
-      # ── Completions ────────────────────────────────────────────────────────
-      autoload -Uz compinit
-      compinit
 
       # ── Disable fish-like completions inside Emacs eat ─────────────────
       if [[ -n "$INSIDE_EMACS_EAT" ]]; then
@@ -200,60 +214,72 @@ in
     '';
 
     plugins = [
-      { name = "fzf-tab";            src = "${pkgs.zsh-fzf-tab}/share/fzf-tab"; }
-      { name = "zsh-autocomplete";   src = "${pkgs.zsh-autocomplete}/share/zsh-autocomplete"; }
-      { name = "zsh-autosuggestions"; src = "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions"; }
-      { name = "pure";               src = "${pkgs.pure-prompt}/share/zsh/site-functions";
-        file = "prompt_pure_setup"; }
+      {
+        name = "fzf-tab";
+        src = "${pkgs.zsh-fzf-tab}/share/fzf-tab";
+      }
+      {
+        name = "zsh-autocomplete";
+        src = "${pkgs.zsh-autocomplete}/share/zsh-autocomplete";
+      }
+      {
+        name = "zsh-autosuggestions";
+        src = "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions";
+      }
+      {
+        name = "pure";
+        src = "${pkgs.pure-prompt}/share/zsh/site-functions";
+        file = "prompt_pure_setup";
+      }
     ];
 
     shellAliases = {
       # ls variants
-      ls   = "ls --color=auto";
-      la   = "ls --color=auto -A";
-      ll   = "ls --color=auto -al";
-      lsg  = "ls --color=auto -d -- *(/N)";
-      lag  = "ls --color=auto -d -A -- *(/N) .*(/N)";
-      llg  = "ls --color=auto -d -al -- *(/N) .*(/N)";
+      ls = "ls --color=auto";
+      la = "ls --color=auto -A";
+      ll = "ls --color=auto -al";
+      lsg = "ls --color=auto -d -- *(/N)";
+      lag = "ls --color=auto -d -A -- *(/N) .*(/N)";
+      llg = "ls --color=auto -d -al -- *(/N) .*(/N)";
       # Navigation (zoxide provides 'z'; cd alias not needed with enableZshIntegration)
       # Editors
-      vi   = "nvim";
-      vim  = "nvim";
+      vi = "nvim";
+      vim = "nvim";
       # Network
-      ww   = "wget";
+      ww = "wget";
       # System
-      del  = "sudo rm -r";
+      del = "sudo rm -r";
       comp = "sudo make install";
       # Git
-      gl   = "git clone";
-      lg   = "lazygit";
-      rcp  = "rsync -avzh --progress --stats";
+      gl = "git clone";
+      lg = "lazygit";
+      rcp = "rsync -avzh --progress --stats";
       # Homebrew helpers (kept for CLI convenience during transition)
-      brewdeps       = "brew deps --installed --tree";
-      brewup         = "brew upgrade --greedy";
-      caskup         = "brew upgrade --cask --greedy";
-      brewcl         = "brew cleanup -s && rm -rf $(brew --cache)";
+      brewdeps = "brew deps --installed --tree";
+      brewup = "brew upgrade --greedy";
+      caskup = "brew upgrade --cask --greedy";
+      brewcl = "brew cleanup -s && rm -rf $(brew --cache)";
       brewrm-msupdate = "brew uninstall microsoft-auto-update";
-      brewall        = "brewup && caskup && brewcl && brewrm-msupdate";
+      brewall = "brewup && caskup && brewcl && brewrm-msupdate";
     };
   };
 
   # ── Atuin (shell history) ────────────────────────────────────────────────────
 
   programs.atuin = {
-    enable               = true;
+    enable = true;
     enableZshIntegration = true;
     settings = {
-      search_mode                      = "daemon-fuzzy";
-      filter_mode                      = "global";
+      search_mode = "daemon-fuzzy";
+      filter_mode = "global";
       filter_mode_shell_up_key_binding = "global";
       search_mode_shell_up_key_binding = "fuzzy";
-      style                            = "compact";
-      ctrl_n_shortcuts                 = true;
-      enter_accept                     = true;
-      sync.records                     = true;
+      style = "compact";
+      ctrl_n_shortcuts = true;
+      enter_accept = true;
+      sync.records = true;
       daemon = {
-        enabled   = true;
+        enabled = true;
         autostart = true;
       };
       ai.enabled = true;
@@ -263,9 +289,9 @@ in
   # ── Zoxide (smart cd) ────────────────────────────────────────────────────────
 
   programs.zoxide = {
-    enable               = true;
+    enable = true;
     enableZshIntegration = true;
-    options              = [ "--cmd cd" ]; # also aliases 'cd' to zoxide
+    options = [ "--cmd cd" ]; # also aliases 'cd' to zoxide
   };
 
   home.sessionVariables._ZO_DOCTOR = "0"; # suppress false-positive init order warning
@@ -273,7 +299,7 @@ in
   # ── Fzf ─────────────────────────────────────────────────────────────────────
 
   programs.fzf = {
-    enable               = true;
+    enable = true;
     enableZshIntegration = true;
     historyWidget.command = "";
   };
@@ -281,7 +307,7 @@ in
   # ── Tmux ─────────────────────────────────────────────────────────────────
 
   programs.tmux = {
-    enable  = true;
+    enable = true;
     plugins = with pkgs.tmuxPlugins; [
       yank
       {
@@ -331,27 +357,27 @@ in
   # ── Ghostty ──────────────────────────────────────────────────────────────────
 
   programs.ghostty = {
-    enable          = true;
-    package         = null; # installed via homebrew cask
+    enable = true;
+    package = null; # installed via homebrew cask
     enableZshIntegration = false;
     settings = {
-      theme                    = "Carbonfox";
-      background-opacity       = 1.0;
-      window-padding-x         = "2,2";
-      window-padding-y         = "2,2";
+      theme = "Carbonfox";
+      background-opacity = 1.0;
+      window-padding-x = "2,2";
+      window-padding-y = "2,2";
       shell-integration-features = "no-cursor";
-      cursor-style             = "block";
-      cursor-style-blink       = false;
-      macos-titlebar-style     = "hidden";
-      bold-is-bright           = true;
-      font-family              = "Iosevka";
-      font-size                = 13;
-      keybind                  = [
+      cursor-style = "block";
+      cursor-style-blink = false;
+      macos-titlebar-style = "hidden";
+      bold-is-bright = true;
+      font-family = "Iosevka";
+      font-size = 13;
+      keybind = [
         "unconsumed:ctrl+ç=reload_config"
         "alt+space=text:\\x1b\\x20"
         "alt+d=esc:d"
       ];
-      macos-option-as-alt      = true;
+      macos-option-as-alt = true;
     };
   };
 
@@ -359,38 +385,39 @@ in
 
   programs.kitty = {
     enable = true;
+    package = null; # exposed as a nix-darwin system application
     font = {
       name = "Iosevka";
       size = 13;
     };
     settings = {
-      bold_font                        = "Iosevka Bold";
-      italic_font                      = "Iosevka Italic";
-      bold_italic_font                 = "Iosevka Bold Italic";
-      disable_ligatures                = "never";
-      text_composition_strategy        = "legacy";
-      cursor_shape                     = "block";
-      cursor_blink_interval            = 0;
-      scrollback_lines                 = 20000;
-      scrollback_fill_enlarged_window  = "yes";
-      wheel_scroll_min_lines           = 2;
-      detect_urls                      = "yes";
-      copy_on_select                   = "clipboard";
-      strip_trailing_spaces            = "smart";
-      focus_follows_mouse              = "yes";
-      hide_window_decorations          = "titlebar-only";
-      enable_audio_bell                = "no";
-      background_opacity               = 1;
-      background_blur                  = 0;
-      shell                            = "zsh";
-      editor                           = "em";
-      clipboard_control                = "write-clipboard write-primary read-clipboard-ask read-primary-ask";
-      clipboard_max_size               = 512;
-      allow_hyperlinks                 = "yes";
-      shell_integration                = "enabled no-cursor";
-      allow_cloning                    = "ask";
-      term                             = "xterm-kitty";
-      macos_option_as_alt              = "yes";
+      bold_font = "Iosevka Bold";
+      italic_font = "Iosevka Italic";
+      bold_italic_font = "Iosevka Bold Italic";
+      disable_ligatures = "never";
+      text_composition_strategy = "legacy";
+      cursor_shape = "block";
+      cursor_blink_interval = 0;
+      scrollback_lines = 20000;
+      scrollback_fill_enlarged_window = "yes";
+      wheel_scroll_min_lines = 2;
+      detect_urls = "yes";
+      copy_on_select = "clipboard";
+      strip_trailing_spaces = "smart";
+      focus_follows_mouse = "yes";
+      hide_window_decorations = "titlebar-only";
+      enable_audio_bell = "no";
+      background_opacity = 1;
+      background_blur = 0;
+      shell = "zsh";
+      editor = "em";
+      clipboard_control = "write-clipboard write-primary read-clipboard-ask read-primary-ask";
+      clipboard_max_size = 512;
+      allow_hyperlinks = "yes";
+      shell_integration = "enabled no-cursor";
+      allow_cloning = "ask";
+      term = "xterm-kitty";
+      macos_option_as_alt = "yes";
     };
     keybindings = {
       "cmd+q" = "quit";
@@ -406,8 +433,8 @@ in
       theme = "carbonfox";
       editor = {
         default-yank-register = "+";
-        line-number           = "relative";
-        mouse                 = true;
+        line-number = "relative";
+        mouse = true;
         cursor-shape = {
           insert = "bar";
           normal = "block";
@@ -416,29 +443,29 @@ in
         file-picker.hidden = false;
       };
       keys.normal = {
-        w     = "@miw";
+        w = "@miw";
         "C-q" = "wclose";
         space = {
-          F       = "no_op";
-          E       = "no_op";
-          e       = "no_op";
-          P       = "no_op";
-          R       = "no_op";
-          C       = "no_op";
-          D       = "no_op";
-          Y       = "no_op";
-          y       = "no_op";
-          "?"     = "no_op";
-          "/"     = "no_op";
-          "A-c"   = "no_op";
-          s       = ":vsplit";
-          S       = ":hsplit";
-          i       = "symbol_picker";
-          I       = "workspace_symbol_picker";
-          p       = "global_search";
-          d       = "workspace_diagnostics_picker";
-          w       = ":w";
-          o       = [
+          F = "no_op";
+          E = "no_op";
+          e = "no_op";
+          P = "no_op";
+          R = "no_op";
+          C = "no_op";
+          D = "no_op";
+          Y = "no_op";
+          y = "no_op";
+          "?" = "no_op";
+          "/" = "no_op";
+          "A-c" = "no_op";
+          s = ":vsplit";
+          S = ":hsplit";
+          i = "symbol_picker";
+          I = "workspace_symbol_picker";
+          p = "global_search";
+          d = "workspace_diagnostics_picker";
+          w = ":w";
+          o = [
             ":sh rm -f /tmp/unique-file"
             ":insert-output yazi \"%{buffer_name}\" --chooser-file=/tmp/unique-file"
             ":sh printf \"\\x1b[?1049h\\x1b[?2004h\" > /dev/tty"
@@ -452,32 +479,34 @@ in
           "C-b" = "buffer_picker";
           "C-s" = ":w";
           "C-c" = ":q";
-          k     = ":bc";
-          u     = "undo";
-          h     = "select_all";
+          k = ":bc";
+          u = "undo";
+          h = "select_all";
         };
       };
       keys.insert = {
-        "C-q"   = "wclose";
-        "C-g"   = "normal_mode";
-        j       = { j = "normal_mode"; };
-        "C-a"   = "goto_line_start";
-        "C-e"   = "goto_line_end";
-        "C-f"   = "move_char_right";
-        "C-b"   = "move_char_left";
-        "C-n"   = "move_line_down";
-        "C-p"   = "move_line_up";
-        "A-f"   = "move_next_word_start";
-        "A-b"   = "move_prev_word_start";
-        "A-v"   = "page_up";
-        "C-v"   = "page_down";
-        "A-<"   = "goto_file_start";
-        "A->"   = "goto_file_end";
-        "C-l"   = "align_view_center";
-        "2"     = "hsplit";
-        "3"     = "vsplit";
-        "0"     = "wclose";
-        "1"     = "wonly";
+        "C-q" = "wclose";
+        "C-g" = "normal_mode";
+        j = {
+          j = "normal_mode";
+        };
+        "C-a" = "goto_line_start";
+        "C-e" = "goto_line_end";
+        "C-f" = "move_char_right";
+        "C-b" = "move_char_left";
+        "C-n" = "move_line_down";
+        "C-p" = "move_line_up";
+        "A-f" = "move_next_word_start";
+        "A-b" = "move_prev_word_start";
+        "A-v" = "page_up";
+        "C-v" = "page_down";
+        "A-<" = "goto_file_start";
+        "A->" = "goto_file_end";
+        "C-l" = "align_view_center";
+        "2" = "hsplit";
+        "3" = "vsplit";
+        "0" = "wclose";
+        "1" = "wonly";
         "C-space" = "select_mode";
         "S-C-f" = "extend_char_right";
         "S-C-b" = "extend_char_left";
@@ -485,27 +514,27 @@ in
         "S-C-p" = "extend_line_up";
         "S-A-f" = "extend_next_word_start";
         "S-A-b" = "extend_prev_word_start";
-        "C-d"   = "delete_char_forward";
-        "C-h"   = "delete_char_backward";
-        "A-d"   = "delete_word_forward";
-        "C-w"   = "delete_word_backward";
+        "C-d" = "delete_char_forward";
+        "C-h" = "delete_char_backward";
+        "A-d" = "delete_word_forward";
+        "C-w" = "delete_word_backward";
         "A-backspace" = "delete_word_backward";
-        "C-k"   = "kill_to_line_end";
-        "C-y"   = "paste_before";
-        "C-u"   = "kill_to_line_start";
-        "C-o"   = "open_below";
-        "C-j"   = "insert_newline";
-        "C-/"   = "undo";
-        "C-_"   = "undo";
-        "C-s"   = "search";
+        "C-k" = "kill_to_line_end";
+        "C-y" = "paste_before";
+        "C-u" = "kill_to_line_start";
+        "C-o" = "open_below";
+        "C-j" = "insert_newline";
+        "C-/" = "undo";
+        "C-_" = "undo";
+        "C-s" = "search";
         "C-x" = {
           "C-f" = "file_explorer";
           "C-b" = "buffer_picker";
           "C-s" = ":w";
           "C-c" = ":q";
-          k     = ":bc";
-          u     = "undo";
-          h     = "select_all";
+          k = ":bc";
+          u = "undo";
+          h = "select_all";
         };
       };
     };
@@ -520,32 +549,32 @@ in
   # ── Yazi (file manager) ─────────────────────────────────────────────────────
 
   programs.yazi = {
-    enable               = true;
+    enable = true;
     enableZshIntegration = true;
-    shellWrapperName     = "y";
+    shellWrapperName = "y";
   };
 
   # ── Opam (OCaml) ────────────────────────────────────────────────────────────
 
   programs.opam = {
-    enable               = true;
+    enable = true;
     enableZshIntegration = false;
   };
 
   # ── Git ──────────────────────────────────────────────────────────────────────
 
   programs.git = {
-    enable     = true;
+    enable = true;
     lfs.enable = true;
     signing.format = null; # silence stateVersion warning
     ignores = [
       "**/.claude/settings.local.json"
     ];
     settings = {
-      user.name       = "JNSFilipe";
-      user.email      = "jose.filipe@ieee.org";
+      user.name = "JNSFilipe";
+      user.email = "jose.filipe@ieee.org";
       init.defaultBranch = "main";
-      pull.rebase     = false;
+      pull.rebase = false;
     };
   };
 }

@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   # ── nix-darwin homebrew integration ────────────────────────────────────────
   # GUI apps only.  All CLI tools live in nix/packages.nix.
   # Exceptions: brews[] holds CLI tools not yet packaged in nixpkgs;
@@ -10,18 +9,21 @@
     enable = true;
 
     onActivation = {
-      autoUpdate  = true;
-      upgrade     = true;
-      # "zap" removes anything not listed below; "cleanup" removes only
-      # unlisted formulae/casks. Use "cleanup" while transitioning.
-      cleanup     = "uninstall";
-      extraFlags  = [ "--force-cleanup" ];
+      # Keep system activation repeatable and non-destructive. Updates happen
+      # explicitly through `make brew-upgrade`; drift aborts instead of deleting.
+      autoUpdate = false;
+      upgrade = false;
+      cleanup = "check";
+    };
+
+    global = {
+      autoUpdate = false;
+      brewfile = true;
     };
 
     # ── CLI exceptions (not in nixpkgs — move to packages.nix when available)
     brews = [
       "herdr"
-      "awscli"
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────
@@ -41,7 +43,7 @@
       # "visual-studio-code"
 
       # ── Version control ────────────────────────────────────────────────────
-      "github"           # GitHub Desktop
+      "github" # GitHub Desktop
 
       # ── Window / keyboard management ──────────────────────────────────────
       # "kindavim"

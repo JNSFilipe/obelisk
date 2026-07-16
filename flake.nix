@@ -17,27 +17,85 @@
     };
   };
 
-  outputs = inputs @ { self, nixpkgs, nix-darwin, home-manager, ... }: {
-    darwinConfigurations."gauss" = nix-darwin.lib.darwinSystem {
-      system = "aarch64-darwin"; # Change to "x86_64-darwin" for Intel Macs
-      modules = [
-        ./nix/darwin.nix
-        home-manager.darwinModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.backupFileExtension = "bak-before-nix";
-          home-manager.users.jfilipe = import ./nix/home.nix;
-          home-manager.extraSpecialArgs = {
-            inherit inputs;
-            # On-disk path to this repo, needed for mkOutOfStoreSymlink
-            # (live symlinks that don't require rebuild on edit).
-            # Must match wherever the repo is cloned.
-            flakeRoot = "/Users/jfilipe/Documents/GitHub/obelisk";
-          };
-        }
-      ];
-      specialArgs = { inherit inputs; };
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      nix-darwin,
+      home-manager,
+      ...
+    }:
+    let
+      system = "aarch64-darwin";
+      hostName = "gauss";
+      userName = "jfilipe";
+      homeDirectory = "/Users/${userName}";
+      flakeRoot = "${homeDirectory}/Documents/GitHub/obelisk";
+      pkgs = nixpkgs.legacyPackages.${system};
+      statixConfig = pkgs.writeText "statix.toml" ''
+        disabled = [
+          # Nix modules are clearer when related option paths stay in domain sections.
+          "repeated_keys"
+        ]
+      '';
+
+      darwinConfiguration = nix-darwin.lib.darwinSystem {
+        inherit system;
+        modules = [
+          ./nix/darwin.nix
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "bak-before-nix";
+              users.${userName} = import ./nix/home.nix;
+              extraSpecialArgs = {
+                inherit
+                  flakeRoot
+                  homeDirectory
+                  inputs
+                  userName
+                  ;
+              };
+            };
+          }
+        ];
+        specialArgs = {
+          inherit
+            homeDirectory
+            hostName
+            inputs
+            userName
+            ;
+        };
+      };
+    in
+    {
+      darwinConfigurations.${hostName} = darwinConfiguration;
+
+      formatter.${system} = pkgs.nixfmt-tree;
+
+      checks.${system} = {
+        inherit (darwinConfiguration) system;
+        kanata-config = pkgs.runCommand "kanata-config-check" { nativeBuildInputs = [ pkgs.kanata ]; } ''
+          kanata --check --cfg ${./configs/kanata/kanata.kbd}
+          touch "$out"
+        '';
+        nix-static-analysis =
+          pkgs.runCommand "nix-static-analysis"
+            {
+              nativeBuildInputs = [
+                pkgs.deadnix
+                pkgs.statix
+              ];
+            }
+            ''
+                      deadnix --fail ${self}/flake.nix ${self}/nix
+              statix check --config ${statixConfig} ${self}/flake.nix
+              statix check --config ${statixConfig} ${self}/nix
+                      touch "$out"
+            '';
+      };
     };
-  };
 }

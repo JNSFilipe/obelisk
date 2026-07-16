@@ -6,8 +6,8 @@
   home.packages = with pkgs; [
 
     # ── Terminal utilities ────────────────────────────────────────────────────
-    coreutils          # GNU core utils (gls, gdate, …)
-    moreutils          # sponge, vipe, ts, …
+    coreutils # GNU core utils (gls, gdate, …)
+    moreutils # sponge, vipe, ts, …
     less
     wget
     htop
@@ -15,30 +15,17 @@
     jq
     fd
     ripgrep
-    fzf
     aspell
     aspellDicts.en
     aspellDicts.en-computers
-    doxx               # open word documents in terminal
-    xleak              # open excel documents in terminal
-    rtk                # For saving tokes: Yields chewedup output for common terminal tools
-
-    # ── Shell history / navigation ────────────────────────────────────────────
-    atuin
-    zoxide
-
-    # ── File managers ─────────────────────────────────────────────────────────
-    yazi
-
-    # ── Multiplexer ───────────────────────────────────────────────────────────
-    tmux
+    doxx # open word documents in terminal
+    xleak # open excel documents in terminal
+    rtk # For saving tokes: Yields chewedup output for common terminal tools
 
     # ── Keyboard remapping ────────────────────────────────────────────────────
     kanata
 
     # ── Version control ───────────────────────────────────────────────────────
-    git-lfs
-    lazygit
     gh
 
     # ── SSH helpers ───────────────────────────────────────────────────────────
@@ -47,30 +34,27 @@
 
     # ── Serial / networking ───────────────────────────────────────────────────
     picocom
-    portal             # file transfer to other devices
+    portal # file transfer to other devices
 
     # ── Build tools ───────────────────────────────────────────────────────────
     gnumake
     cmake
     pkg-config
-    act                # run GitHub Actions locally
+    act # run GitHub Actions locally
 
     # ── Syntax / parsing ──────────────────────────────────────────────────────
     tree-sitter
-    python3Packages.pygments   # for syntax-highlighted previews
+    python3Packages.pygments # for syntax-highlighted previews
 
     # ── Editors (terminal) ────────────────────────────────────────────────────
     neovim
 
     # ── CI / containers ───────────────────────────────────────────────────────
     # docker             # CLI only — docker-desktop cask provides the daemon
-    podman             # CLI only
-    krunkit            # for podman
+    podman # CLI only
+    krunkit # for podman
     kubectl
-    postgresql         # Postgres tooling
-
-    # ── Tailscale ─────────────────────────────────────────────────────────────
-    tailscale
+    postgresql # Postgres tooling
 
     # ── AWS ------─────────────────────────────────────────────────────────────
     awscli2
@@ -81,11 +65,11 @@
     uv
     ty
     python3Packages.python-lsp-server
-    ruff               # includes built-in LSP (replaces ruff-lsp)
+    ruff # includes built-in LSP (replaces ruff-lsp)
     black
 
     # Rust (via rustup so toolchain updates work; or pin via nixpkgs)
-    rustup             # rustup manages rustc / cargo / rust-analyzer
+    rustup # rustup manages rustc / cargo / rust-analyzer
 
     # Go
     go
@@ -103,22 +87,19 @@
     gcc
     libgccjit
     llvm
-    armadillo          # linear algebra
+    armadillo # linear algebra
     openblas
     boost
     python3Packages.pybind11
     raylib
-    libusb1            # USB device access (needed for rpiboot, etc.)
-    rpiboot            # boot Raspberry Pi CM/Zero over USB
+    libusb1 # USB device access (needed for rpiboot, etc.)
+    rpiboot # boot Raspberry Pi CM/Zero over USB
 
     # AI coding assistants
     claude-code
     codex
     gemini-cli
     openspec
-
-    # OCaml
-    opam
 
     # LaTeX
     tectonic

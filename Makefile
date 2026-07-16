@@ -1,4 +1,6 @@
-FLAKE  = $(CURDIR)\#gauss
+HOST ?= gauss
+FLAKE = $(CURDIR)\#$(HOST)
+CONFIG = $(CURDIR)\#darwinConfigurations.$(HOST).config
 IS_ROOT := $(shell id -u)
 SUDO ?= sudo
 
@@ -12,13 +14,13 @@ not-root:
 
 # ── Core ──────────────────────────────────────────────────────────────────────
 
-switch: ## Build and activate the system configuration
+switch: not-root ## Build and activate the system configuration
 	$(SUDO) darwin-rebuild switch --flake "$(FLAKE)"
 
 build: ## Build without activating (dry run)
 	darwin-rebuild build --flake "$(FLAKE)"
 
-check: ## Evaluate the flake and run checks (no build)
+check: ## Build the system and run flake checks
 	nix flake check
 
 # ── Updates ───────────────────────────────────────────────────────────────────
@@ -34,7 +36,7 @@ upgrade: update switch ## Update inputs and activate in one step
 
 # ── History ───────────────────────────────────────────────────────────────────
 
-rollback: ## Roll back to the previous generation
+rollback: not-root ## Roll back Nix system and Home Manager state
 	$(SUDO) darwin-rebuild switch --rollback
 
 generations: ## List all system generations
@@ -42,10 +44,10 @@ generations: ## List all system generations
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 
-gc: switch ## Activate, then garbage-collect old nix store paths (keeps 7 days)
+gc: not-root ## Garbage-collect old nix store paths (keeps 7 days)
 	$(SUDO) nix-collect-garbage --delete-older-than 7d
 
-gc-all: switch ## Activate, then garbage-collect ALL unused nix store paths
+gc-all: not-root ## Garbage-collect ALL unused nix store paths
 	$(SUDO) nix-collect-garbage -d
 
 store-size: ## Show nix store disk usage
@@ -59,8 +61,13 @@ diff: ## Show what changed between current and built config
 packages: ## List all nix-managed packages in the current profile
 	nix profile list --profile /nix/var/nix/profiles/system 2>/dev/null || echo "Use: nix-store -q --references /nix/var/nix/profiles/system"
 
-brew-orphans: ## List homebrew formulae not declared in homebrew.nix
-	brew list --formula
+brew-orphans: ## List Homebrew packages not declared in homebrew.nix
+	brew bundle cleanup --file="$$(nix eval --raw "$(CONFIG).environment.variables.HOMEBREW_BUNDLE_FILE")"
+
+brew-upgrade: not-root ## Explicitly update and upgrade declared Homebrew packages
+	brew update
+	brew bundle install --file="$$(nix eval --raw "$(CONFIG).environment.variables.HOMEBREW_BUNDLE_FILE")"
+	brew cleanup
 
 # ── Submodules ────────────────────────────────────────────────────────────────
 
@@ -73,7 +80,7 @@ doom-update: not-root ## Update the pinned Nix Doom Emacs inputs
 
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
-bootstrap: ## First-time nix-darwin install (run after installing nix)
+bootstrap: not-root ## First-time nix-darwin install (run after installing nix)
 	nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake "$(FLAKE)"
 
 uninstall-nix: ## Completely remove nix from the system
@@ -94,18 +101,20 @@ help: ## Show this help
 	@printf "    edit nix/homebrew.nix → make switch\n\n"
 	@printf "  \033[33mAdd a new config file\033[0m\n"
 	@printf "    add to configs/ → add home.file in nix/home.nix → make switch\n\n"
-	@printf "  \033[33mUpdate everything\033[0m\n"
+	@printf "  \033[33mUpdate Nix inputs\033[0m\n"
 	@printf "    make upgrade  (= update + switch)\n\n"
+	@printf "  \033[33mUpdate Homebrew packages\033[0m\n"
+	@printf "    make brew-upgrade\n\n"
 	@printf "  \033[33mUpdate Doom Emacs\033[0m\n"
 	@printf "    make doom-update → make switch\n\n"
 	@printf "  \033[33mSafe test before applying\033[0m\n"
 	@printf "    make build → make diff → make switch\n\n"
 	@printf "  \033[33mSomething broke after switch\033[0m\n"
-	@printf "    make rollback\n\n"
+	@printf "    make rollback  (Nix-managed state only)\n\n"
 	@printf "  \033[33mReclaim disk space\033[0m\n"
 	@printf "    make gc  (or gc-all for aggressive cleanup)\n\n"
 	@printf "  \033[33mAudit homebrew drift\033[0m\n"
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans doom-update bootstrap uninstall-nix help
+.PHONY: not-root switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-update bootstrap uninstall-nix help

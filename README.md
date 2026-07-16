@@ -8,8 +8,8 @@ and [homebrew](https://brew.sh) (via nix-darwin) handles GUI apps not packaged t
 ## Bootstrap
 
 ```bash
-# Clone (Doom Emacs is a submodule)
-git clone --recurse-submodules https://github.com/jfilipe/obelisk.git
+# Clone (the legacy Emacs checkout is an optional submodule)
+git clone https://github.com/jfilipe/obelisk.git
 cd obelisk
 
 # Install Nix (Determinate Systems installer)
@@ -27,9 +27,10 @@ make help
 
 ```
   bootstrap       First-time nix-darwin install (run after installing nix)
-  brew-orphans    List homebrew formulae not declared in homebrew.nix
+  brew-orphans    List Homebrew packages not declared in homebrew.nix
+  brew-upgrade    Explicitly update and upgrade declared Homebrew packages
   build           Build without activating (dry run)
-  check           Evaluate the flake and run checks (no build)
+  check           Build the system and run flake checks
   diff            Show what changed between current and built config
   doom-update     Update the pinned Nix Doom Emacs inputs
   gc              Garbage-collect old nix store paths (keeps 7 days)
@@ -81,6 +82,12 @@ make switch
 make upgrade
 ```
 
+Homebrew deliberately does not update during system activation. Upgrade its
+declared formulae and casks separately:
+```bash
+make brew-upgrade
+```
+
 **Update Doom Emacs:**
 ```bash
 make doom-update             # update Unstraightened and its Doom inputs
@@ -96,8 +103,11 @@ make switch                  # apply if happy
 
 **Something broke after switch:**
 ```bash
-make rollback                # instant revert to previous generation
+make rollback                # revert Nix-managed system and Home Manager state
 ```
+
+Rollback does not revert Homebrew upgrades or files exposed through the live
+`configs/` symlinks. Both are intentionally managed outside Nix generations.
 
 **Reclaim disk space:**
 ```bash
@@ -145,13 +155,17 @@ atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
 | CLI tools | `nix/packages.nix` | Reproducible, pinned via flake.lock |
 | Nix GUI apps | `nix/darwin.nix` `environment.systemPackages` | Copied into `/Applications/Nix Apps` |
 | Other GUI apps | `nix/homebrew.nix` casks | macOS apps not managed through Nix |
-| CLI not in nixpkgs | `nix/homebrew.nix` brews | `doxx`, `codex-acp`, `ty` |
+| CLI not in nixpkgs | `nix/homebrew.nix` brews | Currently `herdr` |
 | Shell / tool config | `nix/home.nix` `programs.*` | Declarative, managed by home-manager |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
 Editing most files under `configs/` takes effect immediately (live symlinks).
 `configs/doom/` is bundled into the Nix Doom package and requires `make switch`.
 Editing `nix/` or `programs.*` settings requires `make switch` to apply.
+
+System activation installs missing Homebrew packages but does not update or
+remove packages. It fails with a drift report when an undeclared package is
+present; use `make brew-orphans` to inspect the same report beforehand.
 
 ## tmux
 
