@@ -38,7 +38,7 @@ _: {
       # ── Editors ────────────────────────────────────────────────────────────
       "zed"
       "datagrip"
-      # "antigravity"      # for google-ai stuff
+      "antigravity-cli"
       "sublime-text"
       # "visual-studio-code"
 
@@ -73,9 +73,12 @@ _: {
       # ── Productivity ───────────────────────────────────────────────────────
       "notion"
       "claude"
+      "chatgpt"
       "bitwarden"
       "codex-app"
       "notion-calendar"
+      "raycast"
+      "shortcat"
 
       # ── Communication ──────────────────────────────────────────────────────
       "zoom"

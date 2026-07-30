@@ -104,8 +104,7 @@ in
 
     # ── Terminals ──────────────────────────────────────────────────────────
     ".config/wezterm".source = link "wezterm";
-    # ── Window / key management ────────────────────────────────────────────
-    ".config/kanata".source = link "kanata";
+    # ── Window management ──────────────────────────────────────────────────
     ".hammerspoon".source = link "hammerspoon";
     ".config/herdr/config.toml".source = link "herdr/config.toml";
 
@@ -124,6 +123,32 @@ in
       run /usr/bin/killall Dock || true
     fi
   '';
+
+  home.activation.raycastHotkey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run /usr/bin/defaults write com.raycast.macos raycastGlobalHotkey -string "Command-49"
+    # Preserve Spotlight's original key definition while disabling its hotkey.
+    run /usr/bin/defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+      -dict-add 64 \
+      '<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>49</integer><integer>1048576</integer></array><key>type</key><string>standard</string></dict></dict>'
+    run /usr/bin/killall Spotlight || true
+  '';
+
+  launchd.agents.raycast = {
+    enable = true;
+    domain = "gui";
+    config = {
+      ProgramArguments = [
+        "/usr/bin/open"
+        "-g"
+        "-j"
+        "-a"
+        "Raycast"
+      ];
+      RunAtLoad = true;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.error.log";
+    };
+  };
 
   launchd.agents.hammerspoon = {
     enable = true;

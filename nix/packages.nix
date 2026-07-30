@@ -22,9 +22,6 @@
     xleak # open excel documents in terminal
     rtk # For saving tokes: Yields chewedup output for common terminal tools
 
-    # ── Keyboard remapping ────────────────────────────────────────────────────
-    kanata
-
     # ── Version control ───────────────────────────────────────────────────────
     gh
 

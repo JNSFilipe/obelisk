@@ -78,10 +78,6 @@
 
       checks.${system} = {
         inherit (darwinConfiguration) system;
-        kanata-config = pkgs.runCommand "kanata-config-check" { nativeBuildInputs = [ pkgs.kanata ]; } ''
-          kanata --check --cfg ${./configs/kanata/kanata.kbd}
-          touch "$out"
-        '';
         nix-static-analysis =
           pkgs.runCommand "nix-static-analysis"
             {

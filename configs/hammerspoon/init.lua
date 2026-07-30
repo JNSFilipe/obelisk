@@ -1,4 +1,5 @@
 local emacsMap = hs.hotkey.modal.new()
+local enableEmacsRemapping = false
 
 hs.window.animationDuration = 0
 
@@ -799,13 +800,15 @@ local function updateCurrentApp(app)
   end
 end
 
-bindKeys()
-updateCurrentApp(hs.application.frontmostApplication())
+if enableEmacsRemapping then
+  bindKeys()
+  updateCurrentApp(hs.application.frontmostApplication())
 
-emacsAppWatcher = hs.application.watcher.new(function(_, eventType, app)
-  if eventType == hs.application.watcher.activated then
-    updateCurrentApp(app)
-  end
-end)
+  emacsAppWatcher = hs.application.watcher.new(function(_, eventType, app)
+    if eventType == hs.application.watcher.activated then
+      updateCurrentApp(app)
+    end
+  end)
 
-emacsAppWatcher:start()
+  emacsAppWatcher:start()
+end
