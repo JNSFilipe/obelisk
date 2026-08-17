@@ -138,11 +138,19 @@
 
 ;; Leader keybindings
 (after! general
+  ;; The minimal `(default)' module does not install Doom's +bindings preset,
+  ;; so retain the canonical command launcher explicitly in every Evil state.
+  (define-key! 'override
+    "M-x" #'execute-extended-command
+    "A-x" #'execute-extended-command)
+
   (map! :leader
     :desc "M-x" "SPC" #'execute-extended-command
-    :desc "Eval" ";" #'eval-expression
+    :desc "Eval" "X" #'eval-expression
     :desc "IBuffer" "." #'ibuffer
-    :desc "Scratch Buffer" "," #'doom/open-scratch-buffer
+    :desc "Scratch Terminal" "," #'+ghostel/scratch-toggle
+    :desc "Scratch Buffer" ";" #'doom/open-scratch-buffer
+    :desc "Terminal Here" "t" #'+ghostel/here
     :desc "Search Buffer" "v" #'+default/search-buffer
     :desc "Search Project" "g" #'+default/search-project
     :desc "Git" "G" #'magit
@@ -162,6 +170,27 @@
     :desc "Yanks" :n "y" #'consult-yank-pop
     :desc "Yanks" :v "y" #'consult-yank-replace
     :desc "Switch Project" "p" #'projectile-switch-project))
+
+;; Keep the command palette visible and exploratory.  Doom normally defers
+;; Vertico and Marginalia until its first-input hook; loading them eagerly makes
+;; the very first M-x invocation show candidates and command descriptions.
+(use-package! vertico
+  :demand t
+  :config
+  (setq vertico-count 17
+        vertico-cycle t
+        vertico-resize t)
+  (vertico-mode 1)
+  (map! :map vertico-map
+        "TAB" #'vertico-next
+        [tab] #'vertico-next
+        "S-TAB" #'vertico-previous
+        [backtab] #'vertico-previous))
+
+(use-package! marginalia
+  :demand t
+  :config
+  (marginalia-mode 1))
 
 ;; Separate dape keybindings with proper prefix using 'd' for debug
 (map! :leader
@@ -203,10 +232,6 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
   (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
 
-(use-package! evil-ghostel
-  :after (ghostel evil)
-  :hook (ghostel-mode . evil-ghostel-mode))
-
 ;; (use-package! consult-gh
 ;;   :after consult)
 (use-package! consult-gh
@@ -236,3 +261,44 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 (map! :leader
   (:prefix ("-" . "toggle")
    :desc "Flyspell" "s" #'flyspell-mode))
+
+;; Herdr-like Doom workspaces and Ghostel coding-agent sidebar.
+(load! "sheprd")
+
+;; Floating scratch terminal + open-terminal-here helpers.
+(load! "scratch-term")
+
+(map! :leader
+  (:prefix ("TAB" . "workspace")
+   :desc "Display workspace bar" "TAB" #'+workspace/display
+   :desc "Switch workspace" "." #'+workspace/switch-to
+   :desc "Switch to last workspace" "`" #'+workspace/other
+   :desc "Previous workspace" "[" #'+workspace/switch-left
+   :desc "Next workspace" "]" #'+workspace/switch-right
+   :desc "New workspace" "n" #'+workspace/new
+   :desc "New named workspace" "N" #'+workspace/new-named
+   :desc "Load workspace" "l" #'+workspace/load
+   :desc "Save workspace" "s" #'+workspace/save
+   :desc "Kill workspace" "d" #'+workspace/kill
+   :desc "Delete saved workspace" "D" #'+workspace/delete
+   :desc "Rename workspace" "r" #'+workspace/rename
+   :desc "Restore last session" "R" #'+workspace/restore-last-session
+   :desc "Kill workspace session" "x" #'+workspace/kill-session
+   :desc "Switch to workspace 1" "1" #'+workspace/switch-to-0
+   :desc "Switch to workspace 2" "2" #'+workspace/switch-to-1
+   :desc "Switch to workspace 3" "3" #'+workspace/switch-to-2
+   :desc "Switch to workspace 4" "4" #'+workspace/switch-to-3
+   :desc "Switch to workspace 5" "5" #'+workspace/switch-to-4
+   :desc "Switch to workspace 6" "6" #'+workspace/switch-to-5
+   :desc "Switch to workspace 7" "7" #'+workspace/switch-to-6
+   :desc "Switch to workspace 8" "8" #'+workspace/switch-to-7
+   :desc "Switch to workspace 9" "9" #'+workspace/switch-to-8
+   :desc "Switch to final workspace" "0" #'+workspace/switch-to-final
+   :desc "Toggle Sheprd" "h" #'sheprd-toggle
+   :desc "Focus Sheprd spaces" "w" #'sheprd-focus-spaces
+   :desc "Focus Sheprd agents" "a" #'sheprd-focus-agents))
+
+;; GUI Emacs reports the physical Tab key as <tab>, while Doom's workspace
+;; prefix uses TAB (the terminal/C-i event).  Point both events at the same map.
+(define-key doom-leader-map (kbd "<tab>")
+  (lookup-key doom-leader-map (kbd "TAB")))
