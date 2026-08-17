@@ -24,6 +24,8 @@ _: {
     # ── CLI exceptions (not in nixpkgs — move to packages.nix when available)
     brews = [
       "herdr"
+      "mqttui"
+      "clojure"
     ];
 
     # ── Casks (GUI applications) ─────────────────────────────────────────────

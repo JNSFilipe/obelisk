@@ -11,6 +11,23 @@
 
 let
   link = path: config.lib.file.mkOutOfStoreSymlink "${flakeRoot}/configs/${path}";
+
+  # nixpkgs' zsh-autocomplete 26.08.03 references the `z-async` git submodule
+  # but the derivation neither fetches submodules nor installs it, so every
+  # prompt prints "z-async: function definition file not found". Fetch the
+  # submodule ourselves and drop it where the plugin autoloads it from
+  # (~autocomplete/z-async/z-async). Remove once nixpkgs ships the submodule.
+  zsh-autocomplete-fixed = pkgs.zsh-autocomplete.overrideAttrs (old: {
+    zAsyncSrc = pkgs.fetchFromGitHub {
+      owner = "marlonrichert";
+      repo = "z-async";
+      rev = "5370537de80670b4a97e49cd253d15067709c0a6";
+      hash = "sha256-tPosFoZSaUShaRpv7ca9BdOMREfmhnzjd/VKHSshhXo=";
+    };
+    installPhase = old.installPhase + ''
+      cp -R "$zAsyncSrc" "$out/share/zsh-autocomplete/z-async"
+    '';
+  });
 in
 {
   imports = [
@@ -245,7 +262,7 @@ in
       }
       {
         name = "zsh-autocomplete";
-        src = "${pkgs.zsh-autocomplete}/share/zsh-autocomplete";
+        src = "${zsh-autocomplete-fixed}/share/zsh-autocomplete";
       }
       {
         name = "zsh-autosuggestions";
