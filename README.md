@@ -226,7 +226,8 @@ ls /Library/LaunchDaemons/org.nixos.*
 
 ## Adding a new tool
 
-1. **CLI tool in nixpkgs**: add to `nix/packages.nix`, run `make switch`
+1. **CLI tool**: add to `brews` in `nix/homebrew.nix` (or `nix/packages.nix` if
+   homebrew-core does not ship it), run `make switch`
 2. **GUI app**: add cask name to `nix/homebrew.nix`, run `make switch`
 3. **Config file**: add to `configs/`, add `home.file` entry in `nix/home.nix`, run `make switch`
 
