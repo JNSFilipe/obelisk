@@ -122,7 +122,6 @@ in
     # ── Terminals ──────────────────────────────────────────────────────────
     ".config/wezterm".source = link "wezterm";
     # ── Window management ──────────────────────────────────────────────────
-    ".hammerspoon".source = link "hammerspoon";
     ".config/herdr/config.toml".source = link "herdr/config.toml";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
@@ -164,21 +163,6 @@ in
       RunAtLoad = true;
       StandardOutPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.log";
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.error.log";
-    };
-  };
-
-  launchd.agents.hammerspoon = {
-    enable = true;
-    domain = "gui";
-    config = {
-      ProgramArguments = [
-        "/usr/bin/open"
-        "-a"
-        "Hammerspoon"
-      ];
-      RunAtLoad = true;
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/hammerspoon-launcher.error.log";
     };
   };
 

@@ -157,7 +157,6 @@ configs/
   zed/                     Zed
   kitty/                   Kitty theme files
   wezterm/                 WezTerm terminal
-  hammerspoon/             Window management and explicit utility shortcuts
   scripts/                 Shell scripts (zzz, ttt, fzflauncher, ...)
   wallpapers/              Desktop backgrounds
 ```
