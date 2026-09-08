@@ -54,7 +54,11 @@ in
     # only needs to provide the Doom command wrappers.
     provideEmacs = false;
     doomDir = ../configs/doom;
-    emacs = pkgs.emacs30;
+    # The GNU NS (Cocoa) build does not expose its windows to the macOS
+    # Accessibility API, so AX-based tiling window managers (Tangrid) cannot
+    # tile it or list it in their window switcher.  The Mitsuharu Mac port
+    # implements Accessibility properly, so use it on darwin.
+    emacs = pkgs.emacs30-macport;
     experimentalFetchTree = true;
     extraPackages = epkgs: [
       (epkgs.treesit-grammars.with-grammars (
