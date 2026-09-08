@@ -157,13 +157,14 @@ _: {
       # ── Window / keyboard management ──────────────────────────────────────
       # "kindavim"
       # "dockdoor"
-      "hammerspoon"
 
       # ── Browsers ───────────────────────────────────────────────────────────
-      "firefox"
+      "orion"
       "helium-browser"
 
-      # AI coding assistants moved to packages.nix (nix-managed)
+      # ── AI coding assistants (CLIs distributed only as casks) ──────────────
+      "claude-code"
+      "codex"
 
       # ── Fonts ──────────────────────────────────────────────────────────────
       # TODO: The fonts should be managed on the nix side of things
