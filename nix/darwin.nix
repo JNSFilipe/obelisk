@@ -57,13 +57,21 @@
     pkgs.kitty
   ];
 
-  # nix-darwin does not add Homebrew to PATH. Append it so brew-only formulae
-  # (herdr, biber, …) are reachable in the shell. Casks are /Applications GUI
-  # apps and never need PATH. Appended (not prepended) so nix bins win on
-  # collisions (e.g. doxx/ty/rtk also live in packages.nix).
+  # nix-darwin does not add Homebrew to PATH. Homebrew is the default package
+  # source (nix/homebrew.nix), so its bin dirs must be reachable in every
+  # shell. Casks are /Applications GUI apps and never need PATH. Appended (not
+  # prepended) so the few nix bins — home-manager programs.* modules — still
+  # win on collisions.
+  #
+  # Keg-only formulae are not linked into /opt/homebrew/bin, so their opt dirs
+  # are listed explicitly. openblas is keg-only too but library-only: builds
+  # take /opt/homebrew/opt/openblas/lib/pkgconfig via PKG_CONFIG_PATH instead.
   environment.systemPath = [
     "/opt/homebrew/bin"
     "/opt/homebrew/sbin"
+    "/opt/homebrew/opt/llvm/bin"
+    "/opt/homebrew/opt/rustup/bin"
+    "/opt/homebrew/opt/postgresql@18/bin"
   ];
 
   # ── Tailscale ────────────────────────────────────────────────────────────────

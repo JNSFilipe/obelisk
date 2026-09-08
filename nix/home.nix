@@ -276,13 +276,14 @@ in
     ];
 
     shellAliases = {
-      # ls variants
-      ls = "ls --color=auto";
-      la = "ls --color=auto -A";
-      ll = "ls --color=auto -al";
-      lsg = "ls --color=auto -d -- *(/N)";
-      lag = "ls --color=auto -d -A -- *(/N) .*(/N)";
-      llg = "ls --color=auto -d -al -- *(/N) .*(/N)";
+      # ls variants — gls is GNU ls from brew coreutils; Apple's ls stays as
+      # /bin/ls and does not understand --color=auto.
+      ls = "gls --color=auto";
+      la = "gls --color=auto -A";
+      ll = "gls --color=auto -al";
+      lsg = "gls --color=auto -d -- *(/N)";
+      lag = "gls --color=auto -d -A -- *(/N) .*(/N)";
+      llg = "gls --color=auto -d -al -- *(/N) .*(/N)";
       # Navigation (zoxide provides 'z'; cd alias not needed with enableZshIntegration)
       # Editors
       vi = "nvim";

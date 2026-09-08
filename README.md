@@ -3,7 +3,8 @@
 Declarative macOS system configuration.
 [nix-darwin](https://github.com/nix-darwin/nix-darwin) manages the system,
 [home-manager](https://github.com/nix-community/home-manager) manages the user environment,
-and [homebrew](https://brew.sh) (via nix-darwin) handles GUI apps not packaged through Nix.
+and [homebrew](https://brew.sh) (via nix-darwin) is the default package source for
+CLI tools and GUI apps alike.
 
 ## Bootstrap
 
@@ -60,7 +61,8 @@ vim configs/ghostty/config   # takes effect immediately, no rebuild needed
 
 **Add a new CLI tool:**
 ```bash
-vim nix/packages.nix         # add package name
+brew info --formula NAME     # confirm homebrew-core has it
+vim nix/homebrew.nix         # add to brews (or nix/packages.nix if brew lacks it)
 make switch
 ```
 
@@ -127,9 +129,9 @@ make brew-orphans            # list formulae not declared in homebrew.nix
 flake.nix                  Entry point
 nix/
   darwin.nix               System: nix settings, macOS defaults, users
-  homebrew.nix             GUI casks + CLI exceptions not in nixpkgs
+  homebrew.nix             Default package source: brew formulae + casks
   home.nix                 User: zsh, programs, config symlinks
-  packages.nix             CLI packages from nixpkgs
+  packages.nix             nixpkgs escape hatch (things brew does not ship)
 configs/
   tmux.conf                tmux settings (loaded via programs.tmux)
   doom/                    Doom Emacs user config
@@ -151,10 +153,10 @@ atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
 
 | What | Where | Why |
 |------|-------|-----|
-| CLI tools | `nix/packages.nix` | Reproducible, pinned via flake.lock |
+| CLI tools | `nix/homebrew.nix` brews | Default source; one upgrade path for everything |
+| GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code`, `codex`) |
 | Nix GUI apps | `nix/darwin.nix` `environment.systemPackages` | Copied into `/Applications/Nix Apps` |
-| Other GUI apps | `nix/homebrew.nix` casks | macOS apps not managed through Nix |
-| CLI not in nixpkgs | `nix/homebrew.nix` brews | Currently `herdr` |
+| CLI not in homebrew-core | `nix/packages.nix` | Escape hatch; currently empty |
 | Shell / tool config | `nix/home.nix` `programs.*` | Declarative, managed by home-manager |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
