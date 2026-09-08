@@ -104,7 +104,7 @@ in
 
   home.packages = [
     (pkgs.writeShellScriptBin "vanilla-emacs" ''
-      exec ${pkgs.emacs30}/bin/emacs "$@"
+      exec ${pkgs.emacs}/bin/emacs "$@"
     '')
   ];
 
