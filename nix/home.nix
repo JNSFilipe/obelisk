@@ -94,6 +94,40 @@ in
     };
   };
 
+  # ── Emacs daemon ────────────────────────────────────────────────────────────
+  # Run the Doom bundle as a launchd agent at login, so `emacsclient -c` opens a
+  # frame instantly. The home-manager module emits the agent itself (--fg-daemon
+  # under launchd supervision, restarted if it crashes); it only needs pointing
+  # at the Doom emacs instead of its default bare pkgs.emacs.
+  services.emacs = {
+    enable = true;
+    package = config.programs.doom-emacs.finalEmacsPackage;
+  };
+
+  # launchd starts agents with a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin),
+  # so the daemon would not find the tools Doom shells out to — rg, fd, git,
+  # language servers — now that they come from Homebrew. Spell the PATH out;
+  # home.sessionPath cannot be reused here because its entries contain a
+  # literal "$HOME", which launchd does not expand.
+  launchd.agents.emacs.config.EnvironmentVariables.PATH = lib.concatStringsSep ":" [
+    "${homeDirectory}/.local/bin"
+    "${homeDirectory}/.cargo/bin"
+    "${homeDirectory}/.config/scripts"
+    "/etc/profiles/per-user/${userName}/bin"
+    "/run/current-system/sw/bin"
+    "/nix/var/nix/profiles/default/bin"
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
+    "/opt/homebrew/opt/llvm/bin"
+    "/opt/homebrew/opt/rustup/bin"
+    "/opt/homebrew/opt/postgresql@18/bin"
+    "/Library/TeX/texbin"
+    "/usr/bin"
+    "/bin"
+    "/usr/sbin"
+    "/sbin"
+  ];
+
   # ── PATH (available to all shells, including non-interactive scripts) ────
   home.sessionPath = [
     "$HOME/.local/bin"
@@ -272,6 +306,9 @@ in
       # Editors
       vi = "nvim";
       vim = "nvim";
+      # Frames from the launchd Emacs daemon; -a '' starts it if it is down.
+      ec = "emacsclient -c -a ''";
+      et = "emacsclient -t -a ''";
       # Network
       ww = "wget";
       # System
@@ -321,7 +358,14 @@ in
     options = [ "--cmd cd" ]; # also aliases 'cd' to zoxide
   };
 
-  home.sessionVariables._ZO_DOCTOR = "0"; # suppress false-positive init order warning
+  home.sessionVariables = {
+    _ZO_DOCTOR = "0"; # suppress false-positive init order warning
+    # Talk to the Emacs daemon instead of starting a fresh Emacs per edit.
+    # EDITOR stays in the terminal (git commit, crontab, …); VISUAL opens a GUI
+    # frame, following the usual split. Both start the daemon if it is down.
+    EDITOR = "emacsclient -t -a ''";
+    VISUAL = "emacsclient -c -a ''";
+  };
 
   # ── Fzf ─────────────────────────────────────────────────────────────────────
 
