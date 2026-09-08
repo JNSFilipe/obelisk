@@ -14,12 +14,19 @@ not-root:
 
 # ── Core ──────────────────────────────────────────────────────────────────────
 
-switch: not-root ## Build and activate the system configuration
+switch: not-root update ## Update all inputs, activate, then garbage-collect
 	$(SUDO) darwin-rebuild switch --flake "$(FLAKE)"
+	# Updating every input grows the store on each run; reclaim it right away.
+	# Keeps 7 days, so the generation this switch replaced stays rollbackable.
+	$(MAKE) gc
+
+switch-locked: not-root ## Activate without updating anything (pinned flake.lock, no brew upgrade)
+	HOMEBREW_BUNDLE_NO_UPGRADE=1 HOMEBREW_NO_AUTO_UPDATE=1 \
+		$(SUDO) darwin-rebuild switch --flake "$(FLAKE)"
 
 build: ## Build without activating (dry run)
 	darwin-rebuild build --flake "$(FLAKE)"
-
+	
 check: ## Build the system and run flake checks
 	nix flake check
 
@@ -32,7 +39,7 @@ update: not-root ## Update all flake inputs (nixpkgs, home-manager, nix-darwin)
 		nix flake update; \
 	fi
 
-upgrade: update switch ## Update inputs and activate in one step
+upgrade: switch ## Alias for switch, which already updates everything
 
 # ── History ───────────────────────────────────────────────────────────────────
 
@@ -64,9 +71,10 @@ packages: ## List all nix-managed packages in the current profile
 brew-orphans: ## List Homebrew packages not declared in homebrew.nix
 	brew bundle cleanup --file="$$(nix eval --raw "$(CONFIG).environment.variables.HOMEBREW_BUNDLE_FILE")"
 
-brew-upgrade: not-root ## Explicitly update and upgrade declared Homebrew packages
+brew-upgrade: not-root ## Upgrade Homebrew, including casks that self-update (--greedy)
 	brew update
 	brew bundle install --file="$$(nix eval --raw "$(CONFIG).environment.variables.HOMEBREW_BUNDLE_FILE")"
+	brew upgrade --cask --greedy
 	brew cleanup
 
 # ── Submodules ────────────────────────────────────────────────────────────────
@@ -121,4 +129,4 @@ help: ## Show this help
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: not-root switch build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-update bootstrap uninstall-nix help
+.PHONY: not-root switch switch-locked build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-update bootstrap uninstall-nix help

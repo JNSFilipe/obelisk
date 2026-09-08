@@ -29,28 +29,30 @@ make help
 ```
   bootstrap       First-time nix-darwin install (run after installing nix)
   brew-orphans    List Homebrew packages not declared in homebrew.nix
-  brew-upgrade    Explicitly update and upgrade declared Homebrew packages
+  brew-upgrade    Upgrade Homebrew, including casks that self-update (--greedy)
   build           Build without activating (dry run)
   check           Build the system and run flake checks
   diff            Show what changed between current and built config
   doom-update     Update the pinned Nix Doom Emacs inputs
-  gc              Garbage-collect old nix store paths (keeps 7 days)
   gc-all          Garbage-collect ALL unused nix store paths
+  gc              Garbage-collect old nix store paths (keeps 7 days)
   generations     List all system generations
+  help            Show this help
   packages        List all nix-managed packages in the current profile
-  rollback        Roll back to the previous generation
+  rollback        Roll back Nix system and Home Manager state
   store-size      Show nix store disk usage
-  switch          Build and activate the system configuration
+  switch-locked   Activate without updating anything (pinned flake.lock, no brew upgrade)
+  switch          Update all inputs, activate, then garbage-collect
   uninstall-nix   Completely remove nix from the system
   update          Update all flake inputs (nixpkgs, home-manager, nix-darwin)
-  upgrade         Update inputs and activate in one step
+  upgrade         Alias for switch, which already updates everything
 ```
 
 ## Workflows
 
 **Edit nix config and apply:**
 ```bash
-vim nix/packages.nix   # or darwin.nix, homebrew.nix, home.nix
+vim nix/homebrew.nix   # or darwin.nix, home.nix, packages.nix
 make switch
 ```
 
@@ -79,15 +81,29 @@ vim nix/home.nix             # add home.file entry with mkOutOfStoreSymlink
 make switch
 ```
 
-**Update everything (nixpkgs, home-manager, nix-darwin) and activate:**
+**Update everything and activate:**
 ```bash
-make upgrade
+make switch
 ```
 
-Homebrew deliberately does not update during system activation. Upgrade its
-declared formulae and casks separately:
+`make switch` is the single up-to-date command: it updates every flake input
+(nixpkgs, home-manager, nix-darwin, Doom), activation runs `brew update` and
+upgrades outdated declared formulae and casks, and it finishes with `make gc`
+so the store paths the update orphaned do not pile up. The GC keeps 7 days, so
+the generation the switch replaced stays available to `make rollback`.
+`make upgrade` is an alias.
+
+To activate the pinned configuration without updating anything — offline, or
+when you only changed a `nix/` file:
 ```bash
-make brew-upgrade
+make switch-locked
+```
+
+Casks that ship their own updater are skipped during activation, because that
+needs `brew upgrade --greedy` and `brew bundle` does not accept it. Sweep them
+explicitly:
+```bash
+make brew-upgrade            # brew update + bundle install + --greedy cask sweep
 ```
 
 **Update Doom Emacs:**

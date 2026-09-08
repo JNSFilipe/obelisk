@@ -1,18 +1,23 @@
 _: {
   # ── nix-darwin homebrew integration ────────────────────────────────────────
-  # GUI apps only.  All CLI tools live in nix/packages.nix.
-  # Exceptions: brews[] holds CLI tools not yet packaged in nixpkgs;
-  #             some casks, such as claude, are CLIs
-  #             distributed only as macOS casks — no nix alternative.
+  # Homebrew is the default package source: anything homebrew-core ships lives
+  # here, CLI or GUI.  nix/packages.nix is the escape hatch for the few things
+  # brew cannot provide.  nix-darwin/home-manager still own the system, the
+  # dotfiles, and every programs.* module (git, tmux, zsh, fzf, atuin, zoxide,
+  # kitty, ghostty, helix, lazygit, yazi, doom-emacs) — those pull their own
+  # nix packages and must not be duplicated here.
 
   homebrew = {
     enable = true;
 
     onActivation = {
-      # Keep system activation repeatable and non-destructive. Updates happen
-      # explicitly through `make brew-upgrade`; drift aborts instead of deleting.
-      autoUpdate = false;
-      upgrade = false;
+      # `make switch` is the one command that brings the machine up to date, so
+      # activation runs `brew update` and upgrades outdated declared packages.
+      # Casks that ship their own updater are left alone (that needs --greedy,
+      # which `brew bundle` does not accept) — `make brew-upgrade` sweeps those.
+      # Drift still aborts instead of deleting anything.
+      autoUpdate = true;
+      upgrade = true;
       cleanup = "check";
     };
 
