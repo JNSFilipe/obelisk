@@ -150,8 +150,10 @@ nix/
   homebrew.nix             Default package source: brew formulae + casks
   home.nix                 User: zsh, programs, config symlinks
   packages.nix             nixpkgs escape hatch (things brew does not ship)
+  nushell.nix              Nushell, alongside zsh (zsh stays the login shell)
 configs/
   tmux.conf                tmux settings (loaded via programs.tmux)
+  nushell/                 Nushell prompt and commands (loaded via programs.nushell)
   doom/                    Doom Emacs user config
   emacs/                   Legacy Doom checkout (no longer linked or executed)
   vemacs/                  Vanilla Emacs config
@@ -164,7 +166,7 @@ configs/
 ```
 
 Configs managed declaratively by home-manager modules (no files in `configs/`):
-atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
+atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, carapace, tmux plugins.
 
 ## Where packages live
 

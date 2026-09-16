@@ -32,6 +32,7 @@ in
   imports = [
     ./packages.nix
     ./emacs.nix
+    ./nushell.nix
   ];
 
   # ── Identity ────────────────────────────────────────────────────────────────
