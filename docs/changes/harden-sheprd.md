@@ -1,6 +1,9 @@
 # Daily-use Sheprd
 
-Status: in-progress (GUI verification blocked)
+Status: in-progress (automated GUI verification passed; live-agent acceptance pending)
+
+Superseded by `sheprd-herdr-clone.md`, which rewrites Sheprd as a full Herdr
+clone and removes the shared scratch terminal this record preserved.
 
 ## Why / scope
 Strengthen the existing uncommitted Sheprd implementation without replacing
@@ -32,7 +35,8 @@ and actual installed Ghostel integration checks where feasible.
 - [x] Add launch, explicit tracking/status and attention selection; ERT checks.
 - [x] Correct daemon loading/frame lifecycle in code and document parity/limits;
   batch lifecycle checks pass. Real GUI frame behavior remains below.
-- [ ] Verify installed Ghostel, byte compilation and GUI workflow; closeout.
+- [x] Verify installed Ghostel, strict byte compilation and automated GUI workflow.
+- [ ] Complete live-agent/manual acceptance steps in configs/doom/sheprd.md and closeout.
 
 ## Evidence
 - Original batch status reproduction returned `(waiting-input thinking)` for
@@ -70,9 +74,30 @@ and actual installed Ghostel integration checks where feasible.
 - Final user files are edits in the working tree. The restarted daemon still
   uses its existing Nix-store config; changes have not been system-activated.
 
+## Retry evidence — 2026-09-09
+- Connected to healthy standalone GUI Emacs via a temporary local
+  `sheprd-verification` socket. Loaded exact current source copies under
+  `/tmp/sheprd-retry-20260909/`, avoiding the prior Documents-folder open block.
+- Original GUI check failed because launched terminals appeared under GLOBAL:
+  `(equal nil "main")`. Launch relied on asynchronous perspective registration.
+  Fixed by capturing the current perspective and calling `persp-add-buffer`
+  explicitly before displaying the new terminal. Added a regression checking
+  registration precedes display.
+- Batch ERT: 19/19 pass. Strict byte compilation with warnings as errors and
+  scoped `git diff --check` pass.
+- Expanded `sheprd-integration-check`: `passed`. Actual installed Ghostel/Doom
+  verifies native hidden output, launch ownership, real agent-button activation
+  from another workspace, separate panel buffers per GUI frame, and process exit.
+- `sheprd-ghostel-integration-check`: `passed` again. Final GUI inspection returned
+  `(passed ("main") ("*scratch* – Doom Emacs"))`: temporary workspaces, terminals
+  and frames cleaned up. Sidebar visually inspected through CUA.
+- No daemon crash or restart on this retry. Native daemon first-frame startup was
+  not retried; the successful path was the standalone GUI app. No real agent task
+  or paid API call was submitted. Changes remain uncommitted and not Nix-activated.
+
 ## Next
-Resolve GUI startup/file-access problems before running the GUI smoke check and
-manual steps in configs/doom/sheprd.md. The GUI smoke helper now requires an
-already healthy GUI frame. Keep this record active per jig-close; real GUI
-layout, cross-workspace interaction and multi-frame behavior are not verified.
+Run the live Codex/Claude acceptance checks and remaining diff/scratch/minibuffer
+interactions listed in configs/doom/sheprd.md. Automated GUI checks now pass;
+retain the distinction from the earlier daemon startup failure. Keep this record
+active until the remaining acceptance steps are verified, then jig-close.
 Primary agent owns closeout; no workers, commits, deployment or archive.
