@@ -7,6 +7,7 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "buffer_line_height": "standard",
   "proxy": "",
   "title_bar": {
     "show_branch_name": true
@@ -17,6 +18,7 @@
     "cursor_position_button": true
   },
   "vim": {
+    "toggle_relative_line_numbers": true,
     "use_smartcase_find": true
   },
   "toolbar": {
@@ -159,8 +161,8 @@
     "enabled": true,
   },
   // Theme and font size
-  "ui_font_size": 13,
-  "buffer_font_size": 12,
+  "ui_font_size": 13.0,
+  "buffer_font_size": 12.5,
   "ui_font_family": "Iosevka",
   "buffer_font_family": "Iosevka",
   "theme": {

@@ -1,8 +1,8 @@
 ;; -*- no-byte-compile: t; -*-
 ;;; $DOOMDIR/packages.el
 
-;; Declare Doom packages here, then run `make switch` from the dotfiles
-;; repository to rebuild the Nix-managed Doom package.
+;; Declare Doom packages here, then run `make doom-sync` from the dotfiles
+;; repository and restart Emacs.
 
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:

@@ -4,11 +4,12 @@ _: {
   # here, CLI or GUI.  nix/packages.nix is the escape hatch for the few things
   # brew cannot provide.  nix-darwin/home-manager still own the system, the
   # dotfiles, and every programs.* module (git, tmux, zsh, fzf, atuin, zoxide,
-  # kitty, ghostty, helix, lazygit, yazi, doom-emacs) — those pull their own
+  # kitty, ghostty, helix, lazygit, yazi) — those pull their own
   # nix packages and must not be duplicated here.
 
   homebrew = {
     enable = true;
+    taps = [ "d12frosted/emacs-plus" ];
 
     onActivation = {
       # `make switch` is the one command that brings the machine up to date, so
@@ -145,6 +146,7 @@ _: {
       "ghostty"
 
       # ── Editors ────────────────────────────────────────────────────────────
+      "d12frosted/emacs-plus/emacs-plus-app"
       "zed"
       "datagrip"
       "antigravity-cli"

@@ -2,7 +2,6 @@
   config,
   flakeRoot,
   homeDirectory,
-  inputs,
   lib,
   pkgs,
   userName,
@@ -32,7 +31,7 @@ in
 {
   imports = [
     ./packages.nix
-    inputs.nix-doom-emacs-unstraightened.homeModule
+    ./emacs.nix
   ];
 
   # ── Identity ────────────────────────────────────────────────────────────────
@@ -44,93 +43,7 @@ in
   # Let home-manager manage itself
   programs.home-manager.enable = true;
 
-  # The Doom bundle is exposed through nix-darwin's /Applications/Nix Apps.
-  # Avoid duplicate store-path registrations from Home Manager Apps.
   targets.darwin.linkApps.enable = false;
-
-  programs.doom-emacs = {
-    enable = true;
-    # nix-darwin exposes the GUI and emacs binaries system-wide; Home Manager
-    # only needs to provide the Doom command wrappers.
-    provideEmacs = false;
-    doomDir = ../configs/doom;
-    # The GNU NS (Cocoa) build does not expose its windows to the macOS
-    # Accessibility API, so AX-based tiling window managers (Tangrid) cannot
-    # tile it or list it in their window switcher.  The Mitsuharu Mac port
-    # implements Accessibility properly, so use it on darwin.
-    emacs = pkgs.emacs30-macport;
-    experimentalFetchTree = true;
-    extraPackages = epkgs: [
-      (epkgs.treesit-grammars.with-grammars (
-        grammars: with grammars; [
-          tree-sitter-bash
-          tree-sitter-c
-          tree-sitter-cpp
-          tree-sitter-css
-          tree-sitter-csv
-          tree-sitter-dockerfile
-          tree-sitter-elisp
-          tree-sitter-go
-          tree-sitter-gomod
-          tree-sitter-hcl
-          tree-sitter-html
-          tree-sitter-javascript
-          tree-sitter-json
-          tree-sitter-lua
-          tree-sitter-make
-          tree-sitter-nix
-          tree-sitter-org
-          tree-sitter-python
-          tree-sitter-rust
-          tree-sitter-toml
-          tree-sitter-tsx
-          tree-sitter-typescript
-          tree-sitter-yaml
-          tree-sitter-zig
-        ]
-      ))
-    ];
-    emacsPackageOverrides = _: esuper: {
-      org-pdftools = esuper.org-pdftools.overrideAttrs {
-        # Byte compilation starts epdfinfo, which aborts inside the Nix sandbox.
-        ignoreCompilationError = true;
-      };
-    };
-  };
-
-  # ── Emacs daemon ────────────────────────────────────────────────────────────
-  # Run the Doom bundle as a launchd agent at login, so `emacsclient -c` opens a
-  # frame instantly. The home-manager module emits the agent itself (--fg-daemon
-  # under launchd supervision, restarted if it crashes); it only needs pointing
-  # at the Doom emacs instead of its default bare pkgs.emacs.
-  services.emacs = {
-    enable = true;
-    package = config.programs.doom-emacs.finalEmacsPackage;
-  };
-
-  # launchd starts agents with a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin),
-  # so the daemon would not find the tools Doom shells out to — rg, fd, git,
-  # language servers — now that they come from Homebrew. Spell the PATH out;
-  # home.sessionPath cannot be reused here because its entries contain a
-  # literal "$HOME", which launchd does not expand.
-  launchd.agents.emacs.config.EnvironmentVariables.PATH = lib.concatStringsSep ":" [
-    "${homeDirectory}/.local/bin"
-    "${homeDirectory}/.cargo/bin"
-    "${homeDirectory}/.config/scripts"
-    "/etc/profiles/per-user/${userName}/bin"
-    "/run/current-system/sw/bin"
-    "/nix/var/nix/profiles/default/bin"
-    "/opt/homebrew/bin"
-    "/opt/homebrew/sbin"
-    "/opt/homebrew/opt/llvm/bin"
-    "/opt/homebrew/opt/rustup/bin"
-    "/opt/homebrew/opt/postgresql@18/bin"
-    "/Library/TeX/texbin"
-    "/usr/bin"
-    "/bin"
-    "/usr/sbin"
-    "/sbin"
-  ];
 
   # ── PATH (available to all shells, including non-interactive scripts) ────
   home.sessionPath = [
@@ -138,12 +51,6 @@ in
     "$HOME/.cargo/bin"
     "$HOME/.config/scripts"
     "/Library/TeX/texbin"
-  ];
-
-  home.packages = [
-    (pkgs.writeShellScriptBin "vanilla-emacs" ''
-      exec ${pkgs.emacs}/bin/emacs "$@"
-    '')
   ];
 
   # ── Config file symlinks ─────────────────────────────────────────────────────
@@ -168,15 +75,6 @@ in
     # ── Desktop ────────────────────────────────────────────────────────────
     ".config/wallpapers".source = link "wallpapers";
   };
-
-  home.activation.registerEmacsApp = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    app="/Applications/Nix Apps/Emacs.app"
-    if [ -d "$app" ]; then
-      run /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$app"
-      run /usr/bin/mdimport -i "$app"
-      run /usr/bin/killall Dock || true
-    fi
-  '';
 
   home.activation.raycastHotkey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run /usr/bin/defaults write com.raycast.macos raycastGlobalHotkey -string "Command-49"
@@ -310,9 +208,9 @@ in
       # Editors
       vi = "nvim";
       vim = "nvim";
-      # Frames from the launchd Emacs daemon; -a '' starts it if it is down.
-      ec = "emacsclient -c -a ''";
-      et = "emacsclient -t -a ''";
+      # Frames from the launchd-supervised daemon (no second daemon owner).
+      ec = "emacsclient -c";
+      et = "emacsclient -t";
       # Network
       ww = "wget";
       # System
@@ -366,9 +264,9 @@ in
     _ZO_DOCTOR = "0"; # suppress false-positive init order warning
     # Talk to the Emacs daemon instead of starting a fresh Emacs per edit.
     # EDITOR stays in the terminal (git commit, crontab, …); VISUAL opens a GUI
-    # frame, following the usual split. Both start the daemon if it is down.
-    EDITOR = "emacsclient -t -a ''";
-    VISUAL = "emacsclient -c -a ''";
+    # frame, following the usual split. launchd restarts the daemon if it crashes.
+    EDITOR = "emacsclient -t";
+    VISUAL = "emacsclient -c";
   };
 
   # ── Fzf ─────────────────────────────────────────────────────────────────────

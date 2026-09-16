@@ -33,7 +33,9 @@ make help
   build           Build without activating (dry run)
   check           Build the system and run flake checks
   diff            Show what changed between current and built config
-  doom-update     Update the pinned Nix Doom Emacs inputs
+  doom-install    Bootstrap writable Doom with Homebrew Emacs
+  doom-sync       Sync Doom modules/packages after configuration changes
+  doom-update     Upgrade conventional Doom and its packages
   gc-all          Garbage-collect ALL unused nix store paths
   gc              Garbage-collect old nix store paths (keeps 7 days)
   generations     List all system generations
@@ -87,7 +89,7 @@ make switch
 ```
 
 `make switch` is the single up-to-date command: it updates every flake input
-(nixpkgs, home-manager, nix-darwin, Doom), activation runs `brew update` and
+(nixpkgs, home-manager, nix-darwin), activation runs `brew update` and
 upgrades outdated declared formulae and casks, and it finishes with `make gc`
 so the store paths the update orphaned do not pile up. The GC keeps 7 days, so
 the generation the switch replaced stays available to `make rollback`.
@@ -108,8 +110,8 @@ make brew-upgrade            # brew update + bundle install + --greedy cask swee
 
 **Update Doom Emacs:**
 ```bash
-make doom-update             # update Unstraightened and its Doom inputs
-make switch                  # rebuild Doom and activate it
+make doom-update             # Doom upgrade, using Homebrew Emacs
+# Save buffers and restart Emacs afterward.
 ```
 
 **Safe test before applying:**
@@ -176,11 +178,14 @@ atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, tmux plugins.
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
 Editing most files under `configs/` takes effect immediately (live symlinks).
-`configs/doom/` is bundled into the Nix Doom package and requires `make switch`.
+`configs/doom/` is linked live. Changes to `init.el` or `packages.el` require
+`make doom-sync` and an Emacs restart; ordinary `config.el` edits require a reload
+or restart. See [Emacs installation](docs/emacs.md) for setup and maintenance.
 Editing `nix/` or `programs.*` settings requires `make switch` to apply.
 
-System activation installs missing Homebrew packages but does not update or
-remove packages. It fails with a drift report when an undeclared package is
+Locked activation installs missing Homebrew packages but does not upgrade or
+remove packages. Regular `make switch` also updates and upgrades them.
+Activation fails with a drift report when an undeclared package is
 present; use `make brew-orphans` to inspect the same report beforehand.
 
 ## tmux

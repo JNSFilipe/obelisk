@@ -1,5 +1,4 @@
 {
-  config,
   homeDirectory,
   hostName,
   pkgs,
@@ -53,7 +52,6 @@
   # nix-darwin copies GUI bundles from system packages into
   # /Applications/Nix Apps so Launch Services and Spotlight can index them.
   environment.systemPackages = [
-    config.home-manager.users.${userName}.programs.doom-emacs.finalEmacsPackage
     pkgs.kitty
   ];
 

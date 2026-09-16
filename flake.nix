@@ -11,10 +11,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-doom-emacs-unstraightened = {
-      url = "github:marienz/nix-doom-emacs-unstraightened";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -39,7 +35,7 @@
         ]
       '';
 
-      darwinConfiguration = nix-darwin.lib.darwinSystem {
+      mkDarwinConfiguration = extraModules: nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
           ./nix/darwin.nix
@@ -60,7 +56,7 @@
               };
             };
           }
-        ];
+        ] ++ extraModules;
         specialArgs = {
           inherit
             homeDirectory
@@ -70,9 +66,20 @@
             ;
         };
       };
+      darwinConfiguration = mkDarwinConfiguration [ ];
     in
     {
       darwinConfigurations.${hostName} = darwinConfiguration;
+      # A pure configuration variant: sudo's environment filtering cannot
+      # accidentally turn a locked activation into a Homebrew upgrade.
+      darwinConfigurations."${hostName}-locked" = mkDarwinConfiguration [
+        {
+          homebrew.onActivation = {
+            autoUpdate = nixpkgs.lib.mkForce false;
+            upgrade = nixpkgs.lib.mkForce false;
+          };
+        }
+      ];
 
       formatter.${system} = pkgs.nixfmt-tree;
 

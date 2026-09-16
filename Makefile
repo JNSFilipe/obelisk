@@ -1,5 +1,6 @@
 HOST ?= gauss
 FLAKE = $(CURDIR)\#$(HOST)
+LOCKED_FLAKE = $(CURDIR)\#$(HOST)-locked
 CONFIG = $(CURDIR)\#darwinConfigurations.$(HOST).config
 IS_ROOT := $(shell id -u)
 SUDO ?= sudo
@@ -21,8 +22,7 @@ switch: not-root update ## Update all inputs, activate, then garbage-collect
 	$(MAKE) gc
 
 switch-locked: not-root ## Activate without updating anything (pinned flake.lock, no brew upgrade)
-	HOMEBREW_BUNDLE_NO_UPGRADE=1 HOMEBREW_NO_AUTO_UPDATE=1 \
-		$(SUDO) darwin-rebuild switch --flake "$(FLAKE)"
+	$(SUDO) darwin-rebuild switch --flake "$(LOCKED_FLAKE)"
 
 build: ## Build without activating (dry run)
 	darwin-rebuild build --flake "$(FLAKE)"
@@ -79,12 +79,14 @@ brew-upgrade: not-root ## Upgrade Homebrew, including casks that self-update (--
 
 # ── Submodules ────────────────────────────────────────────────────────────────
 
-doom-update: not-root ## Update the pinned Nix Doom Emacs inputs
-	@if command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1; then \
-		NIX_CONFIG="access-tokens = github.com=$$(gh auth token)" nix flake update nix-doom-emacs-unstraightened; \
-	else \
-		nix flake update nix-doom-emacs-unstraightened; \
-	fi
+doom-install: not-root ## Bootstrap writable Doom using Homebrew Emacs
+	DOOMDIR="$(CURDIR)/configs/doom" bash configs/scripts/doom-manage.sh install
+
+doom-sync: not-root ## Sync Doom after changing modules/packages or upgrading Emacs
+	DOOMDIR="$(CURDIR)/configs/doom" bash configs/scripts/doom-manage.sh sync
+
+doom-update: not-root ## Upgrade conventional Doom and its pinned packages
+	DOOMDIR="$(CURDIR)/configs/doom" bash configs/scripts/doom-manage.sh update
 
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
@@ -102,7 +104,7 @@ help: ## Show this help
 	@printf "  \033[33mEdit nix config and apply\033[0m\n"
 	@printf "    edit nix/*.nix → make switch\n\n"
 	@printf "  \033[33mEdit app config (live symlink)\033[0m\n"
-	@printf "    edit configs/*  (Doom requires make switch)\n\n"
+	@printf "    edit configs/*  (Doom modules/packages require make doom-sync)\n\n"
 	@printf "  \033[33mAdd a new CLI tool\033[0m\n"
 	@printf "    edit nix/homebrew.nix brews → make switch\n\n"
 	@printf "  \033[33mAdd a CLI tool brew does not ship\033[0m\n"
@@ -118,7 +120,7 @@ help: ## Show this help
 	@printf "  \033[33mSweep self-updating casks too\033[0m\n"
 	@printf "    make brew-upgrade\n\n"
 	@printf "  \033[33mUpdate Doom Emacs\033[0m\n"
-	@printf "    make doom-update → make switch\n\n"
+	@printf "    make doom-update → restart Emacs\n\n"
 	@printf "  \033[33mSafe test before applying\033[0m\n"
 	@printf "    make build → make diff → make switch\n\n"
 	@printf "  \033[33mSomething broke after switch\033[0m\n"
@@ -129,4 +131,4 @@ help: ## Show this help
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: not-root switch switch-locked build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-update bootstrap uninstall-nix help
+.PHONY: not-root switch switch-locked build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-install doom-sync doom-update bootstrap uninstall-nix help
