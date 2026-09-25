@@ -180,7 +180,13 @@
     :desc "Vundo" "u" #'vundo
     :desc "Yanks" :n "y" #'consult-yank-pop
     :desc "Yanks" :v "y" #'consult-yank-replace
-    :desc "Switch Project" "p" #'projectile-switch-project))
+    :desc "Switch Project" "p" #'projectile-switch-project)
+
+  ;; Expose the same commands outside the leader menu, with which-key labels.
+  (map! :map global-map
+    :desc "New Terminal" "C-c t" #'sheprd-new-terminal
+    :desc "Find Project File" "C-c f" #'projectile-find-file
+    :desc "Switch Workspace Buffer" "C-c b" #'persp-switch-to-buffer))
 
 ;; Keep the command palette visible and exploratory.  Doom normally defers
 ;; Vertico and Marginalia until its first-input hook; loading them eagerly makes
