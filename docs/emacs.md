@@ -60,6 +60,15 @@ launchctl kickstart -k "gui/$(id -u)/org.nix-community.home.emacs"
 explicit. If Homebrew upgrades Emacs, run `make doom-sync` before resuming work.
 `vanilla-emacs` uses the same Homebrew executable with `configs/vemacs`.
 
+The parallel [Gloom Emacs config](../configs/gloom/README.md) lives in `configs/gloom`.
+It uses plain Elisp, reuses installed package libraries, and shares Sheprd and
+Oxocarbon with Doom. Run its explicit setup once, then launch it directly with
+`/opt/homebrew/bin/emacs --init-directory="$PWD/configs/gloom"`. Home Manager also
+declares the `gloom-emacs` launcher for subsequent activations. Its state and
+optional named daemon are separate from Doom.
+The [Gloom parity audit](../configs/gloom/PARITY.md) records the retained packages,
+Meow/UI differences, remaining Doom-specific gaps and external-service test limits.
+
 ## Rollback
 
 `make rollback` restores Nix's previous system and Home Manager generation,
@@ -75,8 +84,10 @@ The migration trial used Emacs Plus 31.1, conventional Doom 2.2.4, GUI and TTY
 clients, actual native compilation, and Ghostel's official native module.
 All 19 Sheprd regression tests and its live Ghostel/workspace integration checks
 passed. The Doom GUI exposes its window and controls through macOS Accessibility.
-Actual Tangrid tiling remains a manual acceptance check: its automation interface
-did not expose usable tiling controls during this trial.
+Tiling was never exercised: Tangrid, the window manager in use during the trial,
+exposed no usable tiling controls through its sparse Accessibility interface.
+Tangrid has since been dropped in favour of OmniWM, so this check no longer
+applies.
 
 `doom doctor` also reported optional language-tool gaps (Go helpers, Terraform,
 Python tools, shellcheck, nixfmt and web formatters), missing Symbola, and missing

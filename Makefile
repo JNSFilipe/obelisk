@@ -1,4 +1,7 @@
-HOST ?= gauss
+# The machine this repository is being applied to.  Detected from the local
+# hostname so the same commands work on gauss (personal) and thorp (work);
+# override with `make switch HOST=thorp` to build the other one from here.
+HOST ?= $(shell scutil --get LocalHostName 2>/dev/null || hostname -s)
 FLAKE = $(CURDIR)\#$(HOST)
 LOCKED_FLAKE = $(CURDIR)\#$(HOST)-locked
 CONFIG = $(CURDIR)\#darwinConfigurations.$(HOST).config
@@ -117,6 +120,8 @@ help: ## Show this help
 	@printf "    make switch  (= flake update + brew update/upgrade + activate + gc)\n\n"
 	@printf "  \033[33mActivate without updating\033[0m\n"
 	@printf "    make switch-locked\n\n"
+	@printf "  \033[33mWork on the other Mac's config from this one\033[0m\n"
+	@printf "    make build HOST=thorp   (hosts: gauss=personal, thorp=work)\n\n"
 	@printf "  \033[33mSweep self-updating casks too\033[0m\n"
 	@printf "    make brew-upgrade\n\n"
 	@printf "  \033[33mUpdate Doom Emacs\033[0m\n"

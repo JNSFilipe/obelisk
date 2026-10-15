@@ -74,7 +74,9 @@
 
   # ── Tailscale ────────────────────────────────────────────────────────────────
 
-  services.tailscale.enable = true;
+  # The Homebrew tailscale-app cask owns the VPN and bundles its matching CLI.
+  # Avoid a second tailscaled competing with the app's network extension.
+  services.tailscale.enable = false;
 
   # ── macOS defaults ──────────────────────────────────────────────────────────
 
@@ -106,7 +108,5 @@
     screensaver.askForPasswordDelay = 0;
   };
 
-  # ── State version ───────────────────────────────────────────────────────────
-  # Do NOT change after initial install.
-  system.stateVersion = 5;
+  # `system.stateVersion` is per-machine and lives in nix/hosts/<name>.nix.
 }

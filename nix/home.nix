@@ -63,12 +63,15 @@ in
     ".config/doom".source = link "doom";
     ".config/nvim".source = link "nvim";
     ".config/vemacs".source = link "vemacs";
+    ".config/gloom-emacs".source = link "gloom";
     ".config/zed".source = link "zed";
 
     # ── Terminals ──────────────────────────────────────────────────────────
     ".config/wezterm".source = link "wezterm";
     # ── Window management ──────────────────────────────────────────────────
     ".config/herdr/config.toml".source = link "herdr/config.toml";
+    # File, not the directory: OmniWM keeps other state under ~/.config/omniwm.
+    ".config/omniwm/settings.toml".source = link "omniwm/settings.toml";
 
     # ── Misc tools ─────────────────────────────────────────────────────────
     ".config/scripts".source = link "scripts";
@@ -77,31 +80,17 @@ in
     ".config/wallpapers".source = link "wallpapers";
   };
 
-  home.activation.raycastHotkey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run /usr/bin/defaults write com.raycast.macos raycastGlobalHotkey -string "Command-49"
-    # Preserve Spotlight's original key definition while disabling its hotkey.
+  # Raycast owned ⌘Space and disabled Spotlight's hotkey to get it.  With
+  # Raycast removed, hand ⌘Space back to Spotlight: a disabled hotkey persists
+  # in the defaults database, so deleting the Raycast block on its own would
+  # leave the key doing nothing at all.  Delete this block if something else
+  # should claim ⌘Space.
+  home.activation.spotlightHotkey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run /usr/bin/defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
       -dict-add 64 \
-      '<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>49</integer><integer>1048576</integer></array><key>type</key><string>standard</string></dict></dict>'
+      '<dict><key>enabled</key><true/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>49</integer><integer>1048576</integer></array><key>type</key><string>standard</string></dict></dict>'
     run /usr/bin/killall Spotlight || true
   '';
-
-  launchd.agents.raycast = {
-    enable = true;
-    domain = "gui";
-    config = {
-      ProgramArguments = [
-        "/usr/bin/open"
-        "-g"
-        "-j"
-        "-a"
-        "Raycast"
-      ];
-      RunAtLoad = true;
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/raycast-launcher.error.log";
-    };
-  };
 
   # ── Zsh ─────────────────────────────────────────────────────────────────────
 

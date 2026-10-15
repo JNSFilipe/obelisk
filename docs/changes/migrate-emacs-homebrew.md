@@ -60,7 +60,8 @@ The two new Nix-relevant files were marked intent-to-add to make them visible to
 Nix; their contents were not staged and nothing was committed.
 
 Pending: actual Tangrid tiling could not be exercised through its sparse AX
-interface. Doom doctor reports optional tool/font gaps documented in docs/emacs.md.
+interface. Obsolete as of 2026-10-15 — Tangrid was dropped for OmniWM, so this
+item is closed as no longer applicable rather than verified. Doom doctor reports optional tool/font gaps documented in docs/emacs.md.
 System activation was not performed: `sudo -n true` requires a password.
 The original daemon had no modified file buffers or live terminal jobs at the
 preflight check (only internal Messages/code-conversion buffers were modified).
@@ -68,7 +69,8 @@ preflight check (only internal Messages/code-conversion buffers were modified).
 ## Next
 User runs `make switch-locked` from the repository and enters their sudo password.
 Then verify the default daemon's executable/version, config directory backup,
-ec/et and Finder Emacs Client.app behavior, and Tangrid tiling. Keep the record
+and ec/et and Finder Emacs Client.app behavior. (The Tangrid tiling check is
+dropped: Tangrid is no longer installed.) Keep the record
 active until activation and acceptance checks pass. No worker or trial process
 remains active. Documentation/rollback procedure is in docs/emacs.md.
 

@@ -1,12 +1,21 @@
-_: {
-  # ── nix-darwin homebrew integration ────────────────────────────────────────
-  # Homebrew is the default package source: anything homebrew-core ships lives
-  # here, CLI or GUI.  nix/packages.nix is the escape hatch for the few things
-  # brew cannot provide.  nix-darwin/home-manager still own the system, the
-  # dotfiles, and every programs.* module (git, tmux, zsh, fzf, atuin, zoxide,
-  # kitty, ghostty, helix, lazygit, yazi) — those pull their own
-  # nix packages and must not be duplicated here.
+{ hostProfile, lib, ... }:
 
+# ── nix-darwin homebrew integration ──────────────────────────────────────────
+# Homebrew is the default package source: anything homebrew-core ships lives
+# here, CLI or GUI.  nix/packages.nix is the escape hatch for the few things
+# brew cannot provide.  nix-darwin/home-manager still own the system, the
+# dotfiles, and every programs.* module (git, tmux, zsh, fzf, atuin, zoxide,
+# kitty, ghostty, helix, lazygit, yazi) — those pull their own
+# nix packages and must not be duplicated here.
+
+let
+  # Which machine gets what.  `hostProfile` comes from the host's entry in
+  # flake.nix: gauss is "personal", thorp is "work".  Anything not wrapped in
+  # one of these is installed on both.
+  personalOnly = lib.optionals (hostProfile == "personal");
+  workOnly = lib.optionals (hostProfile == "work");
+in
+{
   homebrew = {
     enable = true;
     taps = [ "d12frosted/emacs-plus" ];
@@ -51,10 +60,6 @@ _: {
 
       # ── Networking / tunnels ───────────────────────────────────────────────
       "cloudflared" # Cloudflare Tunnel client
-      # nix-darwin's services.tailscale still runs the daemon; this declares the
-      # brew copy so it stops showing up as drift. Nix paths come first on PATH,
-      # so the nix `tailscale` CLI is the one that answers.
-      "tailscale"
 
       # ── Version control ────────────────────────────────────────────────────
       "gh"
@@ -134,11 +139,21 @@ _: {
 
       # ── LaTeX ──────────────────────────────────────────────────────────────
       "tectonic"
+    ]
+    ++ personalOnly [
+      # Nothing personal-only yet: every formula above is a CLI tool both
+      # machines want.
+    ]
+    ++ workOnly [
+      # Nothing work-only yet.
     ];
 
     # ── Casks (GUI applications, plus CLIs shipped only as casks) ────────────
 
     casks = [
+      # Standalone app owns the VPN; configs/scripts/tailscale uses its CLI.
+      "tailscale-app"
+
       # ── Terminals ──────────────────────────────────────────────────────────
       # "kitty"
       # "cmux"
@@ -157,6 +172,7 @@ _: {
       "github" # GitHub Desktop
 
       # ── Window / keyboard management ──────────────────────────────────────
+      "omniwm" # tiling WM; settings in configs/omniwm/settings.toml
       # "kindavim"
       # "dockdoor"
 
@@ -183,19 +199,12 @@ _: {
       # "basictex" # The lightweight alternative
 
       # ── Productivity ───────────────────────────────────────────────────────
-      "notion"
       "claude"
-      "chatgpt"
-      "bitwarden"
       "codex-app"
-      "notion-calendar"
-      "raycast"
       "shortcat"
-      "tradingview"
 
       # ── Communication ──────────────────────────────────────────────────────
       "zoom"
-      "whatsapp"
       "microsoft-teams"
 
       # ── Microsoft Office ───────────────────────────────────────────────────
@@ -206,8 +215,6 @@ _: {
       # ── Storage / cloud ────────────────────────────────────────────────────
       "daisydisk"
       "google-drive"
-      "nextcloud"
-      "paragon-extfs"
       "the-unarchiver"
 
       # ── Development tools ──────────────────────────────────────────────────
@@ -216,22 +223,32 @@ _: {
       "warp"
       # "docker-desktop"
 
-      # ── Media / creative ───────────────────────────────────────────────────
+      # ── Utilities ──────────────────────────────────────────────────────────
+      # Look into Tokie file manager in the future
+      "rustdesk" # The free TeamViewer/AnyDesk solution
+      "betterdisplay" # For creating virtual displays and stuf
+    ]
+    ++ personalOnly [
+      # ── Personal accounts / leisure / home hardware ────────────────────────
+      "notion"
+      "notion-calendar"
+      "chatgpt"
+      "bitwarden"
+      "tradingview"
+      "whatsapp"
+      "nextcloud"
+      "paragon-extfs"
       "gimp"
       "iina"
       "spotify"
-
-      # ── Gaming ─────────────────────────────────────────────────────────────
       "steam"
       "nvidia-geforce-now"
-
-      # ── Utilities ──────────────────────────────────────────────────────────
-      # Look into Tokie file manager in the future
       "adguard"
-      "rustdesk" # The free TeamViewer/AnyDesk solution
-      "betterdisplay" # For creating virtual displays and stuf
       "hp-easy-start"
       "raspberry-pi-imager"
+    ]
+    ++ workOnly [
+      # Nothing work-only yet.  VPN clients, MDM agents and the like go here.
     ];
   };
 }

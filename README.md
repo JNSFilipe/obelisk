@@ -144,17 +144,22 @@ make brew-orphans            # list formulae not declared in homebrew.nix
 ## Structure
 
 ```
-flake.nix                  Entry point
+flake.nix                  Entry point; the host list lives here
 nix/
   darwin.nix               System: nix settings, macOS defaults, users
   homebrew.nix             Default package source: brew formulae + casks
   home.nix                 User: zsh, programs, config symlinks
   packages.nix             nixpkgs escape hatch (things brew does not ship)
   nushell.nix              Nushell, alongside zsh (zsh stays the login shell)
+  hosts/
+    gauss.nix              Personal Mac: machine-specific settings only
+    thorp.nix              Work Mac: machine-specific settings only
 configs/
   tmux.conf                tmux settings (loaded via programs.tmux)
   nushell/                 Nushell prompt and commands (loaded via programs.nushell)
+  omniwm/                  OmniWM tiling window manager settings
   doom/                    Doom Emacs user config
+  gloom/                   Plain-Elisp Emacs 30+ config (linked as gloom-emacs)
   emacs/                   Legacy Doom checkout (no longer linked or executed)
   vemacs/                  Vanilla Emacs config
   nvim/                    Neovim
@@ -167,6 +172,36 @@ configs/
 
 Configs managed declaratively by home-manager modules (no files in `configs/`):
 atuin, ghostty, helix, lazygit, yazi, git, fzf, zoxide, carapace, tmux plugins.
+
+## Machines
+
+Two Macs are managed from this repository:
+
+| Host | Profile | Role |
+|------|---------|------|
+| `gauss` | `personal` | Personal machine |
+| `thorp` | `work` | Work machine |
+
+`make` detects which one it is running on from the local hostname, so the same
+commands work on both. Build the other machine's configuration from either one
+with `make build HOST=thorp`.
+
+What differs is deliberately small:
+
+- **Homebrew packages.** `nix/homebrew.nix` has a shared list plus
+  `personalOnly` and `workOnly` groups selected by the host's profile. Today
+  only personal apps are split out (leisure, home hardware, personal accounts);
+  every CLI tool is shared, and the work-only group is still empty.
+- **Machine-specific settings.** `nix/hosts/<host>.nix` is the place for macOS
+  defaults, launchd agents or paths that exist on one machine only.
+  `system.stateVersion` lives there because it is per-install by definition.
+
+Everything else — dotfiles, shells, editors, git identity — is shared on
+purpose. Adding a third Mac is one line in `flake.nix` plus a file in
+`nix/hosts/`.
+
+`nix flake check` builds **both** configurations, so a change cannot quietly
+break the machine that is not in front of you.
 
 ## Where packages live
 
@@ -202,34 +237,35 @@ present; use `make brew-orphans` to inspect the same report beforehand.
 | `prefix + Tab` | Last window |
 | `prefix + r` | Reload config |
 
-## Managing nix-darwin services
+## Tailscale
 
-Services enabled via `services.<name>.enable = true` in `darwin.nix` (e.g. Tailscale)
-are managed by `launchctl` on macOS.
+Homebrew's `tailscale-app` cask installs the standalone macOS app. The app
+owns the VPN connection; `services.tailscale` is disabled and the separate
+Homebrew `tailscale` formula is not installed.
 
-```bash
-# List all nix-managed daemons
-sudo launchctl list | grep org.nix
+`configs/scripts/tailscale` exposes the app's bundled CLI on the existing
+scripts PATH, keeping CLI and app versions aligned:
 
-# Check status of a specific service (e.g. Tailscale)
-sudo launchctl print system/org.nixos.tailscaled
-
-# Restart a service
-sudo launchctl kickstart -k system/org.nixos.tailscaled
-
-# Stop a service (modern / legacy)
-sudo launchctl bootout system/org.nixos.tailscaled
-sudo launchctl stop org.nixos.tailscaled
-
-# Start a stopped service (modern / legacy)
-sudo launchctl bootstrap system /Library/LaunchDaemons/org.nixos.tailscaled.plist
-sudo launchctl start org.nixos.tailscaled
+```sh
+open -a Tailscale
+tailscale status
+tailscale netcheck
 ```
 
-The service name pattern is `org.nixos.<daemon>`. To find the exact name:
-```bash
-ls /Library/LaunchDaemons/org.nixos.*
+Allow the app's network extension/VPN configuration when macOS prompts,
+then sign in to the intended tailnet. This Mac uses the Digiwest Headscale
+server with subnet routes enabled:
+
+```sh
+tailscale up --login-server http://tailscale.digiwest.pt:80 --accept-routes
 ```
+
+If authentication is required, supply a current Headscale auth key separately;
+keep credentials out of this repository. A hostname does not preserve a node's
+identity when switching clients; verify the assigned address after migration.
+
+Manage the connection through the app or `tailscale up` / `tailscale down`.
+Do not start a separate `tailscaled` with `brew services` or `launchctl`.
 
 ## Adding a new tool
 
