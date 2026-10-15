@@ -91,9 +91,13 @@
       # Set "Icon & widget style" to dark (macOS Sequoia+)
       AppleIconAppearanceTheme = "RegularDark";
       AppleShowAllExtensions = true;
-      # Fast key repeat
-      InitialKeyRepeat = 15;
-      KeyRepeat = 2;
+      # Key repeat at its fastest.  These are the hold-to-repeat settings, so
+      # they govern how quickly Delete chews through text.  Both go below what
+      # the System Settings sliders allow: the slider floors are KeyRepeat 2
+      # (30 ms between repeats) and InitialKeyRepeat 15 (225 ms before the
+      # first repeat).  Units are 15 ms, so this is 15 ms and 150 ms.
+      InitialKeyRepeat = 10;
+      KeyRepeat = 1;
       # Disable smart quotes / dashes in code contexts
       NSAutomaticQuoteSubstitutionEnabled = false;
       NSAutomaticDashSubstitutionEnabled = false;
@@ -106,6 +110,29 @@
       _FXShowPosixPathInTitle = true;
     };
     screensaver.askForPasswordDelay = 0;
+  };
+
+  # ── Keyboard ───────────────────────────────────────────────────────────────
+  # Applied with `hidutil` by the activation script, which the
+  # org.nixos.activate-system daemon re-runs at boot, so it survives restarts.
+  # Note that hidutil replaces the whole mapping table: a mapping that is not
+  # listed here is not applied at all.
+
+  system.keyboard = {
+    enableKeyMapping = true;
+
+    # Fn <-> Left Control, both directions (0xFF00000003 <-> 0x7000000E0).
+    swapLeftCtrlAndFn = true;
+
+    userKeyMapping = [
+      # Caps Lock -> F18, the usual hyper-key arrangement.  This was already
+      # active on gauss, set outside Nix; it is declared here so the swap above
+      # does not wipe it, and so it survives a reboot on both machines.
+      {
+        HIDKeyboardModifierMappingSrc = 30064771129; # 0x700000039 Caps Lock
+        HIDKeyboardModifierMappingDst = 30064771181; # 0x70000006D F18
+      }
+    ];
   };
 
   # `system.stateVersion` is per-machine and lives in nix/hosts/<name>.nix.
