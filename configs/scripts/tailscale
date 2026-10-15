@@ -1,0 +1,8 @@
+#!/bin/sh
+# Use the standalone app's CLI so it always matches the running VPN client.
+app_cli=/Applications/Tailscale.app/Contents/MacOS/Tailscale
+if [ ! -x "$app_cli" ]; then
+  printf '%s\n' 'Tailscale.app is missing. Install it with: brew install --cask tailscale-app' >&2
+  exit 127
+fi
+exec "$app_cli" "$@"

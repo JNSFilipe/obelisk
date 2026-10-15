@@ -134,11 +134,12 @@ invisible to a brew-built aspell.
 the next `make gc`.
 
 Previously-undeclared brew packages: `cloudflared` (brews) and `nextcloud`
-(casks) are now declared. `tailscale` is declared too, at the user's
-request. The daemon stays nix-owned (`services.tailscale`); the brew formula
-only duplicates the CLI, which loses on PATH order. Moving daemon ownership to
-brew would mean disabling `services.tailscale` and running
-`sudo brew services start tailscale` — not done, and not declarative.
+(casks) are now declared. The original migration also declared the
+`tailscale` formula alongside the Nix daemon. Superseded by the 2026-09-24
+Tailscale repair: `tailscale-app` now replaces the formula in the Homebrew
+configuration, `services.tailscale` is disabled, and the scripts PATH exposes
+the app's bundled CLI. See README's Tailscale section. These source changes
+do not imply Nix activation has run.
 
 Also fixed here: the zsh `ls` aliases passed `--color=auto`, which only GNU ls
 accepts. With coreutils coming from brew (g-prefixed), they now call `gls`.
