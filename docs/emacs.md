@@ -21,6 +21,15 @@ make doom-install
 make switch-locked
 ```
 
+On a machine that has never been activated, run `make switch` (or
+`make switch-locked`) **first** instead: activation installs the Emacs Plus
+cask that `make doom-install` requires, so the explicit `brew install` above is
+only needed when bootstrapping Doom ahead of activation. Note that activation
+also starts the Emacs launchd agent, which runs with
+`--init-directory=~/.local/share/doom-emacs` and therefore creates that
+directory before Doom is cloned; `doom-manage.sh` installs into it rather than
+refusing, keeping whatever state the daemon already wrote.
+
 The first two steps have already been performed on this machine during the
 migration trial. `make switch-locked` needs your sudo password. It uses a separate
 Nix configuration with Homebrew updates/upgrades disabled; missing declared

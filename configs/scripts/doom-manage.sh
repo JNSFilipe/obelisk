@@ -13,9 +13,21 @@ fi
 
 case "${1:-}" in
   install)
-    if [[ ! -e "$doom_root" ]]; then
-      mkdir -p "$(dirname "$doom_root")"
-      git clone --depth 1 https://github.com/doomemacs/core.git "$doom_root"
+    if [[ ! -x "$doom_root/bin/doom" ]]; then
+      if [[ -e "$doom_root/.git" ]]; then
+        echo "Existing $doom_root is a git checkout without bin/doom; leaving it untouched." >&2
+        exit 1
+      fi
+      # The Emacs launchd agent runs with --init-directory=$doom_root and
+      # RunAtLoad, so on a fresh machine it creates this directory, and
+      # DOOMLOCALDIR inside it, before Doom has ever been cloned.  Clone into a
+      # staging directory and move the checkout in around whatever is already
+      # there, rather than refusing to install or deleting the daemon's state.
+      staging="$(mktemp -d)"
+      trap 'rm -rf "$staging"' EXIT
+      git clone --depth 1 https://github.com/doomemacs/core.git "$staging/core"
+      mkdir -p "$doom_root"
+      ( cd "$staging/core" && tar cf - . ) | ( cd "$doom_root" && tar xf - )
     fi
     if [[ ! -x "$doom_root/bin/doom" ]]; then
       echo "Existing $doom_root is not a Doom installation; leaving it untouched." >&2
