@@ -1,0 +1,64 @@
+#!/bin/sh
+# Put the built-in display on the "More Space" scaled resolution.
+#
+# macOS keeps display scaling in /Library/Preferences/com.apple.windowserver
+# .displays.plist, keyed by display UUID and rewritten by WindowServer, so
+# there is no `defaults` key for it and nix-darwin has no option.  displayplacer
+# drives the same API the Displays pane does.
+#
+# "More Space" is the right-hand end of that pane's slider, which is the
+# largest scaled ("looks like") resolution the display offers.  Deriving it
+# rather than hardcoding 1710x1112 keeps this working on any Mac, so the two
+# machines share one script even with different built-in panels.
+
+set -eu
+
+placer=${DISPLAYPLACER:-/opt/homebrew/bin/displayplacer}
+
+if [ ! -x "$placer" ]; then
+  printf '%s\n' "display-more-space: $placer not found; skipping" >&2
+  exit 0
+fi
+
+listing=$("$placer" list 2>/dev/null) || {
+  printf '%s\n' 'display-more-space: displayplacer list failed; skipping' >&2
+  exit 0
+}
+
+# Pick the built-in screen's id and its widest scaled mode in one pass.  Blocks
+# are separated by blank lines and only the built-in one is considered, so an
+# external monitor is never touched.
+result=$(printf '%s\n' "$listing" | awk '
+  /^Persistent screen id:/ { id = $4; builtin = 0; best_w = 0; best_h = 0; mode = "" }
+  /^Type:.*built in screen/ { builtin = 1 }
+  builtin && /^ *mode [0-9]+: / && /scaling:on/ {
+    n = $2; sub(":", "", n)
+    if (match($0, /res:[0-9]+x[0-9]+/)) {
+      split(substr($0, RSTART + 4, RLENGTH - 4), wh, "x")
+      # Widest wins; taller breaks a tie, which separates 1710x1112 from
+      # 1710x1068 on a 13" Air.
+      if (wh[1] > best_w || (wh[1] == best_w && wh[2] > best_h)) {
+        best_w = wh[1]; best_h = wh[2]; mode = n
+      }
+    }
+  }
+  builtin && mode != "" { found_id = id; found_mode = mode; found_w = best_w; found_h = best_h }
+  END { if (found_mode != "") printf "%s %s %sx%s\n", found_id, found_mode, found_w, found_h }
+')
+
+if [ -z "$result" ]; then
+  printf '%s\n' 'display-more-space: no built-in display with scaled modes; skipping' >&2
+  exit 0
+fi
+
+id=$(printf '%s' "$result" | cut -d' ' -f1)
+mode=$(printf '%s' "$result" | cut -d' ' -f2)
+res=$(printf '%s' "$result" | cut -d' ' -f3)
+
+# `mode:` changes only this display's resolution; passing origin or degree here
+# would rearrange a multi-display setup as a side effect.
+if "$placer" "id:$id mode:$mode" >/dev/null 2>&1; then
+  printf '%s\n' "display-more-space: built-in display set to $res (mode $mode)"
+else
+  printf '%s\n' "display-more-space: displayplacer could not apply mode $mode" >&2
+fi

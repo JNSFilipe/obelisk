@@ -55,6 +55,7 @@ in
       "doxx" # open word documents in terminal
       "xleak" # open excel documents in terminal
       "rtk" # token-saving proxy for common terminal tools
+      "displayplacer" # sets display scaling; see configs/scripts/display-more-space
       "herdr"
       "mqttui"
 

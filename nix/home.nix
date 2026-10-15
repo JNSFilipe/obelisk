@@ -80,6 +80,17 @@ in
     ".config/wallpapers".source = link "wallpapers";
   };
 
+  # macOS keeps display scaling in com.apple.windowserver.displays.plist, keyed
+  # by display UUID and rewritten by WindowServer, so there is no defaults key
+  # for it and nix-darwin has no option.  The script drives displayplacer, which
+  # uses the same API the Displays pane does, and derives "More Space" as the
+  # largest scaled mode rather than hardcoding a resolution — so both machines
+  # share it even with different built-in panels.  It exits 0 when displayplacer
+  # or a GUI session is missing, so a headless activation cannot fail on it.
+  home.activation.displayMoreSpace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${flakeRoot}/configs/scripts/display-more-space
+  '';
+
   # Raycast owned ⌘Space and disabled Spotlight's hotkey to get it.  With
   # Raycast removed, hand ⌘Space back to Spotlight: a disabled hotkey persists
   # in the defaults database, so deleting the Raycast block on its own would
