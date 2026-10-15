@@ -94,7 +94,14 @@ doom-update: not-root ## Upgrade conventional Doom and its pinned packages
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
 bootstrap: not-root ## First-time nix-darwin install (run after installing nix)
-	nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake "$(FLAKE)"
+	# nix-darwin refuses to activate as a non-root user ("system activation must
+	# now be run as root"), and sudo resets PATH, so before the first activation
+	# neither `nix` nor `darwin-rebuild` is on root's PATH. Build the system
+	# first, then run the darwin-rebuild this flake pins, by absolute path.
+	@sys=$$(nix --extra-experimental-features "nix-command flakes" build --no-link \
+	    --print-out-paths "$(CURDIR)#darwinConfigurations.$(HOST).system") \
+	  && printf 'activating %s\n' "$$sys" \
+	  && $(SUDO) "$$sys/sw/bin/darwin-rebuild" switch --flake "$(FLAKE)"
 
 uninstall-nix: ## Completely remove nix from the system
 	/nix/nix-installer uninstall
