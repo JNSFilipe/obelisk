@@ -13,6 +13,21 @@
 
 set -eu
 
+# Home Manager runs activation scripts with a PATH made only of Nix store
+# entries, so the system tools this needs -- awk above all -- are not on it.
+# Put the standard macOS locations back rather than relying on the caller's
+# environment, the same reason the activation in nix/home.nix spells out
+# /usr/bin/defaults and /usr/bin/killall.
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}
+export PATH
+
+# A display tweak must never be the thing that fails `make switch`, so every
+# exit below this point is a warning and a zero status.
+if ! command -v awk >/dev/null 2>&1; then
+  printf '%s\n' 'display-more-space: awk not found; skipping' >&2
+  exit 0
+fi
+
 placer=${DISPLAYPLACER:-/opt/homebrew/bin/displayplacer}
 
 if [ ! -x "$placer" ]; then

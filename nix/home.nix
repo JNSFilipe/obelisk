@@ -87,8 +87,10 @@ in
   # largest scaled mode rather than hardcoding a resolution — so both machines
   # share it even with different built-in panels.  It exits 0 when displayplacer
   # or a GUI session is missing, so a headless activation cannot fail on it.
+  # `|| true`: the script guards its own failure modes, but a display tweak is
+  # never worth aborting an activation over, so any surprise stays a warning.
   home.activation.displayMoreSpace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${flakeRoot}/configs/scripts/display-more-space
+    run ${flakeRoot}/configs/scripts/display-more-space || true
   '';
 
   # Raycast owned ⌘Space and disabled Spotlight's hotkey to get it.  With
