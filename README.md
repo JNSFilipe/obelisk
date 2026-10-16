@@ -160,7 +160,6 @@ configs/
   omniwm/                  OmniWM tiling window manager settings
   doom/                    Doom Emacs user config
   gloom/                   Plain-Elisp Emacs 30+ config (linked as gloom-emacs)
-  emacs/                   Legacy Doom checkout (no longer linked or executed)
   vemacs/                  Vanilla Emacs config
   nvim/                    Neovim
   zed/                     Zed
