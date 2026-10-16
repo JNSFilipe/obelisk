@@ -1,0 +1,26 @@
+// Syncthing ignore list, linked into each shared folder as .stignore.
+//
+// The shared folders are deliberately narrow: Claude's projects/ and Codex's
+// sessions/. Both hold append-only JSONL, one file per session id, so two
+// machines writing at the same time touch different files and no merge is ever
+// needed. That is what makes these safe to sync live, unlike a browser profile
+// or Codex's thread_history/logs/queue SQLite stores, which are excluded by
+// simply not sharing the directories they live in.
+
+// macOS turds.
+.DS_Store
+._*
+
+// Defensive: if a database ever appears inside one of these folders, do not
+// replicate it. Syncthing copies files, not transactions, so a live SQLite
+// file synced mid-write arrives corrupt.
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+// Editor and tooling scratch.
+*.tmp
+*.swp

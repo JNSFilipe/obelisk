@@ -61,6 +61,7 @@ in
 
       # ── Networking / tunnels ───────────────────────────────────────────────
       "cloudflared" # Cloudflare Tunnel client
+      "syncthing" # file sync; launchd agent and folders in nix/home.nix
 
       # ── Version control ────────────────────────────────────────────────────
       "gh"

@@ -73,11 +73,43 @@ in
     # File, not the directory: OmniWM keeps other state under ~/.config/omniwm.
     ".config/omniwm/settings.toml".source = link "omniwm/settings.toml";
 
+    # ── Syncthing ──────────────────────────────────────────────────────────
+    # One ignore list, linked into each shared folder.  The folders themselves
+    # are paired through the Syncthing UI; only these two are shared, so no
+    # database or browser profile is ever replicated.
+    ".claude/projects/.stignore".source = link "syncthing/stignore";
+    ".codex/sessions/.stignore".source = link "syncthing/stignore";
+
     # ── Misc tools ─────────────────────────────────────────────────────────
     ".config/scripts".source = link "scripts";
 
     # ── Desktop ────────────────────────────────────────────────────────────
     ".config/wallpapers".source = link "wallpapers";
+  };
+
+  # ── Syncthing ───────────────────────────────────────────────────────────────
+  # Homebrew supplies the binary (nix/homebrew.nix); launchd owns the process,
+  # the same arrangement as the Emacs daemon in nix/emacs.nix.  --no-restart
+  # hands restarts to launchd rather than letting Syncthing respawn itself,
+  # which would leave KeepAlive fighting a process it does not own.
+  #
+  # Devices are paired once through the web UI on http://127.0.0.1:8384; device
+  # ids do not exist until first run, so they cannot be declared here.
+  launchd.agents.syncthing = {
+    enable = true;
+    config = {
+      ProgramArguments = [
+        "/opt/homebrew/bin/syncthing"
+        "serve"
+        "--no-browser"
+        "--no-restart"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/syncthing.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/syncthing.error.log";
+    };
   };
 
   # macOS keeps display scaling in com.apple.windowserver.displays.plist, keyed
