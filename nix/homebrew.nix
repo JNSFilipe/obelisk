@@ -181,6 +181,7 @@ in
       # ── Browsers ───────────────────────────────────────────────────────────
       "orion"
       "helium-browser"
+      "zen" # Firefox-based; its profile is the one being synced between Macs
 
       # ── AI coding assistants (CLIs distributed only as casks) ──────────────
       "claude-code"
