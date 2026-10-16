@@ -10,6 +10,11 @@
 ;; (package! dape)
 (package! consult-gh)
 (package! vundo)
+;; AI agents in an Emacs buffer over ACP, rather than a terminal emulator.
+;; Pulls shell-maker and acp as dependencies; all three are on MELPA.
+;; The agent-side adapters are OS packages: claude-agent-acp (nix/packages.nix)
+;; and codex-acp (nix/homebrew.nix).
+(package! agent-shell)
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

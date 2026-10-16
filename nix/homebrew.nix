@@ -137,6 +137,7 @@ in
       # claude-code and codex have no formula — see casks below.
       "gemini-cli"
       "openspec"
+      "codex-acp" # ACP adapter for Codex, used by Emacs agent-shell
 
       # ── LaTeX ──────────────────────────────────────────────────────────────
       "tectonic"

@@ -266,6 +266,25 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   :bind ("C-x u" . vundo))
 
 
+;; AI agents in ordinary Emacs buffers over ACP, instead of a terminal
+;; emulator.  The agents themselves are OS packages that must be on PATH:
+;; claude-agent-acp (nix/packages.nix) and codex-acp (nix/homebrew.nix).  The
+;; Emacs daemon already gets both, via /etc/profiles/per-user and
+;; /opt/homebrew/bin in nix/emacs.nix's EnvironmentVariables.
+;;
+;; Authentication is login-based by default: run `claude' (and `codex') in a
+;; terminal once so the CLI holds a subscription login, and agent-shell reuses
+;; it.  No API key goes in this file.
+(use-package! agent-shell
+  :commands (agent-shell-anthropic-start-claude-code
+             agent-shell-openai-start-codex)
+  :init
+  (map! :leader
+        (:prefix ("a" . "agents")
+         :desc "Claude agent" "c" #'agent-shell-anthropic-start-claude-code
+         :desc "Codex agent"  "x" #'agent-shell-openai-start-codex)))
+
+
 ;; Native smooth scrolling, no package needed
 (pixel-scroll-precision-mode 1)
 
