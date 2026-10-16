@@ -180,7 +180,6 @@ in
       # "dockdoor"
 
       # ── Browsers ───────────────────────────────────────────────────────────
-      "orion"
       "helium-browser"
       "zen" # Firefox-based; its profile is the one being synced between Macs
 
