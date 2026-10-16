@@ -91,13 +91,23 @@
       # Set "Icon & widget style" to dark (macOS Sequoia+)
       AppleIconAppearanceTheme = "RegularDark";
       AppleShowAllExtensions = true;
-      # Key repeat at its fastest.  These are the hold-to-repeat settings, so
-      # they govern how quickly Delete chews through text.  Both go below what
-      # the System Settings sliders allow: the slider floors are KeyRepeat 2
-      # (30 ms between repeats) and InitialKeyRepeat 15 (225 ms before the
-      # first repeat).  Units are 15 ms, so this is 15 ms and 150 ms.
-      InitialKeyRepeat = 10;
-      KeyRepeat = 1;
+      # Keyboard and scrolling feel: these are the values that were actually in
+      # use on gauss, captured from the live defaults rather than chosen, so
+      # thorp gets the same experience instead of a tuned-up one.
+
+      # Hold-to-repeat, which is what governs how fast Delete chews through
+      # text.  Units are 15 ms: 30 ms between repeats after a 225 ms delay.
+      # These are the System Settings slider floors, not below them.
+      InitialKeyRepeat = 15;
+      KeyRepeat = 2;
+      # Held keys repeat rather than opening the accent menu.
+      ApplePressAndHoldEnabled = false;
+
+      # Scrolling: "natural" direction off, and no swipe-to-navigate-pages.
+      "com.apple.swipescrolldirection" = false;
+      AppleEnableSwipeNavigateWithScrolls = false;
+      # Trackpad pointer tracking speed (not scroll): the System Settings slider.
+      "com.apple.trackpad.scaling" = 3.0;
       # Disable smart quotes / dashes in code contexts
       NSAutomaticQuoteSubstitutionEnabled = false;
       NSAutomaticDashSubstitutionEnabled = false;
@@ -110,6 +120,14 @@
       _FXShowPosixPathInTitle = true;
     };
     screensaver.askForPasswordDelay = 0;
+  };
+
+  # Scroll-wheel and mouse tracking speed have no typed nix-darwin option, so
+  # they go through the generic writer.  Same source as the block above: the
+  # values gauss is actually running.
+  system.defaults.CustomUserPreferences."NSGlobalDomain" = {
+    "com.apple.scrollwheel.scaling" = 0.75;
+    "com.apple.mouse.scaling" = 1.5;
   };
 
   # ── Keyboard ───────────────────────────────────────────────────────────────
