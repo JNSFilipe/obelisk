@@ -180,7 +180,7 @@ in
       # "dockdoor"
 
       # ── Browsers ───────────────────────────────────────────────────────────
-      "helium-browser"
+      # Zen is the only declared browser; Safari ships with macOS.
       "zen" # Firefox-based; its profile is the one being synced between Macs
 
       # ── AI coding assistants (CLIs distributed only as casks) ──────────────
