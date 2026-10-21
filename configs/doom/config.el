@@ -1,7 +1,7 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;; Place your private configuration here. Nix bundles this directory, so run
-;; `make switch` from the dotfiles repository after modifying this file.
+;; Home Manager links this directory live. Reload Doom or restart Emacs after
+;; config changes; no Nix activation or package sync is needed for this file.
 
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
@@ -198,9 +198,10 @@
         vertico-cycle t
         vertico-resize t)
   (vertico-mode 1)
+  ;; Override Doom's directory-deleting Backspace after its Vertico defaults.
+  ;; TAB inserts the highlighted candidate, one file path component at a time.
+  (load! "vertico-navigation")
   (map! :map vertico-map
-        "TAB" #'vertico-next
-        [tab] #'vertico-next
         "S-TAB" #'vertico-previous
         [backtab] #'vertico-previous))
 

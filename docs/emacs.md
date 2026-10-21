@@ -78,6 +78,31 @@ optional named daemon are separate from Doom.
 The [Gloom parity audit](../configs/gloom/PARITY.md) records the retained packages,
 Meow/UI differences, remaining Doom-specific gaps and external-service test limits.
 
+## Doom minibuffer editing
+
+- **Tab** inserts the highlighted Vertico candidate (the first suggestion by
+  default), without accepting the prompt. File and project-file candidates are
+  completed one path component at a time: `src/co` → `src/components/` →
+  `src/components/button.el`, rather than inserting the whole nested path at once.
+  Command and buffer candidates are inserted in full.
+- **Backspace** deletes one character, including immediately after `/`; it does
+  not remove the entire directory name. Both GUI and terminal key events are
+  covered.
+- **Enter** still accepts a candidate. **C-j/C-k**, the arrow keys, and Shift-Tab
+  retain their existing candidate-navigation behavior.
+
+These bindings live in `configs/doom/vertico-navigation.el`, loaded after Doom's
+Vertico defaults. They do not change the separate Gloom configuration. No
+`doom sync` or Nix activation is needed; reload Doom or restart Emacs.
+
+Regression tests, using Doom's already installed Vertico and Compat packages:
+
+```sh
+build="$HOME/.local/share/doom-emacs/.local/straight/build-$(/opt/homebrew/bin/emacs -Q --batch --eval '(princ emacs-version)')"
+/opt/homebrew/bin/emacs -Q --batch -L "$build/compat" -L "$build/vertico" \
+  -l configs/doom/tests/vertico-navigation-test.el -f ert-run-tests-batch-and-exit
+```
+
 ## Rollback
 
 `make rollback` restores Nix's previous system and Home Manager generation,
