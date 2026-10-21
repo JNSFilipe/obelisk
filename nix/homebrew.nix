@@ -157,7 +157,7 @@ in
       "rpiboot" # boot Raspberry Pi CM/Zero over USB
 
       # ── AI coding assistants ───────────────────────────────────────────────
-      # claude-code and codex have no formula — see casks below.
+      # claude-code@latest and codex have no formula — see casks below.
       "gemini-cli"
       "pi-coding-agent"
       "openspec"
@@ -207,7 +207,7 @@ in
       "zen" # Firefox-based; its profile is the one being synced between Macs
 
       # ── AI coding assistants (CLIs distributed only as casks) ──────────────
-      "claude-code"
+      "claude-code@latest"
       "codex"
 
       # ── Fonts ──────────────────────────────────────────────────────────────
@@ -251,6 +251,7 @@ in
 
       # ── Utilities ──────────────────────────────────────────────────────────
       # Look into Tokie file manager in the future
+      "purge" # cache and junk cleanup app (not macOS's /usr/sbin/purge)
       "rustdesk" # The free TeamViewer/AnyDesk solution
       "betterdisplay" # For creating virtual displays and stuf
     ]

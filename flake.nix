@@ -144,6 +144,7 @@
                 "man-db"
                 "nushell"
                 "opam"
+                "pi-coding-agent"
                 "pure"
                 "texinfo"
                 "tmux"
@@ -152,6 +153,14 @@
                 "zsh"
                 "zsh-autocomplete"
                 "zsh-autosuggestions"
+              ];
+              requiredCasks = [
+                "claude-code@latest"
+                "kitty"
+                "omniwm"
+                "purge"
+                "tailscale-app"
+                "zen"
               ];
               compliant =
                 configuration:
@@ -173,7 +182,8 @@
                 && hm.programs.zsh.plugins == [ ]
                 && !lib.hasInfix "/nix/store/" hm.home.file."./.zshrc".text
                 && lib.all (name: builtins.elem name (map (b: b.name) cfg.homebrew.brews)) requiredFormulae
-                && builtins.elem "kitty" (map (c: c.name) cfg.homebrew.casks);
+                && lib.all (name: builtins.elem name (map (c: c.name) cfg.homebrew.casks)) requiredCasks
+                && !(builtins.elem "claude-code" (map (c: c.name) cfg.homebrew.casks));
             in
             assert lib.assertMsg (lib.all compliant (builtins.attrValues configurations))
               "Homebrew-first package ownership regressed; audit new Nix runtime packages before adding them to the allowlist.";
