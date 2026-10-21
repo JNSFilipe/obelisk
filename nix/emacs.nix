@@ -25,9 +25,6 @@ in
       ${environment}
       exec ${emacs} --init-directory=${doomRoot} "$@"
     '')
-    (pkgs.writeShellScriptBin "emacsclient" ''
-      exec /opt/homebrew/bin/emacsclient "$@"
-    '')
     (pkgs.writeShellScriptBin "doom" ''
       ${environment}
       if [ ! -x ${doomRoot}/bin/doom ]; then

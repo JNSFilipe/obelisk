@@ -1,5 +1,12 @@
 # Homebrew-first package management
 
+> Historical implementation notes. The original `programs.*` exclusion below
+> has been removed: Homebrew-first now applies to every available package,
+> including shells, plugins, and module-managed tools. See
+> [current ownership policy](../../README.md#where-packages-live) and AGENTS.md.
+> The current configuration uses nullable module packages or direct
+> configuration/runtime hooks, rather than retaining duplicate Nix binaries.
+
 ## Scope
 
 Invert the package policy: Homebrew (`nix/homebrew.nix`) becomes the source for

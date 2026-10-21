@@ -225,7 +225,7 @@ config.colors = {
 	},
 }
 
-config.default_prog = { "zsh" }
+config.default_prog = { "/opt/homebrew/bin/zsh" }
 config.enable_wayland = false
 config.window_decorations = "RESIZE"
 

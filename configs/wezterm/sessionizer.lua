@@ -16,7 +16,7 @@ end
 
 local function list_projects_from_zoxide()
 	local success, stdout, stderr = wezterm.run_child_process({
-		"/bin/zsh",
+		"/opt/homebrew/bin/zsh",
 		"-lc",
 		"zoxide query --list --score",
 	})

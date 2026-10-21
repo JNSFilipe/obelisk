@@ -33,6 +33,9 @@ build: ## Build without activating (dry run)
 check: ## Build the system and run flake checks
 	nix flake check
 
+check-runtime: build ## Test generated shells using installed Homebrew tools (isolated state)
+	python3 tests/homebrew-runtime.py --host "$(HOST)"
+
 # ── Updates ───────────────────────────────────────────────────────────────────
 
 update: not-root ## Update all flake inputs (nixpkgs, home-manager, nix-darwin)
@@ -93,7 +96,14 @@ doom-update: not-root ## Upgrade conventional Doom and its pinned packages
 
 # ── Bootstrap (first-time only) ──────────────────────────────────────────────
 
-bootstrap: not-root ## First-time nix-darwin install (run after installing nix)
+bootstrap: not-root ## First-time nix-darwin install (run after installing Homebrew and Nix)
+	@if [ ! -x /opt/homebrew/bin/brew ]; then \
+		printf '%s\n' 'Install Homebrew from https://brew.sh first.'; exit 1; \
+	fi
+	# Never change the login shell to a path that has not been installed yet.
+	@if [ ! -x /opt/homebrew/bin/zsh ] || [ ! -x /opt/homebrew/bin/bash ]; then \
+		/opt/homebrew/bin/brew install zsh bash; \
+	fi
 	# nix-darwin refuses to activate as a non-root user ("system activation must
 	# now be run as root"), and sudo resets PATH, so before the first activation
 	# neither `nix` nor `darwin-rebuild` is on root's PATH. Build the system
@@ -143,4 +153,4 @@ help: ## Show this help
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: not-root switch switch-locked build check update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-install doom-sync doom-update bootstrap uninstall-nix help
+.PHONY: not-root switch switch-locked build check check-runtime update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-install doom-sync doom-update bootstrap uninstall-nix help

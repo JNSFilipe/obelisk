@@ -111,6 +111,76 @@
         # Build every machine, so a change cannot quietly break the one that is
         # not in front of you.
         lib.mapAttrs (_: configuration: configuration.system) configurations // {
+          # Fail closed if a programs.* default silently reintroduces a Nix
+          # application. These are configuration artifacts, custom wrappers,
+          # or tools with no Homebrew distribution, not package exceptions.
+          homebrew-runtime-ownership =
+            let
+              allowedHomeArtifacts = [
+                "emacs"
+                "doom"
+                "vanilla-emacs"
+                "gloom-emacs"
+                "home-configuration-reference-manpage"
+                "hm-session-vars.sh"
+              ];
+              allowedSystemPackages = [
+                "darwin-version"
+                "darwin-rebuild"
+                "darwin-option"
+                "nix"
+                "nix-info"
+              ];
+              requiredFormulae = [
+                "atuin"
+                "bash"
+                "carapace"
+                "fzf"
+                "fzf-tab"
+                "git"
+                "git-lfs"
+                "helix"
+                "lazygit"
+                "man-db"
+                "nushell"
+                "opam"
+                "pure"
+                "texinfo"
+                "tmux"
+                "yazi"
+                "zoxide"
+                "zsh"
+                "zsh-autocomplete"
+                "zsh-autosuggestions"
+              ];
+              compliant =
+                configuration:
+                let
+                  cfg = configuration.config;
+                  hm = cfg.home-manager.users.${userName};
+                  allowed = names: packages: lib.all (p: builtins.elem (lib.getName p) names) packages;
+                in
+                lib.all (
+                  p:
+                  builtins.elem p.name allowedHomeArtifacts
+                  || builtins.elem (lib.getName p) [
+                    "claude-agent-acp"
+                    "home-manager"
+                  ]
+                ) hm.home.packages
+                && allowed allowedSystemPackages cfg.environment.systemPackages
+                && toString cfg.users.users.${userName}.shell == "/opt/homebrew/bin/zsh"
+                && hm.programs.zsh.plugins == [ ]
+                && !lib.hasInfix "/nix/store/" hm.home.file."./.zshrc".text
+                && lib.all (name: builtins.elem name (map (b: b.name) cfg.homebrew.brews)) requiredFormulae
+                && builtins.elem "kitty" (map (c: c.name) cfg.homebrew.casks);
+            in
+            assert lib.assertMsg (lib.all compliant (builtins.attrValues configurations))
+              "Homebrew-first package ownership regressed; audit new Nix runtime packages before adding them to the allowlist.";
+            pkgs.runCommand "homebrew-runtime-ownership" { } ''
+              touch "$out"
+            '';
+
           nix-static-analysis =
             pkgs.runCommand "nix-static-analysis"
               {

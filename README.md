@@ -3,8 +3,8 @@
 Declarative macOS system configuration.
 [nix-darwin](https://github.com/nix-darwin/nix-darwin) manages the system,
 [home-manager](https://github.com/nix-community/home-manager) manages the user environment,
-and [homebrew](https://brew.sh) (via nix-darwin) is the default package source for
-CLI tools and GUI apps alike.
+and [homebrew](https://brew.sh) (via nix-darwin) supplies every package it offers
+as a formula or cask. Nix packages are used only when Homebrew cannot supply them.
 
 ## Bootstrap
 
@@ -13,10 +13,11 @@ CLI tools and GUI apps alike.
 git clone https://github.com/jfilipe/obelisk.git
 cd obelisk
 
-# Install Nix (Determinate Systems installer)
+# Install Homebrew first: https://brew.sh (Apple Silicon: /opt/homebrew)
+# Then install Nix (Determinate Systems installer)
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
-# First-time activation
+# First-time activation (installs Homebrew shells before changing the login shell)
 make bootstrap
 ```
 
@@ -27,11 +28,12 @@ make help
 ```
 
 ```
-  bootstrap       First-time nix-darwin install (run after installing nix)
+  bootstrap       First-time nix-darwin install (run after installing Homebrew and Nix)
   brew-orphans    List Homebrew packages not declared in homebrew.nix
   brew-upgrade    Upgrade Homebrew, including casks that self-update (--greedy)
   build           Build without activating (dry run)
   check           Build the system and run flake checks
+  check-runtime   Test generated shells using installed Homebrew tools (isolated state)
   diff            Show what changed between current and built config
   doom-install    Bootstrap writable Doom with Homebrew Emacs
   doom-sync       Sync Doom modules/packages after configuration changes
@@ -65,8 +67,8 @@ vim configs/ghostty/config   # takes effect immediately, no rebuild needed
 
 **Add a new CLI tool:**
 ```bash
-brew info --formula NAME     # confirm homebrew-core has it
-vim nix/homebrew.nix         # add to brews (or nix/packages.nix if brew lacks it)
+brew info --formula NAME || brew info --cask NAME  # check both distributions
+vim nix/homebrew.nix         # add to brews/casks; Nix only if neither exists
 make switch
 ```
 
@@ -128,6 +130,41 @@ make rollback                # revert Nix-managed system and Home Manager state
 
 Rollback does not revert Homebrew upgrades or files exposed through the live
 `configs/` symlinks. Both are intentionally managed outside Nix generations.
+
+**Atuin reports a missing migration:**
+
+This usually means an older Atuin is opening a database already migrated by a
+newer one. Do **not** delete `history.db` or rows from `_sqlx_migrations`.
+Homebrew owns Atuin here. Home Manager renders its settings, and both Zsh and
+Nushell initialize the Homebrew executable. Do not install another Atuin with Nix.
+
+```bash
+which -a atuin
+atuin --version
+# If /opt/homebrew/bin/atuin also exists:
+/opt/homebrew/bin/atuin --version
+```
+
+Upgrade the Homebrew version rather than downgrading the database:
+
+```bash
+brew upgrade atuin
+make switch-locked             # remove any legacy Nix-installed copy via activation
+exec /opt/homebrew/bin/zsh -l   # reload integrations and command lookup
+```
+
+The first Homebrew-only migration also works with `make switch-locked`: it
+installs missing declared packages but does not upgrade existing ones. Old Nix
+generations may still contain incompatible Atuin binaries; avoid rolling back
+to them. Nix rollback does not roll back `~/.local/share/atuin`.
+
+Zsh creates `${XDG_DATA_HOME:-$HOME/.local/share}/zsh` before loading plugins,
+so recent-directory history also works on a fresh home or after state cleanup.
+For an already-running shell with a missing directory, create it once:
+
+```bash
+mkdir -p -- "${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
+```
 
 **Reclaim disk space:**
 ```bash
@@ -208,10 +245,26 @@ break the machine that is not in front of you.
 |------|-------|-----|
 | CLI tools | `nix/homebrew.nix` brews | Default source; one upgrade path for everything |
 | GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code`, `codex`) |
-| Nix GUI apps | `nix/darwin.nix` `environment.systemPackages` | Copied into `/Applications/Nix Apps` |
-| CLI not in homebrew-core | `nix/packages.nix` | Escape hatch; currently empty |
-| Shell / tool config | `nix/home.nix` `programs.*` | Declarative, managed by home-manager |
+| Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently Claude Agent ACP and tmux plugins |
+| Shell / tool config | `nix/home.nix` `programs.*` or generated files | Configuration only; never a reason to install a second binary |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
+
+This policy includes shells, plugins, fonts, and packages normally pulled in by
+Home Manager. Modules use `package = null` where supported. Atuin, zoxide, fzf,
+carapace, and Opam modules require a Nix binary, so their configuration and
+integrations are managed separately instead. Zsh initializes tools from stable
+`/opt/homebrew` paths. Nushell refreshes its generated integration files in
+`~/.cache/obelisk/nushell` during `env.nu`, before `config.nu` is parsed, so
+Homebrew upgrades do not leave stale hooks. Application data stays in place.
+The login shell is `/opt/homebrew/bin/zsh`; Kitty is `/Applications/kitty.app`.
+
+Nix still supplies its own management tools, custom configuration wrappers, and
+isolated build/check dependencies. These are not duplicate user applications.
+`nix flake check` audits the declared home and system package lists on both
+hosts against the small Nix-only/configuration allowlist. After installing the
+Homebrew packages, `make check-runtime` smoke-tests the generated Zsh/Nushell
+integrations and tmux using isolated state. It also checks Atuin against an
+online SQLite backup of existing history, never against the live database.
 
 Editing most files under `configs/` takes effect immediately (live symlinks).
 `configs/doom/` is linked live. Changes to `init.el` or `packages.el` require

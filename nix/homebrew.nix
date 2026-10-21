@@ -1,12 +1,11 @@
 { hostProfile, lib, ... }:
 
 # ── nix-darwin homebrew integration ──────────────────────────────────────────
-# Homebrew is the default package source: anything homebrew-core ships lives
-# here, CLI or GUI.  nix/packages.nix is the escape hatch for the few things
-# brew cannot provide.  nix-darwin/home-manager still own the system, the
-# dotfiles, and every programs.* module (git, tmux, zsh, fzf, atuin, zoxide,
-# kitty, ghostty, helix, lazygit, yazi) — those pull their own
-# nix packages and must not be duplicated here.
+# Homebrew is the package source whenever it offers a formula or cask,
+# CLI or GUI.  nix/packages.nix is the escape hatch for the few things
+# brew cannot provide. nix-darwin/home-manager own system settings and
+# dotfiles, not duplicate application packages. programs.* modules use
+# package = null where supported; other integrations are configured directly.
 
 let
   # Which machine gets what.  `hostProfile` comes from the host's entry in
@@ -41,10 +40,27 @@ in
     # /opt/homebrew/bin; darwin.nix adds their opt/*/bin dirs to systemPath.
 
     brews = [
+      # ── Shells, integrations and interactive tools ──────────────────────────
+      "zsh"
+      "bash"
+      "nushell"
+      "atuin"
+      "zoxide"
+      "fzf"
+      "carapace"
+      "tmux"
+      "yazi"
+      "zsh-autocomplete"
+      "zsh-autosuggestions"
+      "fzf-tab"
+      "pure"
+
       # ── Terminal utilities ─────────────────────────────────────────────────
       "coreutils" # GNU core utils, g-prefixed (gls, gdate, …)
       "moreutils" # sponge, vipe, ts, …
       "less"
+      "man-db"
+      "texinfo" # info viewer; nix-darwin's info module would install a Nix copy
       "wget"
       "htop"
       "nmap"
@@ -64,6 +80,9 @@ in
       "syncthing" # file sync; launchd agent and folders in nix/home.nix
 
       # ── Version control ────────────────────────────────────────────────────
+      "git"
+      "git-lfs"
+      "lazygit"
       "gh"
 
       # ── SSH helpers ────────────────────────────────────────────────────────
@@ -86,10 +105,12 @@ in
 
       # ── Editors (terminal) ─────────────────────────────────────────────────
       "neovim"
+      "helix"
 
       # ── CI / containers / databases ────────────────────────────────────────
       # OrbStack provides the Docker engine, CLI, Compose, and buildx.
       "kubernetes-cli" # kubectl
+      "opentofu" # infrastructure as code
       "postgresql@18" # Postgres tooling (keg-only)
 
       # ── AWS ────────────────────────────────────────────────────────────────
@@ -121,6 +142,7 @@ in
 
       # Clojure
       "clojure"
+      "opam" # OCaml package manager
 
       # C / C++
       "gcc"
@@ -137,6 +159,7 @@ in
       # ── AI coding assistants ───────────────────────────────────────────────
       # claude-code and codex have no formula — see casks below.
       "gemini-cli"
+      "pi-coding-agent"
       "openspec"
       "codex-acp" # ACP adapter for Codex, used by Emacs agent-shell
 
@@ -158,7 +181,7 @@ in
       "tailscale-app"
 
       # ── Terminals ──────────────────────────────────────────────────────────
-      # "kitty"
+      "kitty"
       # "cmux"
       # "wezterm"
       "ghostty"
@@ -188,7 +211,7 @@ in
       "codex"
 
       # ── Fonts ──────────────────────────────────────────────────────────────
-      # TODO: The fonts should be managed on the nix side of things
+      # Fonts are Homebrew casks too, following the same ownership policy.
       "font-iosevka"
       "font-geist-mono"
       "font-source-code-pro"

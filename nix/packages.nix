@@ -1,15 +1,15 @@
 { pkgs, ... }:
 {
   # ── nixpkgs escape hatch ────────────────────────────────────────────────────
-  # Homebrew is the default package source (nix/homebrew.nix). Add a package
-  # here only when homebrew-core does not ship it — check with
-  # `brew info --formula <name>` first — and move it to homebrew.nix once brew
-  # gains a formula.
+  # Homebrew is the package source whenever available (nix/homebrew.nix).
+  # Add a package here only after checking both formulae and casks with
+  # `brew info --formula <name>` and `brew info --cask <name>`. Move it to
+  # homebrew.nix when Homebrew gains support.
   #
-  # It does not cover packages pulled in by home-manager programs.* modules
-  # (git, tmux, zsh plugins, fzf, atuin, zoxide, kitty, ghostty, helix,
-  # lazygit, yazi, doom-emacs) — those stay nix-managed because nix also
-  # renders their configuration.
+  # Home Manager configuration is not an exception: available tools and
+  # plugins belong in homebrew.nix even when Nix renders their config.
+  # The remaining tmux plugins (sensible, yank, catppuccin) have no Homebrew
+  # formulae and are referenced directly by programs.tmux.
 
   home.packages = [
     # ACP adapter that lets Emacs agent-shell drive the Claude Agent.

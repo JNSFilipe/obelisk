@@ -10,23 +10,6 @@
 
 let
   link = path: config.lib.file.mkOutOfStoreSymlink "${flakeRoot}/configs/${path}";
-
-  # nixpkgs' zsh-autocomplete 26.08.03 references the `z-async` git submodule
-  # but the derivation neither fetches submodules nor installs it, so every
-  # prompt prints "z-async: function definition file not found". Fetch the
-  # submodule ourselves and drop it where the plugin autoloads it from
-  # (~autocomplete/z-async/z-async). Remove once nixpkgs ships the submodule.
-  zsh-autocomplete-fixed = pkgs.zsh-autocomplete.overrideAttrs (old: {
-    zAsyncSrc = pkgs.fetchFromGitHub {
-      owner = "marlonrichert";
-      repo = "z-async";
-      rev = "5370537de80670b4a97e49cd253d15067709c0a6";
-      hash = "sha256-tPosFoZSaUShaRpv7ca9BdOMREfmhnzjd/VKHSshhXo=";
-    };
-    installPhase = old.installPhase + ''
-      cp -R "$zAsyncSrc" "$out/share/zsh-autocomplete/z-async"
-    '';
-  });
 in
 {
   imports = [
@@ -43,6 +26,9 @@ in
 
   # Let home-manager manage itself
   programs.home-manager.enable = true;
+
+  # Homebrew man-db is on systemPath; do not install another manual viewer.
+  programs.man.package = null;
 
   targets.darwin.linkApps.enable = false;
 
@@ -141,6 +127,8 @@ in
 
   programs.zsh = {
     enable = true;
+    package = null; # Homebrew owns the shell; Home Manager only writes config.
+    completionInit = ""; # zsh-autocomplete owns compinit.
 
     # History
     history = {
@@ -152,82 +140,85 @@ in
       ignoreAllDups = true;
     };
 
-    # Zsh options matching the original zshrc
-    initContent = ''
-      # ── Options ──────────────────────────────────────────────────────────
-      setopt interactive_comments
-      setopt appendhistory
-      setopt hist_save_no_dups
-      setopt hist_ignore_dups
+    initContent = lib.mkMerge [
+      # Run before plugin loading (not just before the first prompt).
+      # zsh-autocomplete sets recent-dirs-file here but never creates its parent.
+      (lib.mkBefore ''
+        mkdir -p -- "''${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
+        fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+      '')
 
-      # ── Disable fish-like completions inside Emacs eat ─────────────────
-      if [[ -n "$INSIDE_EMACS_EAT" ]]; then
-        ZSH_AUTOSUGGEST_DISABLE=1
-        zstyle ':autocomplete:*' enabled no
-      fi
+      # Homebrew paths stay stable across upgrades. No build-time invocation
+      # or Nix copy of these packages is needed to generate the dotfiles.
+      (lib.mkOrder 580 ''
+        source /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+        source /opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh
+        source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+        eval "$(/opt/homebrew/bin/zoxide init zsh --cmd cd)"
+        if [[ $options[zle] = on ]]; then
+          export FZF_CTRL_R_COMMAND=""
+          source <(/opt/homebrew/bin/fzf --zsh)
+          eval "$(/opt/homebrew/bin/atuin init zsh)"
+        fi
+      '')
 
-      # ── Pure prompt ──────────────────────────────────────────────────────
-      autoload -U promptinit; promptinit
-      zstyle :prompt:pure:prompt:success color green
-      zstyle :prompt:pure:prompt:error   color red
-      zstyle :prompt:pure:git:stash      show yes
-      prompt pure
+      # Zsh options matching the original zshrc
+      ''
+        # ── Options ──────────────────────────────────────────────────────────
+        setopt interactive_comments
+        setopt appendhistory
+        setopt hist_save_no_dups
+        setopt hist_ignore_dups
 
-      # Propagate ATUIN_SESSION into tmux display-popups
-      [[ -n "$TMUX" && -n "$ATUIN_SESSION" ]] && \
-        tmux setenv ATUIN_SESSION "$ATUIN_SESSION"
+        # ── Disable fish-like completions inside Emacs eat ─────────────────
+        if [[ -n "$INSIDE_EMACS_EAT" ]]; then
+          ZSH_AUTOSUGGEST_DISABLE=1
+          zstyle ':autocomplete:*' enabled no
+        fi
 
-      # ── Functions ─────────────────────────────────────────────────────────
-      # Most commands live in configs/scripts/ (on PATH).
-      # activate must be a function because it modifies the calling shell.
+        # ── Pure prompt ──────────────────────────────────────────────────────
+        autoload -U promptinit; promptinit
+        zstyle :prompt:pure:prompt:success color green
+        zstyle :prompt:pure:prompt:error   color red
+        zstyle :prompt:pure:git:stash      show yes
+        prompt pure
 
-      activate() {
-        if [ -n "$VIRTUAL_ENV" ]; then deactivate; fi
-        local venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
-        for dir in "''${venv_dirs[@]}"; do
-          if [ -d "$dir" ] && [ -f "$dir/bin/activate" ]; then
-            echo "Activating virtual environment in $dir"
-            source "$dir/bin/activate"
-            return 0
-          fi
-        done
-        echo "No Python virtual environment found."
-        return 1
-      }
+        # Propagate ATUIN_SESSION into tmux display-popups
+        [[ -n "$TMUX" && -n "$ATUIN_SESSION" ]] && \
+          tmux setenv ATUIN_SESSION "$ATUIN_SESSION"
 
-      if command -v opam >/dev/null 2>&1 && opam switch show >/dev/null 2>&1; then
-        eval "$(opam env --shell=zsh)"
-      fi
+        # ── Functions ─────────────────────────────────────────────────────────
+        # Most commands live in configs/scripts/ (on PATH).
+        # activate must be a function because it modifies the calling shell.
 
-      # Option+Space arrives as Meta-Space or NBSP depending on terminal Option handling.
-      cmux-sessionizer-widget() {
-        zle -I
-        "$HOME/.config/scripts/cmux_sesh.sh"
-        zle reset-prompt
-      }
-      zle -N cmux-sessionizer-widget
-      bindkey $'\e ' cmux-sessionizer-widget
-      bindkey $'\xc2\xa0' cmux-sessionizer-widget
-    '';
+        activate() {
+          if [ -n "$VIRTUAL_ENV" ]; then deactivate; fi
+          local venv_dirs=("venv" ".venv" "env" ".env" "virtualenv")
+          for dir in "''${venv_dirs[@]}"; do
+            if [ -d "$dir" ] && [ -f "$dir/bin/activate" ]; then
+              echo "Activating virtual environment in $dir"
+              source "$dir/bin/activate"
+              return 0
+            fi
+          done
+          echo "No Python virtual environment found."
+          return 1
+        }
 
-    plugins = [
-      {
-        name = "fzf-tab";
-        src = "${pkgs.zsh-fzf-tab}/share/fzf-tab";
-      }
-      {
-        name = "zsh-autocomplete";
-        src = "${zsh-autocomplete-fixed}/share/zsh-autocomplete";
-      }
-      {
-        name = "zsh-autosuggestions";
-        src = "${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions";
-      }
-      {
-        name = "pure";
-        src = "${pkgs.pure-prompt}/share/zsh/site-functions";
-        file = "prompt_pure_setup";
-      }
+        if command -v opam >/dev/null 2>&1 && opam switch show >/dev/null 2>&1; then
+          eval "$(opam env --shell=zsh)"
+        fi
+
+        # Option+Space arrives as Meta-Space or NBSP depending on terminal Option handling.
+        cmux-sessionizer-widget() {
+          zle -I
+          "$HOME/.config/scripts/cmux_sesh.sh"
+          zle reset-prompt
+        }
+        zle -N cmux-sessionizer-widget
+        bindkey $'\e ' cmux-sessionizer-widget
+        bindkey $'\xc2\xa0' cmux-sessionizer-widget
+      ''
     ];
 
     shellAliases = {
@@ -239,7 +230,7 @@ in
       lsg = "gls --color=auto -d -- *(/N)";
       lag = "gls --color=auto -d -A -- *(/N) .*(/N)";
       llg = "gls --color=auto -d -al -- *(/N) .*(/N)";
-      # Navigation (zoxide provides 'z'; cd alias not needed with enableZshIntegration)
+      # Navigation: Homebrew zoxide's init above supplies cd.
       # Editors
       vi = "nvim";
       vim = "nvim";
@@ -267,32 +258,22 @@ in
 
   # ── Atuin (shell history) ────────────────────────────────────────────────────
 
-  programs.atuin = {
-    enable = true;
-    enableZshIntegration = true;
-    settings = {
-      search_mode = "daemon-fuzzy";
-      filter_mode = "global";
-      filter_mode_shell_up_key_binding = "global";
-      search_mode_shell_up_key_binding = "fuzzy";
-      style = "compact";
-      ctrl_n_shortcuts = true;
-      enter_accept = true;
-      sync.records = true;
-      daemon = {
-        enabled = true;
-        autostart = true;
-      };
-      ai.enabled = true;
+  # The upstream module requires a Nix package, so render settings directly
+  # and initialize the Homebrew binary in each shell instead.
+  xdg.configFile."atuin/config.toml".source = (pkgs.formats.toml { }).generate "atuin-config" {
+    search_mode = "daemon-fuzzy";
+    filter_mode = "global";
+    filter_mode_shell_up_key_binding = "global";
+    search_mode_shell_up_key_binding = "fuzzy";
+    style = "compact";
+    ctrl_n_shortcuts = true;
+    enter_accept = true;
+    sync.records = true;
+    daemon = {
+      enabled = true;
+      autostart = true;
     };
-  };
-
-  # ── Zoxide (smart cd) ────────────────────────────────────────────────────────
-
-  programs.zoxide = {
-    enable = true;
-    enableZshIntegration = true;
-    options = [ "--cmd cd" ]; # also aliases 'cd' to zoxide
+    ai.enabled = true;
   };
 
   home.sessionVariables = {
@@ -304,18 +285,12 @@ in
     VISUAL = "emacsclient -c";
   };
 
-  # ── Fzf ─────────────────────────────────────────────────────────────────────
-
-  programs.fzf = {
-    enable = true;
-    enableZshIntegration = true;
-    historyWidget.command = "";
-  };
-
   # ── Tmux ─────────────────────────────────────────────────────────────────
 
   programs.tmux = {
     enable = true;
+    package = null; # Plugins below have no Homebrew formula; tmux itself does.
+    shell = "/opt/homebrew/bin/zsh";
     plugins = with pkgs.tmuxPlugins; [
       yank
       {
@@ -393,7 +368,7 @@ in
 
   programs.kitty = {
     enable = true;
-    package = null; # exposed as a nix-darwin system application
+    package = null; # installed via Homebrew cask
     font = {
       name = "Iosevka";
       size = 13;
@@ -417,7 +392,7 @@ in
       enable_audio_bell = "no";
       background_opacity = 1;
       background_blur = 0;
-      shell = "zsh";
+      shell = "/opt/homebrew/bin/zsh";
       editor = "em";
       clipboard_control = "write-clipboard write-primary read-clipboard-ask read-primary-ask";
       clipboard_max_size = 512;
@@ -437,6 +412,7 @@ in
 
   programs.helix = {
     enable = true;
+    package = null;
     settings = {
       theme = "carbonfox";
       editor = {
@@ -552,28 +528,27 @@ in
 
   programs.lazygit = {
     enable = true;
+    package = null;
   };
 
   # ── Yazi (file manager) ─────────────────────────────────────────────────────
 
   programs.yazi = {
     enable = true;
+    package = null;
     enableZshIntegration = true;
     shellWrapperName = "y";
-  };
-
-  # ── Opam (OCaml) ────────────────────────────────────────────────────────────
-
-  programs.opam = {
-    enable = true;
-    enableZshIntegration = false;
   };
 
   # ── Git ──────────────────────────────────────────────────────────────────────
 
   programs.git = {
     enable = true;
-    lfs.enable = true;
+    package = null;
+    lfs = {
+      enable = true;
+      package = null;
+    };
     signing.format = null; # silence stateVersion warning
     ignores = [
       "**/.claude/settings.local.json"

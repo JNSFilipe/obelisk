@@ -150,12 +150,8 @@ def --env opam-env [] {
 }
 opam-env
 
-# ── Atuin inside tmux ────────────────────────────────────────────────────────
-# Mirrors the zsh line that hands the session id to tmux display-popups.
-
-if ("TMUX" in $env) and ("ATUIN_SESSION" in $env) {
-    do --ignore-errors { ^tmux setenv ATUIN_SESSION $env.ATUIN_SESSION }
-}
+# Atuin's session is handed to tmux after its generated integration loads;
+# see nix/nushell.nix. It is not initialized yet at this point.
 
 # ── Keybindings ──────────────────────────────────────────────────────────────
 # Option+Space opens the cmux sessionizer, as in zsh.  Ghostty is configured

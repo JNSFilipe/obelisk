@@ -16,10 +16,38 @@
 # The interactive half of the configuration is real Nushell code and lives in
 # configs/nushell/config.nu.
 
+let
+  integrationDir = "${config.xdg.cacheHome}/obelisk/nushell";
+  # Nushell's source paths are resolved at parse time. Its env.nu is evaluated
+  # before config.nu is parsed, so regenerate these with the installed Homebrew
+  # binaries there, not during a sandboxed Nix build. This also tracks upgrades.
+  refreshIntegrations = pkgs.writeText "refresh-nushell-integrations.sh" ''
+    set -eu
+    export PATH=/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
+    cache=$1
+    mkdir -p -- "$cache"
+    tmp=$(mktemp -d "$cache/.init.XXXXXX")
+    trap 'rm -rf -- "$tmp"' EXIT HUP INT TERM
+    /opt/homebrew/bin/zoxide init nushell --cmd cd > "$tmp/zoxide.nu"
+    /opt/homebrew/bin/carapace _carapace nushell > "$tmp/carapace.nu"
+    /opt/homebrew/bin/atuin init nu > "$tmp/atuin-raw.nu"
+    # Older Atuin releases give both keybindings the same name. This is a
+    # no-op on releases that already give them distinct names.
+    /usr/bin/awk '/name: atuin$/ { n++; if (n > 1) sub(/name: atuin$/, "name: atuin_" n) } 1' \
+      "$tmp/atuin-raw.nu" > "$tmp/atuin.nu"
+    for name in zoxide carapace atuin; do
+      mv -f -- "$tmp/$name.nu" "$cache/$name.nu"
+    done
+  '';
+in
 {
   programs.nushell = {
     enable = true;
-    package = pkgs.nushell;
+    package = null; # Homebrew owns the runtime; keep declarative config here.
+
+    extraEnv = ''
+      ^/bin/sh ${refreshIntegrations} ${lib.hm.nushell.toNushell { } integrationDir}
+    '';
 
     # home.sessionVariables land in a POSIX profile script that Nushell cannot
     # source, so the ones that matter are restated here.
@@ -27,6 +55,7 @@
       EDITOR = "emacsclient -t";
       VISUAL = "emacsclient -c";
       _ZO_DOCTOR = "0";
+      CARAPACE_BRIDGES = "zsh";
     };
 
     settings = {
@@ -72,49 +101,19 @@
     extraConfig = lib.mkMerge [
       (builtins.readFile ../configs/nushell/config.nu)
 
-      # Ordered after the config above, matching home-manager's own atuin wiring.
       (lib.mkOrder 2000 ''
-        source ${
-          pkgs.runCommand "atuin-nushell-config.nu"
-            {
-              nativeBuildInputs = [ pkgs.writableTmpDirAsHomeHook ];
-            }
-            ''
-              ${lib.getExe config.programs.atuin.package} init nu ${lib.escapeShellArgs config.programs.atuin.flags} \
-                | awk '/name: atuin$/ { n++; if (n > 1) sub(/name: atuin$/, "name: atuin_" n) } 1' >> "$out"
-            ''
+        source ${lib.hm.nushell.toNushell { } "${integrationDir}/zoxide.nu"}
+        source ${lib.hm.nushell.toNushell { } "${integrationDir}/carapace.nu"}
+        source ${lib.hm.nushell.toNushell { } "${integrationDir}/atuin.nu"}
+        if ("TMUX" in $env) and ("ATUIN_SESSION" in $env) {
+          do --ignore-errors { ^/opt/homebrew/bin/tmux setenv ATUIN_SESSION $env.ATUIN_SESSION }
         }
       '')
     ];
   };
 
-  # ── Integrations ────────────────────────────────────────────────────────────
-  # Each of these already has a Zsh integration switched on elsewhere; only the
-  # Nushell half is added here.  Nothing below changes the Zsh setup.
-
-  # Atuin's own Nushell init names both of its keybindings `atuin`, which makes
-  # Nushell print a ~20-line "Multiple keybindings share a name" warning at every
-  # startup.  Both bindings work, so this is cosmetic, but not at every prompt.
-  # Generate the same file home-manager would and give the second one a distinct
-  # name.  If upstream renames them, the awk simply matches nothing.
-  programs.atuin.enableNushellIntegration = false;
-  programs.zoxide.enableNushellIntegration = true;
+  # Yazi's wrapper calls the command on PATH and supports package = null.
+  # Atuin, zoxide, fzf, opam and carapace's modules require Nix packages, so
+  # those modules stay disabled; their Homebrew integrations are wired above.
   programs.yazi.enableNushellIntegration = true;
-
-  # Carapace replaces fzf-tab's role: argument completion for external commands.
-  # CARAPACE_BRIDGES falls back to Zsh's completion definitions for anything
-  # carapace has no spec for, so the long tail is still covered.
-  programs.carapace = {
-    enable = true;
-    enableNushellIntegration = true;
-    # Zsh is deliberately left exactly as it was.
-    enableZshIntegration = false;
-    enableBashIntegration = false;
-    enableFishIntegration = false;
-    environment.CARAPACE_BRIDGES = "zsh";
-    extraPackages = [ pkgs.zsh ];
-  };
-
-  # fzf keeps its Zsh integration and gains no Nushell one, as requested.
-  programs.fzf.enableNushellIntegration = false;
 }
