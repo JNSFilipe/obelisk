@@ -170,12 +170,7 @@
                   allowed = names: packages: lib.all (p: builtins.elem (lib.getName p) names) packages;
                 in
                 lib.all (
-                  p:
-                  builtins.elem p.name allowedHomeArtifacts
-                  || builtins.elem (lib.getName p) [
-                    "claude-agent-acp"
-                    "home-manager"
-                  ]
+                  p: builtins.elem p.name allowedHomeArtifacts || lib.getName p == "home-manager"
                 ) hm.home.packages
                 && allowed allowedSystemPackages cfg.environment.systemPackages
                 && toString cfg.users.users.${userName}.shell == "/opt/homebrew/bin/zsh"
@@ -190,6 +185,12 @@
             pkgs.runCommand "homebrew-runtime-ownership" { } ''
               touch "$out"
             '';
+
+          pi-settings-merge = pkgs.runCommand "pi-settings-merge" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            PI_SYNC_PACKAGES_SCRIPT=${./configs/scripts/pi-sync-packages.py} \
+              python3 ${./tests/pi-packages.py}
+            touch "$out"
+          '';
 
           nix-static-analysis =
             pkgs.runCommand "nix-static-analysis"

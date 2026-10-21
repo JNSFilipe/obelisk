@@ -36,6 +36,9 @@ check: ## Build the system and run flake checks
 check-runtime: build ## Test generated shells using installed Homebrew tools (isolated state)
 	python3 tests/homebrew-runtime.py --host "$(HOST)"
 
+check-pi: check ## Test generated Pi activation with isolated settings and a fake Pi
+	python3 tests/pi-activation.py
+
 # ── Updates ───────────────────────────────────────────────────────────────────
 
 update: not-root ## Update all flake inputs (nixpkgs, home-manager, nix-darwin)
@@ -153,4 +156,4 @@ help: ## Show this help
 	@printf "    make brew-orphans  (shows formulae not in homebrew.nix)\n"
 
 .DEFAULT_GOAL := help
-.PHONY: not-root switch switch-locked build check check-runtime update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-install doom-sync doom-update bootstrap uninstall-nix help
+.PHONY: not-root switch switch-locked build check check-runtime check-pi update upgrade rollback generations gc gc-all store-size diff packages brew-orphans brew-upgrade doom-install doom-sync doom-update bootstrap uninstall-nix help

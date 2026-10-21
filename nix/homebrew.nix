@@ -161,7 +161,6 @@ in
       "gemini-cli"
       "pi-coding-agent"
       "openspec"
-      "codex-acp" # ACP adapter for Codex, used by Emacs agent-shell
 
       # ── LaTeX ──────────────────────────────────────────────────────────────
       "tectonic"

@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+_: {
   # ── nixpkgs escape hatch ────────────────────────────────────────────────────
   # Homebrew is the package source whenever available (nix/homebrew.nix).
   # Add a package here only after checking both formulae and casks with
@@ -11,10 +10,6 @@
   # The remaining tmux plugins (sensible, yank, catppuccin) have no Homebrew
   # formulae and are referenced directly by programs.tmux.
 
-  home.packages = [
-    # ACP adapter that lets Emacs agent-shell drive the Claude Agent.
-    # homebrew-core has no formula for it (its sibling codex-acp does, and
-    # lives in homebrew.nix accordingly).
-    pkgs.claude-agent-acp
-  ];
+  # No standalone runtime exceptions remain; Pilish uses Homebrew's Pi CLI.
+  home.packages = [ ];
 }

@@ -245,7 +245,7 @@ break the machine that is not in front of you.
 |------|-------|-----|
 | CLI tools | `nix/homebrew.nix` brews | Default source; one upgrade path for everything |
 | GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code@latest`, `codex`) |
-| Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently Claude Agent ACP and tmux plugins |
+| Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently tmux plugins, with no standalone runtime exceptions |
 | Shell / tool config | `nix/home.nix` `programs.*` or generated files | Configuration only; never a reason to install a second binary |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
@@ -281,6 +281,37 @@ Locked activation installs missing Homebrew packages but does not upgrade or
 remove packages. Regular `make switch` also updates and upgrades them.
 Activation fails with a drift report when an undeclared package is
 present; use `make brew-orphans` to inspect the same report beforehand.
+
+## Pi extensions
+
+Pi itself is installed by Homebrew. `nix/pi.nix` declares these extension
+packages for every machine:
+
+- `npm:pi-web-access`
+- `npm:@juicesharp/rpiv-ask-user-question`
+- `npm:@heyhuynhgiabuu/pi-task`
+
+Home Manager activation atomically replaces only the `packages` key in
+`~/.pi/agent/settings.json`. Other preferences and device identity stay local,
+and the file remains writable by Pi. Credentials, sessions, and installation
+caches are not managed or copied into the repository. Invalid JSON, a busy
+settings lock, or a symlink settings file stops activation instead of overwriting
+it; resolve the reported issue and retry.
+
+- `make switch` syncs the list, then runs the Homebrew Pi's
+  `pi update --extensions --no-approve` to install/update global extensions.
+  Project package declarations are ignored. Update failures stop activation.
+- `make switch-locked` syncs the list without installing/upgrading extensions;
+  Pi installs missing packages on its next startup.
+
+The list is authoritative: edit `nix/pi.nix` to add/remove a shared extension.
+Manual package-list changes are replaced on the next activation, but cached
+packages removed from the list are not deleted. Versions are intentionally
+unpinned and update independently of `flake.lock`.
+
+`make check-pi` runs the flake checks (including isolated settings-merge tests),
+then tests generated activation for both hosts and locked variants using a fake
+Pi, including dry-run behavior. It never loads extensions or changes live settings.
 
 ## tmux
 

@@ -78,6 +78,55 @@ optional named daemon are separate from Doom.
 The [Gloom parity audit](../configs/gloom/PARITY.md) records the retained packages,
 Meow/UI differences, remaining Doom-specific gaps and external-service test limits.
 
+## Agentic workflows: Pilish and Sheprd
+
+Doom uses [Pilish](https://github.com/dnouri/pilish) as its native Pi frontend,
+replacing `agent-shell`. Straight installs it from `dnouri/pilish` together with
+its Elisp dependencies. It uses `/opt/homebrew/bin/pi` over RPC, not ACP, so the
+`claude-agent-acp` and `codex-acp` adapter declarations have been removed.
+Claude Code and Codex themselves remain installed for terminal workflows.
+
+| Doom leader key | Action |
+|---|---|
+| `SPC a p` | Start/focus this project's Pi session (`M-x pilish`) |
+| `SPC a t` | Toggle Pi session windows |
+| `SPC a s` | Browse Pi sessions |
+
+Inside Pilish, `C-c C-c` sends a prompt, `C-c C-k` aborts, and `C-c C-p` opens
+the command menu. Models, credentials, extensions, skills and sessions come from
+the same Pi configuration as the terminal. Authenticate with `/login` in terminal
+Pi if needed; no credentials are stored in the Emacs config. Extension tools and
+basic UI dialogs work over RPC, but custom terminal widgets are not equivalent
+to their terminal UI. Pilish offers Markdown tree-sitter grammar installation on
+first use; accept the one-time setup if the grammars are missing.
+
+`pilish-project-trust-policy` is `default`: Pilish respects Pi's saved trust
+choices instead of upstream's automatic `--approve`. Trust a new project's `.pi`
+resources in terminal Pi first if you want them available from Emacs.
+Sheprd/Ghostel and its Claude/Codex terminal launchers remain unchanged. Gloom
+continues to use that terminal workflow; this native frontend is configured in
+Doom only.
+
+After pulling this change, run `make doom-sync` and restart Emacs after saving
+buffers/finishing terminal jobs. Before the next Nix activation on a machine
+that has the former adapter installed, run:
+
+```sh
+brew uninstall --formula codex-acp
+```
+
+Otherwise the intentional Homebrew `cleanup = "check"` policy reports it as
+undeclared and aborts. The former Nix-managed Claude adapter leaves the profile
+on the next activation; old store generations/cached Doom packages may retain
+inactive files until normal garbage collection. No application data is removed.
+
+Configuration and offline, isolated RPC smoke tests (no model requests):
+
+```sh
+/opt/homebrew/bin/emacs -Q --batch --eval '(let ((root (expand-file-name (format "~/.local/share/doom-emacs/.local/straight/build-%s/" emacs-version)))) (dolist (directory (directory-files root t "^[^.]")) (when (file-directory-p directory) (add-to-list (quote load-path) directory t))))' \
+  -l configs/doom/tests/pilish-config-test.el -f ert-run-tests-batch-and-exit
+```
+
 ## Doom minibuffer editing
 
 - **Tab** inserts the highlighted Vertico candidate (the first suggestion by

@@ -16,6 +16,7 @@ in
     ./packages.nix
     ./emacs.nix
     ./nushell.nix
+    ./pi.nix
   ];
 
   # ── Identity ────────────────────────────────────────────────────────────────
