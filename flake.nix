@@ -189,6 +189,8 @@
           pi-settings-merge = pkgs.runCommand "pi-settings-merge" { nativeBuildInputs = [ pkgs.python3 ]; } ''
             PI_SYNC_PACKAGES_SCRIPT=${./configs/scripts/pi-sync-packages.py} \
               python3 ${./tests/pi-packages.py}
+            PI_SHARE_JIG_SCRIPT=${./configs/scripts/pi-share-jig.py} \
+              python3 ${./tests/pi-skills.py}
             touch "$out"
           '';
 

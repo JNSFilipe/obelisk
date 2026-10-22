@@ -282,14 +282,15 @@ remove packages. Regular `make switch` also updates and upgrades them.
 Activation fails with a drift report when an undeclared package is
 present; use `make brew-orphans` to inspect the same report beforehand.
 
-## Pi extensions
+## Pi extensions and skills
 
-Pi itself is installed by Homebrew. `nix/pi.nix` declares these extension
-packages for every machine:
+Pi itself is installed by Homebrew. `nix/pi.nix` declares all installed Pi
+extension/skill packages for every machine:
 
 - `npm:pi-web-access`
 - `npm:@juicesharp/rpiv-ask-user-question`
-- `npm:@heyhuynhgiabuu/pi-task`
+- `npm:@heyhuynhgiabuu/pi-task` (including its bundled `task` skill)
+- `git:github.com/JNSFilipe/jig` (all 11 Jig skills)
 
 Home Manager activation atomically replaces only the `packages` key in
 `~/.pi/agent/settings.json`. Other preferences and device identity stay local,
@@ -301,17 +302,35 @@ it; resolve the reported issue and retry.
 - `make switch` syncs the list, then runs the Homebrew Pi's
   `pi update --extensions --no-approve` to install/update global extensions.
   Project package declarations are ignored. Update failures stop activation.
-- `make switch-locked` syncs the list without installing/upgrading extensions;
+- `make switch-locked` syncs the list without installing/upgrading packages;
   Pi installs missing packages on its next startup.
 
-The list is authoritative: edit `nix/pi.nix` to add/remove a shared extension.
+Pi owns the single installed Jig checkout at
+`~/.pi/agent/git/github.com/JNSFilipe/jig`. After package reconciliation,
+activation links its `skills/jig-*` directories into `~/.claude/skills` and
+`~/.codex/skills`, so all three clients use the same files. It does not copy
+skills into `~/.agents/skills`, which Pi also scans and would load twice.
+Unrelated Claude plugins and other skills are not managed here.
+
+Sharing preflights all destinations and refuses to overwrite unmanaged Jig
+directories or foreign links; it also refuses leftover
+`~/.agents/skills/jig-*` copies. On a machine with a manual Jig installation,
+first install the Pi package, compare
+and explicitly remove those manual copies (preserving any customizations),
+then activate again. No routine activation recursively deletes skill files.
+Only stale sharing links owned by this configuration are pruned. If a fresh
+locked activation has no Jig checkout yet, sharing is deferred: start Pi to
+install packages, then activate again, or use a regular `make switch`.
+
+The list is authoritative: edit `nix/pi.nix` to add/remove a shared package.
 Manual package-list changes are replaced on the next activation, but cached
 packages removed from the list are not deleted. Versions are intentionally
 unpinned and update independently of `flake.lock`.
 
-`make check-pi` runs the flake checks (including isolated settings-merge tests),
-then tests generated activation for both hosts and locked variants using a fake
-Pi, including dry-run behavior. It never loads extensions or changes live settings.
+`make check-pi` runs the flake checks (including isolated settings-merge and
+skill-sharing tests), then tests generated activation for both hosts and locked
+variants using a fake Pi, including dry-run behavior and shared skill links.
+It never loads extensions or changes live settings.
 
 ## tmux
 

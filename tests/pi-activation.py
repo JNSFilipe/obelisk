@@ -17,6 +17,7 @@ PACKAGES = [
     "npm:pi-web-access",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@heyhuynhgiabuu/pi-task",
+    "git:github.com/JNSFilipe/jig",
 ]
 
 
@@ -44,6 +45,10 @@ def main():
             home = (Path(tmp) / "home").resolve()
             agent = home / ".pi/agent"
             agent.mkdir(parents=True)
+            jig = agent / "git/github.com/JNSFilipe/jig/skills/jig-apply"
+            if not updates:
+                jig.mkdir(parents=True)
+                (jig / "SKILL.md").write_text("---\nname: jig-apply\n---\nSkill\n")
             settings = agent / "settings.json"
             original = {"packages": ["npm:old"], "deviceId": "local", "theme": "custom"}
             settings.write_text(json.dumps(original))
@@ -57,7 +62,13 @@ Path(os.environ['PI_ACTIVATION_LOG']).write_text(json.dumps({
     'args': sys.argv[1:], 'cwd': os.getcwd(),
     'agent': os.environ.get('PI_CODING_AGENT_DIR'),
 }))
-sys.exit(int(os.environ.get('PI_ACTIVATION_EXIT', '0')))
+status = int(os.environ.get('PI_ACTIVATION_EXIT', '0'))
+if status == 0:
+    # Simulate a fresh Git installation: sharing must happen AFTER Pi update.
+    skill = Path(os.environ['PI_CODING_AGENT_DIR']) / 'git/github.com/JNSFilipe/jig/skills/jig-apply'
+    skill.mkdir(parents=True, exist_ok=True)
+    (skill / 'SKILL.md').write_text('Jig skill')
+sys.exit(status)
 """)
             fake_pi.chmod(0o700)
             # Never execute the live Pi, even if the activation bypasses run.
@@ -85,10 +96,17 @@ sys.exit(int(os.environ.get('PI_ACTIVATION_EXIT', '0')))
                 timeout=30,
             )
             assert settings.read_bytes() == before and not log.exists(), host
+            assert not (home / ".claude").exists(), host
+            assert not (home / ".codex").exists(), host
             subprocess.run(["bash", "-c", script], env=env, check=True, timeout=30)
             assert json.loads(settings.read_text()) == original | {
                 "packages": PACKAGES
             }, host
+            for tool in (".claude", ".codex"):
+                link = home / tool / "skills/jig-apply"
+                assert link.is_symlink() and link.resolve() == jig, (host, link)
+            # Sharing must converge without replacing its existing links.
+            subprocess.run(["bash", "-c", script], env=env, check=True, timeout=30)
             if updates:
                 observed = json.loads(log.read_text())
                 assert observed == {
@@ -106,7 +124,7 @@ sys.exit(int(os.environ.get('PI_ACTIVATION_EXIT', '0')))
             else:
                 assert not log.exists(), host
         print(
-            f"PASS {host}: writable merge, dry run, "
+            f"PASS {host}: writable merge, dry run, idempotent skill sharing, "
             + ("global update/error propagation" if updates else "no updates")
         )
 
