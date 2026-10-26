@@ -17,7 +17,10 @@ in
 {
   homebrew = {
     enable = true;
-    taps = [ "d12frosted/emacs-plus" ];
+    taps = [
+      "d12frosted/emacs-plus"
+      "netbirdio/tap"
+    ];
 
     onActivation = {
       # `make switch` is the one command that brings the machine up to date, so
@@ -49,6 +52,7 @@ in
       "fzf"
       "carapace"
       "tmux"
+      "tuios"
       "yazi"
       "zsh-autocomplete"
       "zsh-autosuggestions"
@@ -77,6 +81,7 @@ in
 
       # ── Networking / tunnels ───────────────────────────────────────────────
       "cloudflared" # Cloudflare Tunnel client
+      "netbirdio/tap/netbird" # NetBird VPN CLI
       "syncthing" # file sync; launchd agent and folders in nix/home.nix
 
       # ── Version control ────────────────────────────────────────────────────
@@ -157,7 +162,8 @@ in
       "rpiboot" # boot Raspberry Pi CM/Zero over USB
 
       # ── AI coding assistants ───────────────────────────────────────────────
-      # claude-code@latest and codex have no formula — see casks below.
+      # claude-code and codex have no formula — see casks below.
+      "codex-acp" # Codex Agent Client Protocol adapter
       "gemini-cli"
       "pi-coding-agent"
       "openspec"
@@ -178,6 +184,7 @@ in
     casks = [
       # Standalone app owns the VPN; configs/scripts/tailscale uses its CLI.
       "tailscale-app"
+      "netbirdio/tap/netbird-ui"
 
       # ── Terminals ──────────────────────────────────────────────────────────
       "kitty"
@@ -206,7 +213,7 @@ in
       "zen" # Firefox-based; its profile is the one being synced between Macs
 
       # ── AI coding assistants (CLIs distributed only as casks) ──────────────
-      "claude-code@latest"
+      "claude-code"
       "codex"
 
       # ── Fonts ──────────────────────────────────────────────────────────────
@@ -245,6 +252,7 @@ in
       # ── Development tools ──────────────────────────────────────────────────
       "postman"
       "orbstack"
+      "parallels"
       "warp"
       # "docker-desktop"
 

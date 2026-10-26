@@ -155,7 +155,7 @@
                 "zsh-autosuggestions"
               ];
               requiredCasks = [
-                "claude-code@latest"
+                "claude-code"
                 "kitty"
                 "omniwm"
                 "purge"
@@ -178,7 +178,7 @@
                 && !lib.hasInfix "/nix/store/" hm.home.file."./.zshrc".text
                 && lib.all (name: builtins.elem name (map (b: b.name) cfg.homebrew.brews)) requiredFormulae
                 && lib.all (name: builtins.elem name (map (c: c.name) cfg.homebrew.casks)) requiredCasks
-                && !(builtins.elem "claude-code" (map (c: c.name) cfg.homebrew.casks));
+                && !(builtins.elem "claude-code@latest" (map (c: c.name) cfg.homebrew.casks));
             in
             assert lib.assertMsg (lib.all compliant (builtins.attrValues configurations))
               "Homebrew-first package ownership regressed; audit new Nix runtime packages before adding them to the allowlist.";

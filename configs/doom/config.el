@@ -10,6 +10,8 @@
       user-mail-address "jose.filipe@ieee.org")
 
 ;; ── TRAMP (remote editing) ───────────────────────────────────────────────────
+(load! "obelisk-ssh")
+
 (after! tramp
   (setq tramp-default-method "ssh")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))

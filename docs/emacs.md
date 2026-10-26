@@ -78,6 +78,25 @@ optional named daemon are separate from Doom.
 The [Gloom parity audit](../configs/gloom/PARITY.md) records the retained packages,
 Meow/UI differences, remaining Doom-specific gaps and external-service test limits.
 
+## SSH / remote files
+
+Run `M-x obelisk-ssh` to open a remote home directory in Dired through TRAMP.
+It asks for a username, an IP address or hostname, and a port (default `22`).
+Usernames and hosts offer completion from previous entries while allowing new
+ones; Doom's Savehist persists these histories across sessions. IPv6 addresses
+should be entered without brackets. Passwords are handled by TRAMP/auth-source,
+not stored in these completion histories.
+
+This is remote file access, not a terminal session. Open files from Dired as
+usual. Reload Doom or restart Emacs after pulling the configuration; no package
+sync or Nix activation is required.
+
+Offline tests (no SSH connections):
+
+```sh
+/opt/homebrew/bin/emacs -Q --batch -l configs/doom/tests/ssh-test.el -f ert-run-tests-batch-and-exit
+```
+
 ## Agentic workflows: Pilish and Sheprd
 
 Doom uses [Pilish](https://github.com/dnouri/pilish) as its native Pi frontend,
@@ -108,17 +127,13 @@ continues to use that terminal workflow; this native frontend is configured in
 Doom only.
 
 After pulling this change, run `make doom-sync` and restart Emacs after saving
-buffers/finishing terminal jobs. Before the next Nix activation on a machine
-that has the former adapter installed, run:
-
-```sh
-brew uninstall --formula codex-acp
-```
-
-Otherwise the intentional Homebrew `cleanup = "check"` policy reports it as
-undeclared and aborts. The former Nix-managed Claude adapter leaves the profile
-on the next activation; old store generations/cached Doom packages may retain
-inactive files until normal garbage collection. No application data is removed.
+buffers/finishing terminal jobs. The former Homebrew `codex-acp` adapter is no
+longer required by Doom, but remains declared in `nix/homebrew.nix` to preserve
+the installed tool. Activation still rejects undeclared Homebrew packages;
+`make brew-orphans` lists these for a manual audit.
+The former Nix-managed Claude adapter leaves the profile on the next activation;
+old store generations/cached Doom packages may retain inactive files until
+normal garbage collection. No application data is removed.
 
 Configuration and offline, isolated RPC smoke tests (no model requests):
 

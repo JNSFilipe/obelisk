@@ -244,15 +244,15 @@ break the machine that is not in front of you.
 | What | Where | Why |
 |------|-------|-----|
 | CLI tools | `nix/homebrew.nix` brews | Default source; one upgrade path for everything |
-| GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code@latest`, `codex`) |
+| GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code`, `codex`) |
 | Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently tmux plugins, with no standalone runtime exceptions |
 | Shell / tool config | `nix/home.nix` `programs.*` or generated files | Configuration only; never a reason to install a second binary |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
 Pi (`pi-coding-agent` formula), Zen Browser (`zen` cask), Claude Code
-(`claude-code@latest` cask), OmniWM, Purge, and `tailscale-app` are common to
+(`claude-code` cask), OmniWM, Purge, and `tailscale-app` are common to
 all machines, not personal/work-only packages. The flake check enforces this
-shared baseline and excludes the conflicting `claude-code` cask.
+shared baseline and excludes the conflicting `claude-code@latest` cask.
 
 This policy includes shells, plugins, fonts, and packages normally pulled in by
 Home Manager. Modules use `package = null` where supported. Atuin, zoxide, fzf,
