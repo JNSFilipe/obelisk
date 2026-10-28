@@ -319,3 +319,19 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 ;; keymap on `C-c s' and on the leader's TAB prefix (both TAB and <tab>), so no
 ;; workspace or terminal bindings are declared here.
 (load! "sheprd")
+
+;; ytube: search YouTube through Vertico and watch inside an xwidget buffer.
+;; Self-contained like Sheprd; yt-dlp is used for search when installed.
+(load! "ytube")
+(map! :leader
+  (:prefix ("Y" . "YouTube")
+   :desc "Search" "s" #'ytube-search
+   :desc "Resume Results" "r" #'ytube-resume
+   :desc "Play URL" "p" #'ytube-play
+   :desc "Toggle Thumbnails" "t" #'ytube-toggle-thumbnails))
+(map! :map global-map
+  (:prefix ("C-c y" . "YouTube")
+   :desc "Search" "s" #'ytube-search
+   :desc "Resume Results" "r" #'ytube-resume
+   :desc "Play URL" "p" #'ytube-play
+   :desc "Toggle Thumbnails" "t" #'ytube-toggle-thumbnails))
