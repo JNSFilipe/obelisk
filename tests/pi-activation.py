@@ -18,14 +18,20 @@ PACKAGES = [
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@heyhuynhgiabuu/pi-task",
     "git:github.com/JNSFilipe/jig",
+    "npm:pi-claude-bridge",
 ]
+DEFAULTS = {
+    "defaultProvider": "claude-bridge",
+    "defaultModel": "claude-opus-5-5",
+    "defaultThinkingLevel": "high",
+}
 
 
 def main():
     for host in ("gauss", "thorp", "gauss-locked", "thorp-locked"):
         prefix = f"{REPO}#darwinConfigurations.{host}.config.home-manager.users.jfilipe"
         activation = subprocess.check_output(
-            ["nix", "eval", "--raw", f"{prefix}.home.activation.piPackages.data"],
+            ["nix", "eval", "--raw", f"{prefix}.home.activation.piSettings.data"],
             text=True,
             timeout=90,
         )
@@ -99,7 +105,7 @@ sys.exit(status)
             assert not (home / ".claude").exists(), host
             assert not (home / ".codex").exists(), host
             subprocess.run(["bash", "-c", script], env=env, check=True, timeout=30)
-            assert json.loads(settings.read_text()) == original | {
+            assert json.loads(settings.read_text()) == DEFAULTS | original | {
                 "packages": PACKAGES
             }, host
             for tool in (".claude", ".codex"):

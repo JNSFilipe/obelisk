@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge declarative Pi packages into writable, otherwise machine-local settings."""
+"""Merge declarative Pi settings into writable, otherwise machine-local settings."""
 
 import json
 import os
@@ -9,12 +9,20 @@ import tempfile
 from pathlib import Path
 
 
-def sync_packages(manifest_path, settings_path):
-    packages = json.loads(manifest_path.read_text())
+def sync_settings(manifest_path, settings_path):
+    declared = json.loads(manifest_path.read_text())
+    if not isinstance(declared, dict):
+        raise ValueError("settings manifest must be a JSON object")
+    packages = declared.get("packages")
     if not isinstance(packages, list) or not all(
         isinstance(source, str) and source.strip() for source in packages
     ):
-        raise ValueError("package manifest must be an array of nonempty strings")
+        raise ValueError("manifest packages must be an array of nonempty strings")
+    defaults = declared.get("defaults", {})
+    if not isinstance(defaults, dict) or not all(
+        isinstance(value, str) and value.strip() for value in defaults.values()
+    ):
+        raise ValueError("manifest defaults must be an object of nonempty strings")
 
     # Cooperate with Pi's proper-lockfile settings writer (realpath: false).
     # Never steal a busy/stale lock; fail safely and let activation be retried.
@@ -22,12 +30,12 @@ def sync_packages(manifest_path, settings_path):
     lock_path = Path(str(settings_path) + ".lock")
     lock_path.mkdir()
     try:
-        merge_settings(packages, settings_path)
+        merge_settings(packages, defaults, settings_path)
     finally:
         lock_path.rmdir()
 
 
-def merge_settings(packages, settings_path):
+def merge_settings(packages, defaults, settings_path):
     if settings_path.is_symlink():
         raise ValueError(f"refusing symlink settings file: {settings_path}")
     try:
@@ -38,10 +46,13 @@ def merge_settings(packages, settings_path):
         mode = 0o600
     if not isinstance(settings, dict):
         raise TypeError("Pi settings must contain a JSON object")
-    if settings.get("packages") == packages:
+    # Packages are authoritative; defaults apply only where Pi has no value,
+    # so choices made in Pi (e.g. /model) survive activation.
+    merged = defaults | settings | {"packages": packages}
+    if merged == settings:
         return
 
-    settings["packages"] = packages
+    settings = merged
     content = json.dumps(settings, indent=2, ensure_ascii=False) + "\n"
     temporary = None
     try:
@@ -68,9 +79,9 @@ def main():
         print(f"usage: {sys.argv[0]} MANIFEST_JSON SETTINGS_JSON", file=sys.stderr)
         return 2
     try:
-        sync_packages(Path(sys.argv[1]), Path(sys.argv[2]))
+        sync_settings(Path(sys.argv[1]), Path(sys.argv[2]))
     except (OSError, ValueError, TypeError) as error:
-        print(f"Pi package settings: {error}", file=sys.stderr)
+        print(f"Pi settings: {error}", file=sys.stderr)
         return 1
     return 0
 

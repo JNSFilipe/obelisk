@@ -13,17 +13,25 @@ let
     "npm:@juicesharp/rpiv-ask-user-question"
     "npm:@heyhuynhgiabuu/pi-task"
     "git:github.com/JNSFilipe/jig"
+    "npm:pi-claude-bridge"
   ];
-  manifest = pkgs.writeText "pi-packages.json" (builtins.toJSON packages);
+  # Applied only when unset, so choices made in Pi survive activation.
+  defaults = {
+    defaultProvider = "claude-bridge";
+    defaultModel = "claude-opus-5-5";
+    defaultThinkingLevel = "high";
+  };
+  settings = { inherit packages defaults; };
+  manifest = pkgs.writeText "pi-settings.json" (builtins.toJSON settings);
   agentDirectory = "${config.home.homeDirectory}/.pi/agent";
 in
 {
-  # Do not use home.file: Pi writes settings itself. Merge only the authoritative
-  # package list, keeping preferences/device identity local and settings writable.
+  # Do not use home.file: Pi writes settings itself. Replace the package list and fill
+  # unset defaults, keeping preferences/device identity local and settings writable.
   # nix-darwin runs Homebrew before Home Manager, so both executables exist here.
   # Follow Homebrew's upgrade policy: locked configurations only sync settings.
-  home.activation.piPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run /opt/homebrew/bin/python3.13 ${../configs/scripts/pi-sync-packages.py} \
+  home.activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run /opt/homebrew/bin/python3.13 ${../configs/scripts/pi-sync-settings.py} \
       ${manifest} ${lib.escapeShellArg "${agentDirectory}/settings.json"}
     ${lib.optionalString darwinConfig.homebrew.onActivation.upgrade ''
       (

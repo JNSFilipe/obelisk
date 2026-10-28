@@ -291,10 +291,15 @@ extension/skill packages for every machine:
 - `npm:@juicesharp/rpiv-ask-user-question`
 - `npm:@heyhuynhgiabuu/pi-task` (including its bundled `task` skill)
 - `git:github.com/JNSFilipe/jig` (all 11 Jig skills)
+- `npm:pi-claude-bridge`
 
-Home Manager activation atomically replaces only the `packages` key in
-`~/.pi/agent/settings.json`. Other preferences and device identity stay local,
-and the file remains writable by Pi. Credentials, sessions, and installation
+It also declares the default model, `claude-bridge/claude-opus-5-5` with `high`
+thinking. Each of `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`
+is written only when unset, so a model chosen in Pi persists across activations.
+
+Home Manager activation atomically replaces the `packages` key in
+`~/.pi/agent/settings.json` and fills those unset defaults. Other preferences
+and device identity stay local, and the file remains writable by Pi. Credentials, sessions, and installation
 caches are not managed or copied into the repository. Invalid JSON, a busy
 settings lock, or a symlink settings file stops activation instead of overwriting
 it; resolve the reported issue and retry.
