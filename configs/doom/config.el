@@ -190,6 +190,12 @@
     :desc "Find Project File" "C-c f" #'projectile-find-file
     :desc "Switch Workspace Buffer" "C-c b" #'persp-switch-to-buffer))
 
+;; `C-c p' is persp-mode's prefix, whose minor-mode map shadows global-map, so
+;; mirror the leader's "Switch Project" inside it (replacing `persp-prev').
+(after! persp-mode
+  (map! :map persp-key-map
+    :desc "Switch Project" "p" #'projectile-switch-project))
+
 ;; Keep the command palette visible and exploratory.  Doom normally defers
 ;; Vertico and Marginalia until its first-input hook; loading them eagerly makes
 ;; the very first M-x invocation show candidates and command descriptions.
