@@ -70,13 +70,13 @@ explicit. If Homebrew upgrades Emacs, run `make doom-sync` before resuming work.
 `vanilla-emacs` uses the same Homebrew executable with `configs/vemacs`.
 
 The parallel [Gloom Emacs config](../configs/gloom/README.md) lives in `configs/gloom`.
-It uses plain Elisp, reuses installed package libraries, and shares Sheprd and
-Oxocarbon with Doom. Run its explicit setup once, then launch it directly with
+It uses plain Elisp with Evil, reuses installed package libraries, and shares
+Sheprd and Oxocarbon with Doom. Run its explicit setup once, then launch it directly with
 `/opt/homebrew/bin/emacs --init-directory="$PWD/configs/gloom"`. Home Manager also
 declares the `gloom` launcher (alias `gloom-emacs`) for subsequent activations. Its state and
 optional named daemon are separate from Doom.
 The [Gloom parity audit](../configs/gloom/PARITY.md) records the retained packages,
-Meow/UI differences, remaining Doom-specific gaps and external-service test limits.
+UI differences, remaining Doom-specific gaps and external-service test limits.
 
 ## SSH / remote files
 

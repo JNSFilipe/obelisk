@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline stand-in for `pi --mode rpc`, enough for Pilish and M-x Machina.
+"""Offline stand-in for `pi`, enough for Sheprd: RPC mode for Pilish, else a TUI.
 
 Reads one JSON command per line and answers with Pi's response/event shapes.
 FAKE_PI_LOG (required) receives one JSON line per argv and command, so tests
@@ -74,6 +74,12 @@ def run_prompt(text, lines):
 
 def main():
     log({"argv": argv, "cwd": os.getcwd()})
+    if "--mode" not in argv:
+        # Interactive (terminal) Pi: idle at a prompt until killed.
+        sys.stdout.write("fake pi ready\n› ")
+        sys.stdout.flush()
+        while True:
+            time.sleep(1)
     lines = iter(sys.stdin.readline, "")
     for line in lines:
         if not line.strip():

@@ -23,7 +23,8 @@
   (startup-redirect-eln-cache (expand-file-name "eln-cache/" gloom-state-directory)))
 
 (defconst gloom-packages
-  '(meow persp-mode ghostel doom-themes vertico orderless marginalia
+  '(evil evil-collection evil-surround evil-nerd-commenter evil-ghostel
+    persp-mode ghostel doom-themes vertico orderless marginalia
     consult embark embark-consult consult-eglot projectile magit diff-hl
     yasnippet doom-snippets vundo avy helpful hl-todo makefile-executor
     consult-gh diredfl rust-mode go-mode typescript-mode web-mode lua-mode
@@ -36,8 +37,8 @@
     ox-gfm ob-go ob-async org-noter ligature kkp xclip ns-auto-titlebar
     git-link git-timemachine haml-mode pug-mode slim-mode sass-mode stylus-mode
     sws-mode rainbow-mode htmlize ox-clip org-mac-link
-    ;; M-x Machina, its terminal and Pilish, used when `gloom-sessions' is nil.
-    eat mx-machina pilish))
+    ;; Sheprd runs Pi agents in Pilish.
+    pilish))
 
 (defvar gloom-doom-local-directory
   (expand-file-name (or (getenv "DOOMLOCALDIR")

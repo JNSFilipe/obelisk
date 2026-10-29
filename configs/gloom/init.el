@@ -1,12 +1,7 @@
-;;; init.el --- Plain Elisp, Meow and Sheprd -*- lexical-binding: t; -*-
+;;; init.el --- Plain Elisp, Evil and Sheprd -*- lexical-binding: t; -*-
 (when (< emacs-major-version 30)
   (error "This configuration requires Emacs 30 or newer"))
 (load (expand-file-name "packages.el" (file-name-directory load-file-name)) nil t)
-
-(defvar gloom-sessions nil
-  "Non-nil runs persp-mode sessions and the shared Sheprd multiplexer.
-Nil loads neither and uses M-x Machina (machina.el) for coding agents
-instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
 
 (setq user-full-name "JNSFilipe"
       user-mail-address "jose.filipe@ieee.org"
@@ -101,8 +96,7 @@ instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
       projectile-cache-file (expand-file-name "projectile.cache" gloom-state-directory)
       projectile-known-projects-file
       (expand-file-name "projectile-bookmarks.eld" gloom-state-directory)
-      projectile-switch-project-action
-      (if gloom-sessions #'gloom-project-open #'projectile-find-file))
+      projectile-switch-project-action #'gloom-project-open)
 (projectile-mode 1)
 (defun gloom-project-open ()
   "Open the chosen project in its own session."
@@ -113,9 +107,7 @@ instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
     (setq default-directory root)
     (projectile-find-file)))
 
-(load (expand-file-name (if gloom-sessions "workspaces.el" "machina.el")
-                        gloom-config-directory)
-      nil t)
+(load (expand-file-name "workspaces.el" gloom-config-directory) nil t)
 (load (expand-file-name "editing.el" gloom-config-directory) nil t)
 (load (expand-file-name "coding.el" gloom-config-directory) nil t)
 (load (expand-file-name "integrations.el" gloom-config-directory) nil t)
@@ -141,8 +133,8 @@ instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
 ;; Built-in backends remain available, including containers on newer Emacs.
 (require 'tramp-container nil t)
 
-;; Keep Ghostel's shell keys in input state. Normal state uses its read-only
-;; scrollback through the Meow bridge in editing.el.
+;; Ghostel's shell keys in insert state; normal state is evil-ghostel's
+;; (editing.el).
 (with-eval-after-load 'ghostel
   (keymap-set ghostel-semi-char-mode-map "C-s" #'consult-line)
   (keymap-set ghostel-semi-char-mode-map "C-k" #'gloom-ghostel-kill-line)
@@ -160,6 +152,10 @@ instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
   (kill-ring-save (point) (line-end-position))
   (ghostel-send-key "k" "ctrl"))
 
+;; Sheprd runs Pi agents in Pilish.  As in Doom, keep Pi's saved project
+;; trust decisions instead of Pilish's default of approving every project.
+(with-eval-after-load 'pilish
+  (setq pilish-project-trust-policy 'default))
 (setq consult-gh-default-clone-directory "~/Documents/GitHub/")
 (keymap-set global-map "C-x m" #'ghostel)
 (with-eval-after-load 'org

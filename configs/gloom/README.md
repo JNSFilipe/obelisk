@@ -2,7 +2,7 @@
 
 A parallel Emacs 30+ config written in plain Elisp. It shares the Doom config's
 Sheprd implementation and Oxocarbon theme. It loads package libraries from the
-existing Doom store, without starting Doom or Evil. `persp-mode` supplies sessions;
+existing Doom store, without starting Doom; editing uses Evil, as Doom does. `persp-mode` supplies sessions;
 this deliberately uses the same package as Doom, rather than `perspective`.
 
 ## Run
@@ -15,11 +15,11 @@ selects Doom):
 /opt/homebrew/bin/emacs --init-directory="$PWD/configs/gloom"
 ```
 
-The setup command installs only missing packages. On the current installation,
-those are Meow, M-x Machina and EAT. Setup also checks Ghostel's native module.
-Normal startup never refreshes archives, downloads packages or installs grammars.
-Meow and M-x Machina are fetched from their official Git repositories using
-Emacs's built-in package-vc; EAT comes from NonGNU ELPA.
+The setup command installs only missing packages; on the current installation
+Doom's store already provides every one. Setup also checks Ghostel's native
+module. Normal startup never refreshes archives, downloads packages or installs
+grammars. Ghostel (with evil-ghostel) and Doom Snippets are fetched from their
+Git repositories using Emacs's built-in package-vc; the rest from the archives.
 Native compilation uses Gloom's own `eln-cache` state directory. The reused
 Persp/Yas/Doom Snippets libraries load with JIT compilation disabled for that
 dependency path because their source builds contain undeclared compiler calls.
@@ -41,33 +41,26 @@ an Emacs version upgrade, sync Doom's builds or run this config's installer agai
 
 ## Editing and navigation
 
-`h j k l` move; uppercase motions extend the selection. `gg`/`G` jump to the
-buffer's beginning/end; `0`/`^`/`$` move to line start/first text/end.
-`i`/`a` insert/append at the selection; `I`/`A` insert at first text/line end,
-and `o`/`O` open a line below/above. Escape returns to normal.
+Editing is [Evil](https://github.com/emacs-evil/evil): Vim's states, motions,
+operators (`dw`, `ci(`, `>>`...), text objects, registers, macros, `.` repeat
+and ex commands. Special modes (Dired, Magit, Help, Info...) get Vim keys from
+evil-collection, `ys`/`cs`/`ds` come from evil-surround and `gc` comments
+with evil-nerd-commenter. Undo uses Emacs's own `undo-redo` (`u` / `C-r`).
+Yanks go to the kill ring and the system clipboard.
 
-`v` toggles character selection; ordinary motions then extend it. `V` selects
-lines, `w`/`W` select a word/symbol, and `b`/`e` extend word selections.
-Select first, then use `d` to cut, `c`/`s` to change, or `y` to copy to **both the
-kill ring and system clipboard**. `y` also copies ordinary marked regions in
-read-only motion buffers. Insert state retains normal text typing.
-`x` deletes a character, `p` pastes, `r` replaces a selection from the kill ring,
-and `u`/`C-r` undo/redo. `/` searches with Meow Visit; `n`/`N` select the next/
-previous occurrence. `1..9` keep Meow's selection expansion hints.
+The Doom config's Evil tweaks are kept: `j`/`k` move by visual line, `$` stops
+at the last non-blank character, `w`/`W` select the word/WORD at point
+(`viw`/`viW`), `<`/`>` keep the selection, `C-q` kills the buffer (also while
+typing), and `ç`/`Ç` jump between Git hunks.
 
-This remains selection-first: `w d` cuts the selected word; Vim's `dw` operator
-grammar isn't added. `gr` grabs a selection and `gb` selects a block.
-Meow's grab/beacon and keyboard macros handle repeated edits without adding a
-second cursor package. See `SPC ?` for the configured cheatsheet and the
-[Meow tutorial](https://github.com/meow-edit/meow/blob/master/TUTORIAL.org) for
-beacon workflows.
-
-Meow's leader is the native `C-c` prefix: `SPC t` and `C-c t`, for example, open
-the same terminal. Unbound leader keys retain Meow's keypad behavior. `C-h` still
-opens help in insert state; normal-state `C-h/j/k/l` focus adjacent windows,
-including Ghostel terminals and the protected Sheprd sidebar. The sidebar also
-binds these keys directly, so you can navigate back to the editor or terminal.
-The cursor does not blink, including Ghostel terminal requests for blinking.
+The leader is the `C-c` prefix map: `SPC` in normal, visual and motion states,
+`M-SPC` in every state, so `SPC t`, `M-SPC t` and `C-c t` open the same
+terminal. `SPC ?` lists the leader keys. The leader and normal-state
+`C-h/j/k/l` (focus adjacent windows, including Ghostel terminals and the
+protected Sheprd sidebar) take precedence over every mode's own bindings.
+`C-h` still opens help in insert state. The sidebar binds these keys directly,
+so you can navigate back to the editor or terminal. The cursor does not blink,
+including Ghostel terminal requests for blinking.
 
 | Key after SPC (or C-c) | Action |
 | --- | --- |
@@ -89,57 +82,21 @@ Live shell/agent processes are not resurrected by saving a layout.
 
 Sheprd's existing `C-c s` map includes `n/p` next/previous session, `N` new,
 `W` rename, `D` kill, `1..9` select session, `v/-` splits, `h/j/k/l` focus,
-`a` launch Codex/Claude, and `?` help. Its sidebar requires graphical Emacs;
-session and terminal commands also work in terminal frames. Ghostel starts in
-insert state with its native shell keys. **Escape** enters normal state over
-read-only scrollback, with terminal output still streaming; use `C-h/j/k/l` to
-change panes and `y` to copy selected text while staying in normal state.
-**i** resumes native terminal input at the live prompt. Native Copy/Emacs mode
-commands and mouse selection also synchronize Meow's state. In explicit raw
-char mode, Ghostel captures all keys; `M-RET` returns to semi-char input, where
-Escape enters normal state. `M-x ghostel-send-next-key` forwards a literal
-Escape to a terminal application. The sidebar retains its native buttons and
-`j/k` item movement. Sheprd's `e` still opens editable scrollback in a separate
-Meow buffer. Dired uses `h/l` up/open, `j/k` movement,
-and its built-in marks, operations, `wdired` and remote support.
-
-## Without sessions: M-x Machina
-
-`gloom-sessions`, at the top of `init.el`, defaults to `t`: the persp-mode
-sessions and Sheprd described above. Set it to `nil` and restart to run without
-either (persp-mode cannot be unloaded from a running Emacs). Then:
-
-- [M-x Machina](https://github.com/eliraz-refael/m-x-machina) manages coding
-  agents instead. Claude Code runs its terminal UI through EAT (needs `claude`
-  and `python3`). Other agents run through agent-shell (ACP, reused from Doom's
-  store) and appear only while their ACP command is installed: Codex
-  (`codex-acp`), Gemini (`gemini`), Pi (`pi-acp`, installed with Homebrew's
-  `npm install -g pi-acp`; it is not in Homebrew or nixpkgs), Antigravity
-  (`agy_acp_server.par`, from `antigravity-acp` in `nix/packages.nix`) and
-  Claude over ACP (`claude-agent-acp`); see `gloom-machina-acp-agents` in
-  `machina.el`. vterm is not offered. Its SQLite
-  registry lives in Gloom's state directory under `emacs-agents/`.
-- Creating an agent never asks about Git worktrees: agents use the checkout
-  you choose. Use Git directly when an agent needs its own worktree.
-- Pi agents can also run in [Pilish](https://pilish.dev), reused from Doom's
-  store: choose agent `Pi`, then interface `pilish` (`agent-shell` uses
-  pi-acp). The conversation opens as Pilish's chat with its input window
-  below; the sidebar still shows working, approval (an open Pi extension
-  dialog), unread replies and stopped. Resume reopens the same Pi session ID
-  and its history. A Pi agent stopped before its first message resumes empty,
-  because Pi saves a session only once it has messages. Agent-to-agent
-  messaging is not supported for Pilish agents. The first Pilish session asks
-  to install the tree-sitter Markdown grammar its chat uses.
-  `machina-pilish.el` joins the two packages through their internal
-  functions, so their upgrades can break it; the checks below then fail.
-- `SPC a` (`C-c a`) opens Machina: `a` sidebar, `n` new agent, `b` board,
-  `d` dashboard, `z` focus/restore, `]`/`[` next/previous agent needing attention.
-- `SPC t`/`,`/`<` open new Ghostel terminals (here, split right, split down).
-  `SPC b` and `C-x b` switch among all buffers; `SPC p` opens a project's files.
-  `C-c s` and `C-c TAB` are unbound.
-- Machina's sidebar, board, dashboard, transcript and EAT terminals run without
-  Meow, keeping their own keys (`j/k`, `RET`, `n`, `z`, `?`...). The sidebar
-  keeps `SPC` as the leader and `C-h/j/k/l` window focus.
+`a` new agent (Claude, Codex or Pi, persistent and resumable; Pi can
+run in Pilish), `!` next agent needing attention, `O` board, and `?` help. See
+[Sheprd](../doom/sheprd.md#persistent-agents). Its sidebar requires graphical Emacs;
+session and terminal commands also work in terminal frames. Terminals use
+Ghostel's own Evil integration, evil-ghostel: they start in insert state with
+the native shell keys (plus `C-s` to search the scrollback and `C-k` to kill to
+the kill ring). **Escape** enters normal state, with output still streaming:
+motions roam the scrollback, `v`/`y` copy, `C-h/j/k/l` change panes, and
+operators (`d`, `c`, `x`...) edit the shell's input line. **i**/**a** return to
+the live prompt. In full-screen programs such as Claude Code, Escape goes to the
+program; `C-c <escape>` enters normal state there, and `C-c C-r` toggles that
+per buffer. The sidebar and board keep their native buttons and `j/k`
+movement. Sheprd's `e` opens editable scrollback in an ordinary buffer. Pilish
+uses its own Evil integration. Dired uses `h/l` up/open, `j/k` movement, and its
+built-in marks, operations, `wdired` and remote support.
 
 ## Coding and remote files
 
@@ -165,7 +122,7 @@ The current Doom store has no built `epdfinfo` executable: PDF rendering needs
 `M-x pdf-tools-install` and its native build dependencies. Missing PDF support
 does not break Org, and startup never launches a native build.
 
-See [the parity audit](PARITY.md) for what is equivalent, what changes with Meow,
+See [the parity audit](PARITY.md) for what is equivalent, what changes with Gloom,
 and the remaining differences from Doom. This is not an exhaustive reproduction
 of Doom's module UI, templates or language command wrappers.
 
@@ -198,23 +155,17 @@ last for machine-specific settings and additional existing integrations.
 After setup, from the repository:
 
 ```sh
-# Use a temporary state directory; point Emacs at the installed libraries.
-elpa="$HOME/.local/share/gloom-emacs/elpa"
+# Use a temporary state directory, never the real one.
 GLOOM_EMACS_STATE="$(mktemp -d)" /opt/homebrew/bin/emacs -Q --batch \
-  -L "$elpa/meow" \
-  -l configs/gloom/tests/config-test.el -f ert-run-tests-batch-and-exit
-# The same suite with gloom-sessions nil (M-x Machina instead of Sheprd).
-GLOOM_EMACS_STATE="$(mktemp -d)" /opt/homebrew/bin/emacs -Q --batch \
-  -L "$elpa/meow" -L "$elpa/mx-machina/lisp" -L "$(echo "$elpa"/eat-*)" \
-  --eval '(defvar gloom-sessions nil)' \
   -l configs/gloom/tests/config-test.el -f ert-run-tests-batch-and-exit
 /opt/homebrew/bin/emacs -Q --batch \
   -l configs/doom/tests/sheprd-test.el -f ert-run-tests-batch-and-exit
 ```
 
-Each run skips the tests that belong to the other `gloom-sessions` setting.
-
 The standalone checks exercise real persp-mode sessions/layouts, terminal
-confinement, actual Meow editing/copying and native keymaps, code commands, TRAMP path parsing, remote server
-selection and a real Ghostel native terminal. Remote network connectivity and
+confinement, actual Evil editing/copying, the leader and native keymaps, code commands, TRAMP path parsing, remote server
+selection and a real Ghostel native terminal. They also drive Sheprd's persistent agents end to
+end (Claude, Codex and Pi in terminals, Pi in Pilish) against offline fake
+clients in `configs/doom/tests`, which need `python3`; no account or network is
+used. Remote network connectivity and
 language server responses depend on the actual host/project.

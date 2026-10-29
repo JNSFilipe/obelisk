@@ -1,6 +1,6 @@
 # Pilish as an M-x Machina interface (Gloom)
 
-Status: implemented (awaiting the user's GUI trial)
+Status: superseded (removed 2026-10-29; Sheprd gained persistent agents and Pilish, see docs/changes/sheprd-agent-registry.md)
 
 ## Why / scope
 In Gloom with `gloom-sessions` nil, Pi agents created in M-x Machina should run

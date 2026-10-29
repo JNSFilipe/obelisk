@@ -3,290 +3,21 @@
 (unless (featurep 'gloom-init)
   (load (expand-file-name "../init.el" (file-name-directory load-file-name)) nil t))
 
-(ert-deftest gloom-startup-without-doom-or-evil ()
-  (should meow-global-mode)
+(ert-deftest gloom-startup-without-doom-with-evil ()
+  (should evil-mode)
+  (should gloom-override-mode)
+  (should (featurep 'evil-collection))
+  (should persp-mode)
   (should vertico-mode)
   (should marginalia-mode)
   (should (memq 'doom-oxocarbon custom-enabled-themes))
   (should-not (featurep 'doom))
-  (should-not (featurep 'evil))
-  (should-not (featurep 'perspective)))
-
-(ert-deftest gloom-sessions-load-persp-and-sheprd-only ()
-  (skip-unless gloom-sessions)
-  (should persp-mode)
-  (should (featurep 'sheprd))
-  (should (string-prefix-p gloom-state-directory persp-save-dir))
-  (should-not (featurep 'mx-machina))
-  (should (eq (key-binding (kbd "C-x b")) #'persp-switch-to-buffer))
-  (should (eq (key-binding (kbd "C-c t")) #'sheprd-new-terminal))
-  (should (eq projectile-switch-project-action #'gloom-project-open)))
-
-(ert-deftest gloom-without-sessions-uses-machina ()
-  (skip-unless (not gloom-sessions))
-  (should-not (featurep 'persp-mode))
-  (should-not (featurep 'sheprd))
-  (should-not (fboundp '+workspace-switch))
-  (should (featurep 'mx-machina))
-  (should (featurep 'eat))
-  (should (string-prefix-p gloom-state-directory mx-machina-directory))
-  ;; Claude through EAT, plus agent-shell agents whose ACP command is installed.
-  (cl-letf (((symbol-function 'executable-find)
-             (lambda (command &rest _) (and (member command '("codex-acp" "gemini"))
-                                            command))))
-    (should (equal (mapcar (lambda (config) (alist-get :identifier config))
-                           (mx-machina-backend-configs))
-                   '(codex gemini-cli claude-eat))))
-  (cl-letf (((symbol-function 'executable-find) #'ignore))
-    (should (equal (mapcar (lambda (config) (alist-get :identifier config))
-                           (mx-machina-backend-configs))
-                   '(claude-eat))))
-  (should (eq projectile-switch-project-action #'projectile-find-file))
-  (should (eq (key-binding (kbd "C-x b")) #'consult-buffer))
-  (should (eq (key-binding (kbd "C-c b")) #'consult-buffer))
-  (should (eq (key-binding (kbd "C-c t")) #'gloom-new-terminal))
-  (should (eq (key-binding (kbd "C-c ,")) #'gloom-terminal-split-right))
-  (should (eq (key-binding (kbd "C-c <")) #'gloom-terminal-split-down))
-  (should-not (key-binding (kbd "C-c TAB")))
-  (should (eq (key-binding (kbd "C-c a a")) #'mx-machina))
-  (should (eq (key-binding (kbd "C-c a n")) #'mx-machina-new))
-  (should (eq (key-binding (kbd "C-c a b")) #'mx-machina-board))
-  (should (eq (key-binding (kbd "C-c a z")) #'mx-machina-focus)))
-
-(ert-deftest gloom-machina-never-asks-for-a-worktree ()
-  (skip-unless (not gloom-sessions))
-  (let (asked)
-    (cl-letf (((symbol-function 'read-string)
-               (lambda (prompt &optional default &rest _)
-                 (or default (if (string-prefix-p "Session" prompt) "Test" "x"))))
-              ((symbol-function 'read-directory-name)
-               (lambda (_prompt &optional _dir default &rest _) (or default "/tmp/repo/")))
-              ((symbol-function 'mx-machina--worktree) (lambda (_) '("/tmp/repo/")))
-              ((symbol-function 'mx-machina-backend-read-profile) (lambda () "claude-eat"))
-              ((symbol-function 'mx-machina--read-folder) (lambda () ""))
-              ((symbol-function 'read-char-choice) (lambda (&rest _) (setq asked t) ?y))
-              ((symbol-function 'read-from-minibuffer)
-               (lambda (&rest _) (setq asked t) "y")))
-      (should-not (nth 4 (mx-machina--read-new-session)))
-      (should-not asked)))
-  ;; Unrelated yes/no questions still reach the original y-or-n-p.
-  (cl-letf (((symbol-function 'y-or-n-p) (lambda (prompt) (list 'asked prompt))))
-    (should (equal (gloom-machina-skip-worktree (lambda () (y-or-n-p "Other? ")))
-                   '(asked "Other? ")))))
-
-;;; Pilish as a Machina interface, against tests/fake-pi.py (no network or account).
-
-(defun gloom-test-wait (predicate &optional seconds)
-  "Process events until PREDICATE holds or SECONDS (default 10) pass."
-  (let ((end (+ (float-time) (or seconds 10))))
-    (while (and (not (funcall predicate)) (< (float-time) end))
-      (accept-process-output nil 0.05))
-    (funcall predicate)))
-
-(defmacro gloom-test-with-fake-pi (&rest body)
-  "Run BODY with Pilish launching the fake Pi in a fresh Git checkout.
-Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
-  (declare (indent 0))
-  `(let* ((root (make-temp-file "gloom-pilish-" t))
-          (repo (file-name-as-directory (expand-file-name "repo" root)))
-          (log (expand-file-name "fake-pi.jsonl" root))
-          (process-environment (append (list (concat "FAKE_PI_LOG=" log))
-                                       process-environment))
-          (pilish-executable
-           (list (executable-find "python3")
-                 (expand-file-name "fake-pi.py" (file-name-directory
-                                                 (symbol-file 'gloom-test-wait)))))
-          ;; Pilish's chat mode asks to install a Markdown grammar otherwise.
-          (treesit-auto-install-grammar 'never)
-          (started nil))
-     (cl-flet ((fake-pi-log ()
-                 (with-temp-buffer
-                   (when (file-exists-p log) (insert-file-contents log))
-                   (mapcar (lambda (line) (json-parse-string line :object-type 'alist))
-                           (split-string (buffer-string) "\n" t)))))
-       (make-directory repo t)
-       (let ((default-directory repo))
-         (call-process "git" nil nil nil "init" "-q")
-         (call-process "git" nil nil nil "-c" "user.name=t" "-c" "user.email=t@t"
-                       "commit" "-q" "--allow-empty" "-m" "init"))
-       (unwind-protect (progn ,@body)
-         (maphash (lambda (id _) (ignore-errors (mx-machina-stop id)))
-                  mx-machina--running)
-         (delete-directory root t)))))
-
-(defun gloom-test-session (id)
-  (mx-machina-session id))
-
-(defun gloom-test-live-p (id)
-  (let ((session (gloom-test-session id)))
-    (and (equal (mx-machina-session-status session) "live")
-         (equal (mx-machina-session-activity session) "input"))))
-
-(ert-deftest gloom-machina-pilish-internals-are-present ()
-  "Fail loudly when a Machina or Pilish upgrade moves what the adapter uses."
-  (skip-unless (not gloom-sessions))
-  (dolist (function '(mx-machina-backend-configs mx-machina-backend-start
-                      mx-machina-backend-process mx-machina-backend-stop
-                      mx-machina-backend-metadata mx-machina--show-conversation
-                      mx-machina-focus mx-machina--transport-create
-                      mx-machina--transport-fail pilish--setup-session
-                      pilish--handle-event pilish--apply-state-response
-                      pilish--load-session-history))
-    (should (fboundp function)))
-  (dolist (variable '(pilish--status pilish--state pilish--process
-                      pilish--input-buffer mx-machina--backend-kind
-                      mx-machina-backend-event-hook pilish-extra-args))
-    (should (boundp variable)))
-  (should (equal pilish-executable '("pi")))
-  (should (eq pilish-project-trust-policy 'default))
-  (should (member '(pi-pilish pilish)
-                  (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "/bin/x")))
-                    (mapcar (lambda (c) (list (alist-get :identifier c) (alist-get :interface c)))
-                            (mx-machina-backend-configs))))))
-
-(ert-deftest gloom-machina-pilish-lifecycle ()
-  (skip-unless (not gloom-sessions))
-  (gloom-test-with-fake-pi
-    (let* ((id (mx-machina-new "pilish-life" repo "pi-pilish"))
-           (chat (mx-machina-start id))
-           conversation)
-      (should (eq (buffer-local-value 'mx-machina--backend-kind chat) 'pilish))
-      (should (gloom-test-wait (lambda () (gloom-test-live-p id))))
-      (setq conversation (mx-machina-session-conversation (gloom-test-session id)))
-      ;; The saved conversation is the Pi session ID Gloom passed.
-      (should (equal (alist-get 'argv (car (fake-pi-log)))
-                     (vector "--mode" "rpc" "--session-id" conversation)))
-      (should (equal (mx-machina-session-model (gloom-test-session id)) "Fake Model"))
-      ;; A turn: working while Pi runs, then input with an unread reply.
-      (let ((input (buffer-local-value 'pilish--input-buffer chat))
-            seen-working)
-        (with-current-buffer input
-          (erase-buffer)
-          (insert "hello")
-          (pilish-send))
-        (should (gloom-test-wait
-                 (lambda ()
-                   (when (equal (mx-machina-session-activity (gloom-test-session id)) "working")
-                     (setq seen-working t))
-                   (and seen-working (gloom-test-live-p id)))))
-        (should (mx-machina-unread-p (gloom-test-session id)))
-        ;; A Pi extension dialog shows as approval while it is open.
-        (let (activity-during-dialog)
-          (cl-letf (((symbol-function 'yes-or-no-p)
-                     (lambda (&rest _)
-                       (setq activity-during-dialog
-                             (mx-machina-session-activity (gloom-test-session id)))
-                       t)))
-            (with-current-buffer input
-              (erase-buffer)
-              (insert "please ask first")
-              (pilish-send))
-            (should (gloom-test-wait (lambda () activity-during-dialog)))
-            (should (gloom-test-wait (lambda () (gloom-test-live-p id)))))
-          (should (equal activity-during-dialog "approval"))
-          (should (seq-find (lambda (entry)
-                              (equal (alist-get 'type (alist-get 'command entry))
-                                     "extension_ui_response"))
-                            (fake-pi-log)))))
-      ;; Stop ends Pi but keeps the conversation buffer.
-      (mx-machina-stop id)
-      (should (equal (mx-machina-session-status (gloom-test-session id)) "stopped"))
-      (should (buffer-live-p chat))
-      (should-not (process-live-p (buffer-local-value 'pilish--process chat)))
-      ;; Resume passes the same session ID and renders the saved history.
-      (setenv "FAKE_PI_SAVED" conversation)
-      (unwind-protect
-          (progn
-            (mx-machina-start id)
-            (should (gloom-test-wait (lambda () (gloom-test-live-p id))))
-            (let ((argvs (delq nil (mapcar (lambda (entry) (alist-get 'argv entry))
-                                           (fake-pi-log)))))
-              (should (= 2 (length argvs)))
-              (should (equal (car (last argvs))
-                             (vector "--mode" "rpc" "--session-id" conversation))))
-            (should (gloom-test-wait
-                     (lambda ()
-                       (seq-find (lambda (entry)
-                                   (equal (alist-get 'type (alist-get 'command entry))
-                                          "get_messages"))
-                                 (fake-pi-log)))))
-            (should (equal (mx-machina-session-conversation (gloom-test-session id))
-                           conversation)))
-        (setenv "FAKE_PI_SAVED" nil)))))
-
-(ert-deftest gloom-machina-pilish-rejects-a-different-session ()
-  (skip-unless (not gloom-sessions))
-  (gloom-test-with-fake-pi
-    (setenv "FAKE_PI_WRONG_ID" "11111111-2222-4333-8444-555555555555")
-    (unwind-protect
-        (let ((id (mx-machina-new "pilish-wrong" repo "pi-pilish")))
-          (mx-machina-start id)
-          (should (gloom-test-wait
-                   (lambda () (equal (mx-machina-session-status (gloom-test-session id))
-                                     "failed"))))
-          (should (string-match-p "different session ID"
-                                  (mx-machina-session-error (gloom-test-session id)))))
-      (setenv "FAKE_PI_WRONG_ID" nil))))
-
-(ert-deftest gloom-machina-pilish-shows-chat-and-input ()
-  (skip-unless (not gloom-sessions))
-  (gloom-test-with-fake-pi
-    (save-window-excursion
-      (let* ((id (mx-machina-new "pilish-view" repo "pi-pilish")))
-        (mx-machina-open id)
-        (let* ((chat (mx-machina-start id))
-               (input (buffer-local-value 'pilish--input-buffer chat)))
-          (should (get-buffer-window chat))
-          (should (eq (window-buffer) input))
-          (should (eq (window-in-direction 'above) (get-buffer-window chat)))
-          (require 'mx-machina-messaging)
-          (should (equal (mx-machina-messaging--hold
-                          (gloom-test-session id) (cdr (gethash id mx-machina--running)))
-                         "Agent messaging does not support Pilish agents")))))))
-
-(ert-deftest gloom-machina-views-keep-native-keys ()
-  (skip-unless (not gloom-sessions))
-  (with-temp-buffer
-    (mx-machina-sidebar-mode)
-    (should-not meow-mode)
-    (should (eq (key-binding (kbd "j")) #'mx-machina-sidebar-next))
-    (should (eq (key-binding (kbd "RET")) #'mx-machina-sidebar-open))
-    (should (eq (key-binding (kbd "SPC t")) #'gloom-new-terminal))
-    (should (eq (key-binding (kbd "C-h")) #'gloom-window-left)))
-  (dolist (mode '(mx-machina-mode mx-machina-board-mode eat-mode))
-    (with-temp-buffer
-      (require (if (eq mode 'mx-machina-board-mode) 'mx-machina-board 'mx-machina))
-      (funcall mode)
-      (should-not meow-mode))))
-
-(ert-deftest gloom-machina-sidebar-opens-against-a-real-registry ()
-  (skip-unless (not gloom-sessions))
-  (save-window-excursion
-    (mx-machina)
-    (let ((sidebar (seq-find (lambda (buffer)
-                               (eq (buffer-local-value 'major-mode buffer)
-                                   'mx-machina-sidebar-mode))
-                             (buffer-list))))
-      (should sidebar)
-      (should (get-buffer-window sidebar))
-      (should-not (buffer-local-value 'meow-mode sidebar))))
-  (should (file-exists-p mx-machina-directory)))
-
-(ert-deftest gloom-without-sessions-terminal-splits ()
-  (skip-unless (not gloom-sessions))
-  (save-window-excursion
-    (delete-other-windows)
-    (let* ((origin (selected-window)) opened)
-      (cl-letf (((symbol-function 'ghostel) (lambda (arg) (setq opened arg))))
-        (gloom-terminal-split-right))
-      (should (= 2 (length (window-list))))
-      (should-not (eq origin (selected-window)))
-      (should (eq (window-in-direction 'left) origin))
-      ;; A non-numeric argument makes Ghostel create a new terminal.
-      (should (eq opened t)))))
+  (should-not (featurep 'meow))
+  (should-not (featurep 'perspective))
+  (should (eq evil-undo-system 'undo-redo))
+  (should (string-prefix-p gloom-state-directory persp-save-dir)))
 
 (ert-deftest gloom-sessions-confine-terminals-and-restore-layouts ()
-  (skip-unless gloom-sessions)
   (let ((origin (+workspace-current-name))
         (buffer (generate-new-buffer "test-terminal")))
     (unwind-protect
@@ -318,31 +49,32 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
         (when (+workspace-exists-p name) (+workspace-delete name)))
       (when (buffer-live-p buffer) (kill-buffer buffer)))))
 
-(ert-deftest gloom-meow-special-buffers-keep-native-keys ()
+(ert-deftest gloom-evil-special-buffers-keep-native-keys ()
   (require 'ghostel)
   (with-temp-buffer
     (ghostel-mode)
-    (should meow-mode)
-    (should meow-insert-mode)
+    (should evil-ghostel-mode)
+    (should (evil-insert-state-p))
     (should ghostel-ignore-cursor-change)
-    (when gloom-sessions
-      (should (eq (key-binding (kbd "C-c s n")) #'sheprd-next-session)))
+    (should (eq (key-binding (kbd "C-c s n")) #'sheprd-next-session))
+    (should (eq (key-binding (kbd "M-SPC t")) #'sheprd-new-terminal))
     (should (eq (key-binding (kbd "C-s")) #'consult-line)))
-  (when gloom-sessions
-    (with-temp-buffer
-      (sheprd-sidebar-mode)
-      (should-not meow-mode)
-      (should (eq (key-binding (kbd "j")) #'sheprd-next-item))
-      (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal))))
+  (with-temp-buffer
+    (sheprd-sidebar-mode)
+    (should (evil-emacs-state-p))
+    (should (eq (key-binding (kbd "j")) #'sheprd-next-item))
+    (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal)))
   (with-temp-buffer
     (emacs-lisp-mode)
-    (should meow-mode)
-    (should meow-normal-mode)
-    (should (eq (key-binding (kbd "w")) #'meow-mark-word))
+    (should (evil-normal-state-p))
+    (should (equal (key-binding (kbd "w")) "viw"))
+    (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal))
+    (should (eq (key-binding (kbd "SPC ?")) #'gloom-leader-help))
+    (should (eq (key-binding (kbd "C-h")) #'gloom-window-left))
+    (should (eq (key-binding (kbd "gc")) #'evilnc-comment-operator))
     (should (eq (key-binding (kbd "M-x")) #'execute-extended-command))))
 
 (ert-deftest gloom-workspace-persistence-restores-file-and-layout ()
-  (skip-unless gloom-sessions)
   (let* ((origin (+workspace-current-name))
          (file (make-temp-file "gloom-workspace-" nil ".txt"))
          (state (make-temp-file "gloom-persp-"))
@@ -369,7 +101,7 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
       (delete-file file)
       (delete-file state))))
 
-(ert-deftest gloom-ghostel-meow-follows-native-modes ()
+(ert-deftest gloom-ghostel-evil-states ()
   (require 'ghostel)
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-native-modes")))
@@ -380,31 +112,18 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (setq ghostel--cursor-style 1 ghostel--cursor-blinking t)
             (ghostel--apply-cursor-style)
             (should-not ghostel--cursor-blink-timer)
+            (should (evil-insert-state-p))
             (execute-kbd-macro (kbd "<escape>"))
-            (should meow-normal-mode)
-            (should (eq ghostel--input-mode 'emacs))
-            (should buffer-read-only)
+            (should (evil-normal-state-p))
+            ;; Normal state roams the terminal; the shell keeps its input mode.
+            (should (eq ghostel--input-mode 'semi-char))
+            (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal))
             (execute-kbd-macro (kbd "i"))
-            (should meow-insert-mode)
-            (should (eq ghostel--input-mode 'semi-char))
-            ;; Native commands and mouse/mark selection use these transitions.
-            (ghostel-copy-mode)
-            (should meow-normal-mode)
-            (should (eq ghostel--input-mode 'copy))
-            (ghostel-semi-char-mode)
-            (should meow-insert-mode)
-            (ghostel-char-mode)
-            (should meow-insert-mode)
-            (ghostel-semi-char-mode)
-            ;; Temporary leader/keypad use must not change terminal input mode.
-            (meow--switch-state 'keypad)
-            (should (eq ghostel--input-mode 'semi-char))
-            (meow--switch-state 'insert)
+            (should (evil-insert-state-p))
             (should (eq ghostel--input-mode 'semi-char)))
         (kill-buffer buffer)))))
 
 (ert-deftest gloom-navigation-includes-real-sheprd-terminal-and-sidebar ()
-  (skip-unless gloom-sessions)
   (require 'ghostel)
   (let ((origin (+workspace-current-name))
         (session (format "gloom-navigation-%s" (float-time)))
@@ -437,10 +156,9 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
           (select-window main)
           (execute-kbd-macro (kbd "C-l"))
           (should (eq right (selected-window)))
-          (should meow-insert-mode)
+          (should (evil-insert-state-p))
           (execute-kbd-macro (kbd "<escape>"))
-          (should meow-normal-mode)
-          (should (eq ghostel--input-mode 'emacs))
+          (should (evil-normal-state-p))
           (execute-kbd-macro (kbd "C-h"))
           (should (eq main (selected-window)))
           (execute-kbd-macro (kbd "C-l C-j"))
@@ -452,7 +170,7 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
           (should (eq (key-binding (kbd "j")) #'sheprd-next-item))
           (execute-kbd-macro (kbd "C-l C-l"))
           (should (eq right (selected-window)))
-          (should meow-normal-mode)
+          (should (evil-normal-state-p))
           ;; Normal scrollback navigation must keep agent output streaming.
           (let ((deadline (+ (float-time) 5)))
             (while (and (< (float-time) deadline)
@@ -462,16 +180,16 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
           (let (copied)
             (goto-char (point-min))
             (search-forward "live-output")
-            (push-mark (- (point) (length "live-output")) t t)
+            (goto-char (match-beginning 0))
             (cl-letf (((symbol-function 'gui-set-selection)
                        (lambda (kind text)
                          (when (eq kind 'CLIPBOARD) (setq copied text)))))
-              (execute-kbd-macro (kbd "y")))
+              (execute-kbd-macro (kbd "v E y")))
             (should (equal copied "live-output")))
-          (should meow-normal-mode)
-          (should (eq ghostel--input-mode 'emacs))
+          (should (evil-normal-state-p))
+          ;; i returns to the live prompt and types into the shell.
           (execute-kbd-macro (kbd "i gloom-input RET"))
-          (should meow-insert-mode)
+          (should (evil-insert-state-p))
           (should (eq ghostel--input-mode 'semi-char))
           (should (eq (key-binding (kbd "C-k")) #'gloom-ghostel-kill-line))
           (should (eq (key-binding (kbd "C-j")) #'ghostel--send-event))
@@ -537,8 +255,6 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
     (should (commandp command))))
 
 (ert-deftest gloom-ghostel-native-agent-output ()
-  ;; The integration check loads Sheprd itself; it belongs to sessions only.
-  (skip-unless gloom-sessions)
   (load (expand-file-name "tests/sheprd-integration.el" gloom-doom-directory) nil t)
   (should (eq 'passed (sheprd-ghostel-integration-check))))
 
@@ -583,8 +299,7 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
                      rustic-cargo-check rustic-cargo-build consult-yasnippet
                      docker eglot-find-implementation eglot-find-typeDefinition))
     (should (commandp command)))
-  (should-not (featurep 'doom))
-  (should-not (featurep 'evil)))
+  (should-not (featurep 'doom)))
 
 (ert-deftest gloom-node-project-tools-available-before-eglot ()
   (let* ((root (make-temp-file "gloom-node-" t))
@@ -670,7 +385,7 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
         (pip-requirements-mode)
         (should-not fetched)))))
 
-(ert-deftest gloom-meow-vim-motions-and-selection-first-editing ()
+(ert-deftest gloom-evil-vim-motions-and-operators ()
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-edit-test")))
       (unwind-protect
@@ -680,25 +395,30 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (insert "alpha beta\n  second line\nlast\n")
             (execute-kbd-macro (kbd "gg"))
             (should (= (point) (point-min)))
-            (execute-kbd-macro (kbd "w d"))
-            ;; Select the word, then delete it; d is never an operator prefix.
-            (should (string-prefix-p " beta" (buffer-string)))
+            ;; Real operator grammar: dw deletes a word.
+            (execute-kbd-macro (kbd "dw"))
+            (should (string-prefix-p "beta\n" (buffer-string)))
             (execute-kbd-macro (kbd "j 0"))
             (should (= (point) (line-beginning-position)))
             (execute-kbd-macro (kbd "^"))
             (should (= (current-column) 2))
+            ;; $ stops at the last non-blank character, as in the Doom config.
             (execute-kbd-macro (kbd "$"))
-            (should (= (point) (line-end-position)))
+            (should (= (point) (1- (line-end-position))))
             (execute-kbd-macro (kbd "G"))
-            (should (= (point) (point-max)))
+            (should (= (line-number-at-pos) (line-number-at-pos (point-max))))
             (execute-kbd-macro (kbd "gg v l"))
-            (should (region-active-p))
-            (should (= 2 (- (region-end) (region-beginning))))
-            (execute-kbd-macro (kbd "v"))
-            (should-not (region-active-p)))
+            (should (evil-visual-state-p))
+            (should (= 2 (- evil-visual-end evil-visual-beginning)))
+            (execute-kbd-macro (kbd "<escape>"))
+            (should-not (region-active-p))
+            ;; w selects the word at point (viw).
+            (execute-kbd-macro (kbd "w"))
+            (should (evil-visual-state-p))
+            (should (equal "beta" (buffer-substring evil-visual-beginning evil-visual-end))))
         (kill-buffer buffer)))))
 
-(ert-deftest gloom-meow-vim-insertion-keys ()
+(ert-deftest gloom-evil-vim-insertion-keys ()
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-insert-test")))
       (unwind-protect
@@ -709,7 +429,7 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (goto-char (point-min))
             (execute-kbd-macro (kbd "I X <escape>"))
             (should (string-prefix-p "  Xalpha\n" (buffer-string)))
-            (should meow-normal-mode)
+            (should (evil-normal-state-p))
             (execute-kbd-macro (kbd "A Y <escape>"))
             (should (string-prefix-p "  XalphaY\n" (buffer-string)))
             (execute-kbd-macro (kbd "o Z <escape>"))
@@ -718,10 +438,9 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (should (string-match-p "\nQ\nZ\nbeta" (buffer-string))))
         (kill-buffer buffer)))))
 
-(ert-deftest gloom-meow-y-copies-selections-and-ordinary-marks ()
+(ert-deftest gloom-evil-y-copies-to-the-kill-ring-and-clipboard ()
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-copy-test"))
-          (select-enable-clipboard nil)
           (kill-ring nil)
           copied)
       (unwind-protect
@@ -734,30 +453,24 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (should (equal copied "alpha"))
             (should (equal (car kill-ring) "alpha"))
             (should (equal (buffer-string) "alpha beta\n"))
-            (setq copied nil)
-            (goto-char 7)
-            (push-mark 11 t t)
-            (execute-kbd-macro (kbd "y"))
-            (should (equal copied "beta"))
-            ;; Motion buffers have the same copy key; terminal/sidebar stay native.
-            (special-mode)
-            (should meow-motion-mode)
-            (setq copied nil)
-            (goto-char 1)
-            (push-mark 6 t t)
-            (execute-kbd-macro (kbd "y"))
-            (should (equal copied "alpha")))
+            (should (evil-normal-state-p))
+            (execute-kbd-macro (kbd "yy"))
+            (should (equal copied "alpha beta\n")))
         (kill-buffer buffer)))))
 
-(ert-deftest gloom-normal-map-has-only-real-commands ()
+(ert-deftest gloom-evil-maps-have-only-real-commands ()
   (cl-labels ((check-map (map)
-                (map-keymap (lambda (_ binding)
-                              (cond ((keymapp binding) (check-map binding))
-                                    ((symbolp binding) (should (commandp binding)))))
+                (map-keymap (lambda (key binding)
+                              (cond ((eq binding mode-specific-map)) ; the leader
+                                    ((eq key 'intercept-state)) ; Evil's marker
+                                    ((keymapp binding) (check-map binding))
+                                    ((and (symbolp binding) binding)
+                                     (should (commandp binding)))))
                             map)))
-    (check-map meow-normal-state-keymap)))
+    (check-map evil-normal-state-map)
+    (check-map gloom-override-mode-map)))
 
-(ert-deftest gloom-meow-delete-fallback-does-not-move-windows ()
+(ert-deftest gloom-evil-delete-keeps-window-keys ()
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-delete-test")))
       (unwind-protect
@@ -766,12 +479,12 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (emacs-lisp-mode)
             (insert "alpha beta\n")
             (goto-char 7)
-            (execute-kbd-macro (kbd "d"))
-            (should (equal (buffer-string) "alpha \n"))
+            (execute-kbd-macro (kbd "x"))
+            (should (equal (buffer-string) "alpha eta\n"))
             (should (eq (key-binding (kbd "C-k")) #'gloom-window-up)))
         (kill-buffer buffer)))))
 
-(ert-deftest gloom-meow-undo-and-redo ()
+(ert-deftest gloom-evil-undo-and-redo ()
   (save-window-excursion
     (let ((buffer (generate-new-buffer "gloom-undo-test")))
       (unwind-protect
@@ -788,3 +501,225 @@ Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
             (execute-kbd-macro (kbd "C-r"))
             (should (equal (buffer-string) "alpha!")))
         (kill-buffer buffer)))))
+
+
+;;; Sheprd agents end to end: real persp sessions, Ghostel terminals and
+;;; Pilish, against offline fake CLIs (configs/doom/tests/fake-*.py).
+
+;; Let-bound below before Pilish loads; they must be dynamic.
+(defvar pilish-executable)
+(defvar treesit-auto-install-grammar)
+
+(defun gloom-test-wait (predicate &optional seconds)
+  "Process events until PREDICATE holds or SECONDS (default 10) pass."
+  (let ((end (+ (float-time) (or seconds 10))))
+    (while (and (not (funcall predicate)) (< (float-time) end))
+      (accept-process-output nil 0.05))
+    (funcall predicate)))
+
+(defmacro gloom-test-with-agents (&rest body)
+  "Run BODY in a fresh session and registry, with every client faked.
+Binds `repo', `session' and `log'; `agent-log' returns the logged entries."
+  (declare (indent 0))
+  `(let* ((root (make-temp-file "gloom-agents-" t))
+          (repo (file-name-as-directory (expand-file-name "repo" root)))
+          (log (expand-file-name "agents.jsonl" root))
+          (fake (lambda (name) (expand-file-name (format "tests/fake-%s.py" name)
+                                                 gloom-doom-directory)))
+          (python (executable-find "python3"))
+          (sheprd-directory (file-name-as-directory (expand-file-name "sheprd" root)))
+          (sheprd--db nil) (sheprd--db-file nil)
+          (sheprd-agent-commands `((claude . (,python ,(funcall fake "claude")))
+                                   (codex . (,python ,(funcall fake "codex")))
+                                   (pi . (,python ,(funcall fake "pi")))))
+          (pilish-executable (list python (funcall fake "pi")))
+          (process-environment (append (list (concat "FAKE_AGENT_LOG=" log)
+                                             (concat "FAKE_PI_LOG=" log))
+                                       process-environment))
+          ;; Pilish's chat mode otherwise asks to install a Markdown grammar.
+          (treesit-auto-install-grammar 'never)
+          (origin (+workspace-current-name))
+          (session (format "agents-%s" (random 100000))))
+     (cl-flet ((agent-log ()
+                 (with-temp-buffer
+                   (when (file-exists-p log) (insert-file-contents log))
+                   (mapcar (lambda (line) (json-parse-string line :object-type 'alist
+                                                             :array-type 'list))
+                           (split-string (buffer-string) "\n" t)))))
+       (make-directory repo t)
+       (let ((default-directory repo))
+         (call-process "git" nil nil nil "init" "-q"))
+       (unwind-protect
+           (save-window-excursion
+             (+workspace-switch session t)
+             ,@body)
+         (dolist (id (hash-table-keys sheprd--runs))
+           (ignore-errors (sheprd-stop-agent id)))
+         (dolist (buffer (buffer-list))
+           (when (buffer-local-value 'sheprd--agent-id buffer)
+             (let ((kill-buffer-query-functions nil)) (kill-buffer buffer))))
+         (+workspace-switch origin t)
+         (when (+workspace-exists-p session) (+workspace-delete session))
+         (when sheprd--db (sqlite-close sheprd--db))
+         (delete-directory root t)))))
+
+(defun gloom-test-state (id)
+  (sheprd--agent-state (sheprd-agent id)))
+
+(defmacro gloom-test-recording-activities (var &rest body)
+  "Run BODY collecting, in VAR, every activity Sheprd stores, oldest first.
+Polling can apply several client reports at once, so sampling the record
+would miss short-lived states."
+  (declare (indent 1))
+  `(let* ((,var nil)
+          (record (lambda (_id &rest changes)
+                    (when (plist-member changes :activity)
+                      (setq ,var (append ,var (list (plist-get changes :activity))))))))
+     (advice-add 'sheprd--agent-set :before record)
+     (unwind-protect (progn ,@body)
+       (advice-remove 'sheprd--agent-set record))))
+
+(defun gloom-test-wait-for-runs (count log-function)
+  "Wait until LOG-FUNCTION reports COUNT client starts; return their argvs."
+  (gloom-test-wait (lambda () (>= (length (funcall log-function)) count)))
+  (mapcar (lambda (entry) (alist-get 'argv entry)) (funcall log-function)))
+
+(ert-deftest gloom-sheprd-claude-agent-reports-hooks-and-resumes ()
+  (gloom-test-with-agents
+    (setenv "FAKE_CLAUDE_EVENTS" "UserPromptSubmit Notification:permission PostToolUse Stop")
+    (unwind-protect
+        (gloom-test-recording-activities seen
+          (let* ((id (sheprd-new-agent "planner" 'claude repo))
+                 (agent (sheprd-agent id))
+                 (conversation (sheprd-agent-conversation agent))
+                 (buffer (sheprd--run-buffer id)))
+          ;; Sealed into this session only.
+          (should (equal session (buffer-local-value 'sheprd--session buffer)))
+          (should (memq buffer (+workspace-buffer-list)))
+          (should (gloom-test-wait (lambda () (eq 'input (car (last seen))))))
+          ;; Starting clears the activity; then the hooks in order: start,
+          ;; prompt, permission, tool done, stop.
+          (should (equal '(nil input working approval working input) seen))
+          (let ((first (car (agent-log))))
+            (should (equal "claude" (alist-get 'program first)))
+            (should (member "--settings" (alist-get 'argv first)))
+            (should (equal (last (alist-get 'argv first) 2) (list "--session-id" conversation))))
+          (should (sheprd-agent-launched (sheprd-agent id)))
+          ;; Stop keeps the record and the buffer.
+          (sheprd-stop-agent id)
+          (should (eq 'stopped (gloom-test-state id)))
+          (should (buffer-live-p buffer))
+          ;; Opening it again resumes the same conversation.
+          (setenv "FAKE_CLAUDE_EVENTS" nil)
+          (sheprd-open-agent id)
+          (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+          (should (equal (last (car (last (gloom-test-wait-for-runs 2 #'agent-log))) 2)
+                         (list "--resume" conversation)))
+          (should (equal conversation (sheprd-agent-conversation (sheprd-agent id))))))
+      (setenv "FAKE_CLAUDE_EVENTS" nil))))
+
+(ert-deftest gloom-sheprd-agent-that-dies-at-start-fails ()
+  (gloom-test-with-agents
+    (setenv "FAKE_CLAUDE_CRASH" "1")
+    (unwind-protect
+        (let ((id (sheprd-new-agent "crasher" 'claude repo)))
+          (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'failed))))
+          (should (string-match-p "exited before starting"
+                                  (sheprd-agent-error (sheprd-agent id))))
+          ;; Its terminal stays, so the crash output can be read.  Ghostel
+          ;; renders a hidden terminal lazily: read the terminal itself.
+          (should (cl-some (lambda (buffer)
+                             (string-match-p "fake claude crashed"
+                                             (or (sheprd--full-terminal-text buffer) "")))
+                           (sheprd--agent-buffers id)))
+          (should-not (sheprd-agent-launched (sheprd-agent id))))
+      (setenv "FAKE_CLAUDE_CRASH" nil))))
+
+(ert-deftest gloom-sheprd-codex-agent-captures-its-thread ()
+  (gloom-test-with-agents
+    (setenv "FAKE_CODEX_EVENTS" "approval turn:thread-42")
+    (unwind-protect
+        (let ((id (sheprd-new-agent "coder" 'codex repo)))
+          (should (gloom-test-wait
+                   (lambda () (equal "thread-42" (sheprd-agent-conversation (sheprd-agent id))))))
+          (sheprd-stop-agent id)
+          (setenv "FAKE_CODEX_EVENTS" nil)
+          (sheprd-open-agent id)
+          (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+          (should (equal '("resume" "thread-42")
+                         (last (car (last (gloom-test-wait-for-runs 2 #'agent-log))) 2))))
+      (setenv "FAKE_CODEX_EVENTS" nil))))
+
+(ert-deftest gloom-sheprd-pi-terminal-agent-reads-its-screen ()
+  (gloom-test-with-agents
+    (let* ((id (sheprd-new-agent "notes" 'pi repo 'ghostel))
+           (conversation (sheprd-agent-conversation (sheprd-agent id))))
+      (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+      (should (equal (list "--session-id" conversation)
+                     (car (gloom-test-wait-for-runs 1 #'agent-log)))))))
+
+(ert-deftest gloom-sheprd-pilish-agent-lifecycle ()
+  (gloom-test-with-agents
+    (let* ((id (sheprd-new-agent "pilot" 'pi repo 'pilish))
+           (chat (sheprd--run-buffer id))
+           (input (buffer-local-value 'pilish--input-buffer chat))
+           (conversation (sheprd-agent-conversation (sheprd-agent id))))
+      ;; Both Pilish buffers are sealed into the session; the input is shown.
+      (dolist (buffer (list chat input))
+        (should (equal session (buffer-local-value 'sheprd--session buffer))))
+      (should (get-buffer-window chat))
+      (should (eq (window-buffer) input))
+      (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+      (let ((argv (car (gloom-test-wait-for-runs 1 #'agent-log))))
+        (should (equal '("--mode" "rpc") (seq-take argv 2)))
+        (should (equal conversation (cadr (member "--session-id" argv))))
+        ;; Pi's own saved project trust decisions apply, as in Doom.
+        (should-not (member "--approve" argv)))
+      ;; A turn shows working, then input.
+      (let (seen)
+        (with-current-buffer input (erase-buffer) (insert "hello") (pilish-send))
+        (should (gloom-test-wait (lambda ()
+                                   (cl-pushnew (gloom-test-state id) seen)
+                                   (and (memq 'working seen)
+                                        (eq (gloom-test-state id) 'input))))))
+      ;; A Pi dialog shows approval exactly while it is open.
+      (let (during)
+        (cl-letf (((symbol-function 'yes-or-no-p)
+                   (lambda (&rest _) (setq during (gloom-test-state id)) t)))
+          (with-current-buffer input (erase-buffer) (insert "please ask") (pilish-send))
+          (should (gloom-test-wait (lambda () during)))
+          (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input)))))
+        (should (eq 'approval during)))
+      ;; Stop, then resume the same Pi session with its history.
+      (sheprd-stop-agent id)
+      (should (eq 'stopped (gloom-test-state id)))
+      (setenv "FAKE_PI_SAVED" conversation)
+      (unwind-protect
+          (progn
+            (sheprd-open-agent id)
+            (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+            (should (gloom-test-wait
+                     (lambda ()
+                       (seq-find (lambda (entry)
+                                   (equal "get_messages"
+                                          (alist-get 'type (alist-get 'command entry))))
+                                 (agent-log))))))
+        (setenv "FAKE_PI_SAVED" nil)))))
+
+(ert-deftest gloom-sheprd-session-rename-and-kill-keep-agent-records ()
+  (gloom-test-with-agents
+    (let ((id (sheprd-new-agent "keeper" 'pi repo 'ghostel))
+          (renamed (concat session "-renamed")))
+      (should (gloom-test-wait (lambda () (eq (gloom-test-state id) 'input))))
+      (sheprd-rename-session renamed)
+      (setq session renamed)
+      (should (equal renamed (sheprd-agent-session (sheprd-agent id))))
+      (cl-letf (((symbol-function 'y-or-n-p) (lambda (&rest _) nil)))
+        (sheprd-kill-session renamed))
+      (should-not (sheprd--agent-buffers id))
+      (should (eq 'stopped (gloom-test-state id)))
+      (should (equal renamed (sheprd-agent-session (sheprd-agent id))))
+      ;; The sidebar lists it under a closed session.
+      (with-temp-buffer
+        (sheprd--render-sidebar)
+        (should (string-match-p (regexp-quote (format "%s (1)" renamed)) (buffer-string)))))))

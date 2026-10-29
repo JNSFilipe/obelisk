@@ -8,8 +8,8 @@ are disabled in this Doom configuration.
 
 **This is functional coverage of the essential workflows, not exact Doom
 feature parity.** The first implementation's core tests missed several package
-integrations. Those have now been wired using the existing store; Meow remains
-the only newly installed Elisp package. The table distinguishes shared behavior,
+integrations. Those have now been wired using the existing store; no Elisp
+package needs installing beyond Doom's store. The table distinguishes shared behavior,
 native/package equivalents, and remaining differences. “Configured” does not
 mean that every external service or every package command has been exercised.
 
@@ -17,10 +17,10 @@ mean that every external service or every package command has been exercised.
 | --- | --- | --- |
 | Workspaces / persp-mode | Same `persp-mode` package; thin `+workspace-*` adapter | Verified creation, switching, rename, deletion, file/layout persistence and terminal confinement. Own state; no import of Doom's saved sessions. |
 | Ghostel / Sheprd | Loads the same `configs/doom/sheprd.el`; same Ghostel native module | Verified real terminal output and graphical sessions/panes/sidebar. Agent CLIs keep their existing MCP configuration; no live MCP calls tested. |
-| Custom leader/window/terminal keys | Meow's native C-c leader and shared Sheprd map | C-h/j/k/l explicitly include the protected sidebar and terminal windows. Ghostel Escape enters normal live scrollback; i returns to native input. Most custom commands retained. C-c s stays Sheprd; vertical split uses C-c \| or Sheprd v. SPC D opens diagnostics; symbols remain SPC e s. |
-| Evil +everywhere / multiple-cursors | Meow normal/insert/motion/keypad, Vim-familiar movement/insertion/selection keys, grab/beacon, keyboard macros | Intentional selection-first editing; gg/G, 0/^/$, I/A/o/O, v/V and u/C-r configured. y copies Meow selections and ordinary marked regions to the system clipboard. Evil operator grammar, ex commands, package bindings and evil-mc are not reproduced. Native special-mode keys remain usable. |
+| Custom leader/window/terminal keys | C-c leader on SPC (normal/visual/motion) and M-SPC through an Evil intercept map; shared Sheprd map | C-h/j/k/l explicitly include the protected sidebar and terminal windows. The Doom config's Evil tweaks (visual-line j/k, $ to last non-blank, w/W select word, C-q, ç/Ç hunks) are kept. Ghostel uses evil-ghostel. C-c s stays Sheprd; vertical split uses C-c \| or Sheprd v. SPC D opens diagnostics; symbols remain SPC e s. Doom's general.el leader definitions and which-key labels are not reproduced; SPC ? lists the leader keys. |
+| Evil +everywhere / multiple-cursors | Evil, evil-collection, evil-surround, evil-nerd-commenter, evil-ghostel, Pilish's pilish-evil | Vim operators, text objects, ex commands and evil-collection's special-mode keys. Doom's other Evil modules (snipe, easymotion, multiedit, evil-mc, args, lion, exchange, indent-plus, textobj-anyblock, visualstar, goggles, escape) are in the store but not enabled. |
 | Vertico completion | Vertico, Orderless, Marginalia, Consult, Embark/Embark-Consult | Configured command/file/project/code completion, previews, actions/export, directory navigation, repeat, Consult Dir/Yasnippet and Wgrep. Doom-specific search/workspace narrowing wrappers are replaced by package commands and persp buffer filtering. |
-| Dired | Built-in Dired/Dired-X/WDired, Diredfl, Meow motion keys | File navigation and operations retained. Doom's Dirvish wrapper, history and subtree UI are not enabled. |
+| Dired | Built-in Dired/Dired-X/WDired, Diredfl, evil-collection keys with h/l up/open | File navigation and operations retained. Doom's Dirvish wrapper, history and subtree UI are not enabled. |
 | Remote files | Built-in TRAMP, containers, remote PATH, authinfo and macOS Keychain | SSH/sudo/multihop/container paths parsed; remote Eglot executable discovery tested with a stub. No real remote host/container connection tested. |
 | Oxocarbon / Doom UI | Same private `doom-oxocarbon` theme and Iosevka | Theme verified. Native mode line/help/display rules replace Doom UI. Doom quit messages, emoji command UI, Evil operation hints, symbol prettification and popup TTL rules differ. |
 | Ligatures / hl-todo / vc-gutter | Ligature, hl-todo, diff-hl | Operators, TODOs, change gutter and hunk movement configured. Doom's expanded per-language pretty-symbol tables are omitted. |
@@ -49,7 +49,7 @@ mean that every external service or every package command has been exercised.
 
 All 25 Gloom ERT tests passed with Emacs Plus 31.1. The suite exercises actual
 persp-mode state, layouts and persistence;
-Meow/native keymaps; a real Ghostel terminal; command-provider loading; checker
+Meow/native keymaps (Evil since 2026-10-29, see below); a real Ghostel terminal; command-provider loading; checker
 handoff and a real Python syntax check; Node project executable lookup before Eglot; template expansion;
 completion extensions; and Org/PDF failure isolation. A separate graphical run
 passed the existing Sheprd integration check. The unchanged Sheprd suite previously
@@ -72,7 +72,14 @@ integration checks in an initialized graphical frame. A fresh-state startup
 recheck also hit an Emacs 31 native font crash while loading completion code;
 its cause remains unestablished. That failed launch is not counted as passed.
 
+On 2026-10-29 Gloom replaced Meow with Evil. The editing, navigation and
+terminal tests were rewritten for Evil (operator grammar, insertion keys,
+clipboard yanks, leader precedence, evil-ghostel states); with Sheprd's
+persistent-agent tests the suite passed 31/31 in batch. Graphical behavior
+under Evil (cursor shapes, clipboard via pbpaste, Claude Code's Escape
+routing) has not been rechecked in a GUI frame.
+
 Full parity cannot be inferred from these checks. The remaining gaps above are
 mostly Doom-specific wrappers/defaults and the complete template catalog; the
-Meow/UI differences are intentional consequences of the streamlined design.
+UI differences are intentional consequences of the streamlined design.
 External service checks still require actual hosts/projects/tools.

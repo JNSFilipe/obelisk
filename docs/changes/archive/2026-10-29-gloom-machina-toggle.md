@@ -1,6 +1,6 @@
 # Gloom sessions toggle and M-x Machina
 
-Status: implemented (awaiting the user's interactive trial)
+Status: superseded (removed 2026-10-29; Sheprd gained persistent agents and Pilish, see docs/changes/sheprd-agent-registry.md)
 
 ## Why / scope
 Let the user try M-x Machina (https://github.com/eliraz-refael/m-x-machina) in

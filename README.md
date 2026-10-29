@@ -245,7 +245,7 @@ break the machine that is not in front of you.
 |------|-------|-----|
 | CLI tools | `nix/homebrew.nix` brews | Default source; one upgrade path for everything |
 | GUI apps | `nix/homebrew.nix` casks | Plus CLIs shipped only as casks (`claude-code`, `codex`) |
-| Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently tmux plugins and `antigravity-acp` (Gloom's Antigravity agent), allowlisted by name in `flake.nix` |
+| Packages unavailable in Homebrew | `nix/packages.nix` or the relevant Nix module | Only after checking formulae and casks; currently tmux plugins, with no standalone runtime exceptions |
 | Shell / tool config | `nix/home.nix` `programs.*` or generated files | Configuration only; never a reason to install a second binary |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
