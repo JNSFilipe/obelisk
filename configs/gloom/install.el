@@ -19,8 +19,13 @@
         ('doom-snippets
          (package-vc-install '(doom-snippets :url "https://github.com/doomemacs/snippets"
                                             :main-file "doom-snippets.el")))
+        ('mx-machina
+         ;; Not on any archive.  Its own dependencies are optional interfaces.
+         (let ((package-archives nil))
+           (package-vc-install '(mx-machina :url "https://github.com/eliraz-refael/m-x-machina"
+                                            :lisp-dir "lisp"))))
         (_ nil)))
-    (let ((archive-packages (cl-set-difference missing '(meow ghostel doom-snippets))))
+    (let ((archive-packages (cl-set-difference missing '(meow ghostel doom-snippets mx-machina))))
       (when archive-packages
         (package-refresh-contents)
         (dolist (package archive-packages) (package-install package))))))

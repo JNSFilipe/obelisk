@@ -16,15 +16,17 @@ selects Doom):
 ```
 
 The setup command installs only missing packages. On the current installation,
-Meow is the only missing package. Setup also checks Ghostel's native module.
+those are Meow, M-x Machina and EAT. Setup also checks Ghostel's native module.
 Normal startup never refreshes archives, downloads packages or installs grammars.
-Meow is fetched from its official Git repository using Emacs's built-in package-vc.
+Meow and M-x Machina are fetched from their official Git repositories using
+Emacs's built-in package-vc; EAT comes from NonGNU ELPA.
 Native compilation uses Gloom's own `eln-cache` state directory. The reused
 Persp/Yas/Doom Snippets libraries load with JIT compilation disabled for that
 dependency path because their source builds contain undeclared compiler calls.
 Other libraries retain native compilation and its normal warning reporting.
 
-Home Manager declares `~/.config/gloom-emacs` and the `gloom-emacs` launcher. They
+Home Manager declares `~/.config/gloom-emacs` and the `gloom` launcher (also
+available as `gloom-emacs`). They
 become available on the next normal system activation. The direct command above
 works immediately. An optional separate daemon uses `gloom-emacs --daemon=gloom`;
 connect with `/opt/homebrew/bin/emacsclient -s gloom -c` (or `-t`).
@@ -101,6 +103,44 @@ Escape to a terminal application. The sidebar retains its native buttons and
 Meow buffer. Dired uses `h/l` up/open, `j/k` movement,
 and its built-in marks, operations, `wdired` and remote support.
 
+## Without sessions: M-x Machina
+
+`gloom-sessions`, at the top of `init.el`, defaults to `t`: the persp-mode
+sessions and Sheprd described above. Set it to `nil` and restart to run without
+either (persp-mode cannot be unloaded from a running Emacs). Then:
+
+- [M-x Machina](https://github.com/eliraz-refael/m-x-machina) manages coding
+  agents instead. Claude Code runs its terminal UI through EAT (needs `claude`
+  and `python3`). Other agents run through agent-shell (ACP, reused from Doom's
+  store) and appear only while their ACP command is installed: Codex
+  (`codex-acp`), Gemini (`gemini`), Pi (`pi-acp`, installed with Homebrew's
+  `npm install -g pi-acp`; it is not in Homebrew or nixpkgs), Antigravity
+  (`agy_acp_server.par`, from `antigravity-acp` in `nix/packages.nix`) and
+  Claude over ACP (`claude-agent-acp`); see `gloom-machina-acp-agents` in
+  `machina.el`. vterm is not offered. Its SQLite
+  registry lives in Gloom's state directory under `emacs-agents/`.
+- Creating an agent never asks about Git worktrees: agents use the checkout
+  you choose. Use Git directly when an agent needs its own worktree.
+- Pi agents can also run in [Pilish](https://pilish.dev), reused from Doom's
+  store: choose agent `Pi`, then interface `pilish` (`agent-shell` uses
+  pi-acp). The conversation opens as Pilish's chat with its input window
+  below; the sidebar still shows working, approval (an open Pi extension
+  dialog), unread replies and stopped. Resume reopens the same Pi session ID
+  and its history. A Pi agent stopped before its first message resumes empty,
+  because Pi saves a session only once it has messages. Agent-to-agent
+  messaging is not supported for Pilish agents. The first Pilish session asks
+  to install the tree-sitter Markdown grammar its chat uses.
+  `machina-pilish.el` joins the two packages through their internal
+  functions, so their upgrades can break it; the checks below then fail.
+- `SPC a` (`C-c a`) opens Machina: `a` sidebar, `n` new agent, `b` board,
+  `d` dashboard, `z` focus/restore, `]`/`[` next/previous agent needing attention.
+- `SPC t`/`,`/`<` open new Ghostel terminals (here, split right, split down).
+  `SPC b` and `C-x b` switch among all buffers; `SPC p` opens a project's files.
+  `C-c s` and `C-c TAB` are unbound.
+- Machina's sidebar, board, dashboard, transcript and EAT terminals run without
+  Meow, keeping their own keys (`j/k`, `RET`, `n`, `z`, `?`...). The sidebar
+  keeps `SPC` as the leader and `C-h/j/k/l` window focus.
+
 ## Coding and remote files
 
 Eglot, Flymake, Xref, Eldoc and Emacs's completion preview provide code navigation,
@@ -158,13 +198,21 @@ last for machine-specific settings and additional existing integrations.
 After setup, from the repository:
 
 ```sh
-# Use a temporary state directory; point Emacs at the installed Meow library.
+# Use a temporary state directory; point Emacs at the installed libraries.
+elpa="$HOME/.local/share/gloom-emacs/elpa"
 GLOOM_EMACS_STATE="$(mktemp -d)" /opt/homebrew/bin/emacs -Q --batch \
-  -L "$HOME/.local/share/gloom-emacs/elpa/meow" \
+  -L "$elpa/meow" \
+  -l configs/gloom/tests/config-test.el -f ert-run-tests-batch-and-exit
+# The same suite with gloom-sessions nil (M-x Machina instead of Sheprd).
+GLOOM_EMACS_STATE="$(mktemp -d)" /opt/homebrew/bin/emacs -Q --batch \
+  -L "$elpa/meow" -L "$elpa/mx-machina/lisp" -L "$(echo "$elpa"/eat-*)" \
+  --eval '(defvar gloom-sessions nil)' \
   -l configs/gloom/tests/config-test.el -f ert-run-tests-batch-and-exit
 /opt/homebrew/bin/emacs -Q --batch \
   -l configs/doom/tests/sheprd-test.el -f ert-run-tests-batch-and-exit
 ```
+
+Each run skips the tests that belong to the other `gloom-sessions` setting.
 
 The standalone checks exercise real persp-mode sessions/layouts, terminal
 confinement, actual Meow editing/copying and native keymaps, code commands, TRAMP path parsing, remote server

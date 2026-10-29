@@ -35,7 +35,9 @@
     auto-yasnippet wgrep saveplace-pdf-view org-pdftools toc-org org-cliplink
     ox-gfm ob-go ob-async org-noter ligature kkp xclip ns-auto-titlebar
     git-link git-timemachine haml-mode pug-mode slim-mode sass-mode stylus-mode
-    sws-mode rainbow-mode htmlize ox-clip org-mac-link))
+    sws-mode rainbow-mode htmlize ox-clip org-mac-link
+    ;; M-x Machina, its terminal and Pilish, used when `gloom-sessions' is nil.
+    eat mx-machina pilish))
 
 (defvar gloom-doom-local-directory
   (expand-file-name (or (getenv "DOOMLOCALDIR")

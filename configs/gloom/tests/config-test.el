@@ -5,16 +5,288 @@
 
 (ert-deftest gloom-startup-without-doom-or-evil ()
   (should meow-global-mode)
-  (should persp-mode)
   (should vertico-mode)
   (should marginalia-mode)
   (should (memq 'doom-oxocarbon custom-enabled-themes))
   (should-not (featurep 'doom))
   (should-not (featurep 'evil))
-  (should-not (featurep 'perspective))
-  (should (string-prefix-p gloom-state-directory persp-save-dir)))
+  (should-not (featurep 'perspective)))
+
+(ert-deftest gloom-sessions-load-persp-and-sheprd-only ()
+  (skip-unless gloom-sessions)
+  (should persp-mode)
+  (should (featurep 'sheprd))
+  (should (string-prefix-p gloom-state-directory persp-save-dir))
+  (should-not (featurep 'mx-machina))
+  (should (eq (key-binding (kbd "C-x b")) #'persp-switch-to-buffer))
+  (should (eq (key-binding (kbd "C-c t")) #'sheprd-new-terminal))
+  (should (eq projectile-switch-project-action #'gloom-project-open)))
+
+(ert-deftest gloom-without-sessions-uses-machina ()
+  (skip-unless (not gloom-sessions))
+  (should-not (featurep 'persp-mode))
+  (should-not (featurep 'sheprd))
+  (should-not (fboundp '+workspace-switch))
+  (should (featurep 'mx-machina))
+  (should (featurep 'eat))
+  (should (string-prefix-p gloom-state-directory mx-machina-directory))
+  ;; Claude through EAT, plus agent-shell agents whose ACP command is installed.
+  (cl-letf (((symbol-function 'executable-find)
+             (lambda (command &rest _) (and (member command '("codex-acp" "gemini"))
+                                            command))))
+    (should (equal (mapcar (lambda (config) (alist-get :identifier config))
+                           (mx-machina-backend-configs))
+                   '(codex gemini-cli claude-eat))))
+  (cl-letf (((symbol-function 'executable-find) #'ignore))
+    (should (equal (mapcar (lambda (config) (alist-get :identifier config))
+                           (mx-machina-backend-configs))
+                   '(claude-eat))))
+  (should (eq projectile-switch-project-action #'projectile-find-file))
+  (should (eq (key-binding (kbd "C-x b")) #'consult-buffer))
+  (should (eq (key-binding (kbd "C-c b")) #'consult-buffer))
+  (should (eq (key-binding (kbd "C-c t")) #'gloom-new-terminal))
+  (should (eq (key-binding (kbd "C-c ,")) #'gloom-terminal-split-right))
+  (should (eq (key-binding (kbd "C-c <")) #'gloom-terminal-split-down))
+  (should-not (key-binding (kbd "C-c TAB")))
+  (should (eq (key-binding (kbd "C-c a a")) #'mx-machina))
+  (should (eq (key-binding (kbd "C-c a n")) #'mx-machina-new))
+  (should (eq (key-binding (kbd "C-c a b")) #'mx-machina-board))
+  (should (eq (key-binding (kbd "C-c a z")) #'mx-machina-focus)))
+
+(ert-deftest gloom-machina-never-asks-for-a-worktree ()
+  (skip-unless (not gloom-sessions))
+  (let (asked)
+    (cl-letf (((symbol-function 'read-string)
+               (lambda (prompt &optional default &rest _)
+                 (or default (if (string-prefix-p "Session" prompt) "Test" "x"))))
+              ((symbol-function 'read-directory-name)
+               (lambda (_prompt &optional _dir default &rest _) (or default "/tmp/repo/")))
+              ((symbol-function 'mx-machina--worktree) (lambda (_) '("/tmp/repo/")))
+              ((symbol-function 'mx-machina-backend-read-profile) (lambda () "claude-eat"))
+              ((symbol-function 'mx-machina--read-folder) (lambda () ""))
+              ((symbol-function 'read-char-choice) (lambda (&rest _) (setq asked t) ?y))
+              ((symbol-function 'read-from-minibuffer)
+               (lambda (&rest _) (setq asked t) "y")))
+      (should-not (nth 4 (mx-machina--read-new-session)))
+      (should-not asked)))
+  ;; Unrelated yes/no questions still reach the original y-or-n-p.
+  (cl-letf (((symbol-function 'y-or-n-p) (lambda (prompt) (list 'asked prompt))))
+    (should (equal (gloom-machina-skip-worktree (lambda () (y-or-n-p "Other? ")))
+                   '(asked "Other? ")))))
+
+;;; Pilish as a Machina interface, against tests/fake-pi.py (no network or account).
+
+(defun gloom-test-wait (predicate &optional seconds)
+  "Process events until PREDICATE holds or SECONDS (default 10) pass."
+  (let ((end (+ (float-time) (or seconds 10))))
+    (while (and (not (funcall predicate)) (< (float-time) end))
+      (accept-process-output nil 0.05))
+    (funcall predicate)))
+
+(defmacro gloom-test-with-fake-pi (&rest body)
+  "Run BODY with Pilish launching the fake Pi in a fresh Git checkout.
+Binds `repo' and `log'; `fake-pi-log' returns the logged entries."
+  (declare (indent 0))
+  `(let* ((root (make-temp-file "gloom-pilish-" t))
+          (repo (file-name-as-directory (expand-file-name "repo" root)))
+          (log (expand-file-name "fake-pi.jsonl" root))
+          (process-environment (append (list (concat "FAKE_PI_LOG=" log))
+                                       process-environment))
+          (pilish-executable
+           (list (executable-find "python3")
+                 (expand-file-name "fake-pi.py" (file-name-directory
+                                                 (symbol-file 'gloom-test-wait)))))
+          ;; Pilish's chat mode asks to install a Markdown grammar otherwise.
+          (treesit-auto-install-grammar 'never)
+          (started nil))
+     (cl-flet ((fake-pi-log ()
+                 (with-temp-buffer
+                   (when (file-exists-p log) (insert-file-contents log))
+                   (mapcar (lambda (line) (json-parse-string line :object-type 'alist))
+                           (split-string (buffer-string) "\n" t)))))
+       (make-directory repo t)
+       (let ((default-directory repo))
+         (call-process "git" nil nil nil "init" "-q")
+         (call-process "git" nil nil nil "-c" "user.name=t" "-c" "user.email=t@t"
+                       "commit" "-q" "--allow-empty" "-m" "init"))
+       (unwind-protect (progn ,@body)
+         (maphash (lambda (id _) (ignore-errors (mx-machina-stop id)))
+                  mx-machina--running)
+         (delete-directory root t)))))
+
+(defun gloom-test-session (id)
+  (mx-machina-session id))
+
+(defun gloom-test-live-p (id)
+  (let ((session (gloom-test-session id)))
+    (and (equal (mx-machina-session-status session) "live")
+         (equal (mx-machina-session-activity session) "input"))))
+
+(ert-deftest gloom-machina-pilish-internals-are-present ()
+  "Fail loudly when a Machina or Pilish upgrade moves what the adapter uses."
+  (skip-unless (not gloom-sessions))
+  (dolist (function '(mx-machina-backend-configs mx-machina-backend-start
+                      mx-machina-backend-process mx-machina-backend-stop
+                      mx-machina-backend-metadata mx-machina--show-conversation
+                      mx-machina-focus mx-machina--transport-create
+                      mx-machina--transport-fail pilish--setup-session
+                      pilish--handle-event pilish--apply-state-response
+                      pilish--load-session-history))
+    (should (fboundp function)))
+  (dolist (variable '(pilish--status pilish--state pilish--process
+                      pilish--input-buffer mx-machina--backend-kind
+                      mx-machina-backend-event-hook pilish-extra-args))
+    (should (boundp variable)))
+  (should (equal pilish-executable '("pi")))
+  (should (eq pilish-project-trust-policy 'default))
+  (should (member '(pi-pilish pilish)
+                  (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) "/bin/x")))
+                    (mapcar (lambda (c) (list (alist-get :identifier c) (alist-get :interface c)))
+                            (mx-machina-backend-configs))))))
+
+(ert-deftest gloom-machina-pilish-lifecycle ()
+  (skip-unless (not gloom-sessions))
+  (gloom-test-with-fake-pi
+    (let* ((id (mx-machina-new "pilish-life" repo "pi-pilish"))
+           (chat (mx-machina-start id))
+           conversation)
+      (should (eq (buffer-local-value 'mx-machina--backend-kind chat) 'pilish))
+      (should (gloom-test-wait (lambda () (gloom-test-live-p id))))
+      (setq conversation (mx-machina-session-conversation (gloom-test-session id)))
+      ;; The saved conversation is the Pi session ID Gloom passed.
+      (should (equal (alist-get 'argv (car (fake-pi-log)))
+                     (vector "--mode" "rpc" "--session-id" conversation)))
+      (should (equal (mx-machina-session-model (gloom-test-session id)) "Fake Model"))
+      ;; A turn: working while Pi runs, then input with an unread reply.
+      (let ((input (buffer-local-value 'pilish--input-buffer chat))
+            seen-working)
+        (with-current-buffer input
+          (erase-buffer)
+          (insert "hello")
+          (pilish-send))
+        (should (gloom-test-wait
+                 (lambda ()
+                   (when (equal (mx-machina-session-activity (gloom-test-session id)) "working")
+                     (setq seen-working t))
+                   (and seen-working (gloom-test-live-p id)))))
+        (should (mx-machina-unread-p (gloom-test-session id)))
+        ;; A Pi extension dialog shows as approval while it is open.
+        (let (activity-during-dialog)
+          (cl-letf (((symbol-function 'yes-or-no-p)
+                     (lambda (&rest _)
+                       (setq activity-during-dialog
+                             (mx-machina-session-activity (gloom-test-session id)))
+                       t)))
+            (with-current-buffer input
+              (erase-buffer)
+              (insert "please ask first")
+              (pilish-send))
+            (should (gloom-test-wait (lambda () activity-during-dialog)))
+            (should (gloom-test-wait (lambda () (gloom-test-live-p id)))))
+          (should (equal activity-during-dialog "approval"))
+          (should (seq-find (lambda (entry)
+                              (equal (alist-get 'type (alist-get 'command entry))
+                                     "extension_ui_response"))
+                            (fake-pi-log)))))
+      ;; Stop ends Pi but keeps the conversation buffer.
+      (mx-machina-stop id)
+      (should (equal (mx-machina-session-status (gloom-test-session id)) "stopped"))
+      (should (buffer-live-p chat))
+      (should-not (process-live-p (buffer-local-value 'pilish--process chat)))
+      ;; Resume passes the same session ID and renders the saved history.
+      (setenv "FAKE_PI_SAVED" conversation)
+      (unwind-protect
+          (progn
+            (mx-machina-start id)
+            (should (gloom-test-wait (lambda () (gloom-test-live-p id))))
+            (let ((argvs (delq nil (mapcar (lambda (entry) (alist-get 'argv entry))
+                                           (fake-pi-log)))))
+              (should (= 2 (length argvs)))
+              (should (equal (car (last argvs))
+                             (vector "--mode" "rpc" "--session-id" conversation))))
+            (should (gloom-test-wait
+                     (lambda ()
+                       (seq-find (lambda (entry)
+                                   (equal (alist-get 'type (alist-get 'command entry))
+                                          "get_messages"))
+                                 (fake-pi-log)))))
+            (should (equal (mx-machina-session-conversation (gloom-test-session id))
+                           conversation)))
+        (setenv "FAKE_PI_SAVED" nil)))))
+
+(ert-deftest gloom-machina-pilish-rejects-a-different-session ()
+  (skip-unless (not gloom-sessions))
+  (gloom-test-with-fake-pi
+    (setenv "FAKE_PI_WRONG_ID" "11111111-2222-4333-8444-555555555555")
+    (unwind-protect
+        (let ((id (mx-machina-new "pilish-wrong" repo "pi-pilish")))
+          (mx-machina-start id)
+          (should (gloom-test-wait
+                   (lambda () (equal (mx-machina-session-status (gloom-test-session id))
+                                     "failed"))))
+          (should (string-match-p "different session ID"
+                                  (mx-machina-session-error (gloom-test-session id)))))
+      (setenv "FAKE_PI_WRONG_ID" nil))))
+
+(ert-deftest gloom-machina-pilish-shows-chat-and-input ()
+  (skip-unless (not gloom-sessions))
+  (gloom-test-with-fake-pi
+    (save-window-excursion
+      (let* ((id (mx-machina-new "pilish-view" repo "pi-pilish")))
+        (mx-machina-open id)
+        (let* ((chat (mx-machina-start id))
+               (input (buffer-local-value 'pilish--input-buffer chat)))
+          (should (get-buffer-window chat))
+          (should (eq (window-buffer) input))
+          (should (eq (window-in-direction 'above) (get-buffer-window chat)))
+          (require 'mx-machina-messaging)
+          (should (equal (mx-machina-messaging--hold
+                          (gloom-test-session id) (cdr (gethash id mx-machina--running)))
+                         "Agent messaging does not support Pilish agents")))))))
+
+(ert-deftest gloom-machina-views-keep-native-keys ()
+  (skip-unless (not gloom-sessions))
+  (with-temp-buffer
+    (mx-machina-sidebar-mode)
+    (should-not meow-mode)
+    (should (eq (key-binding (kbd "j")) #'mx-machina-sidebar-next))
+    (should (eq (key-binding (kbd "RET")) #'mx-machina-sidebar-open))
+    (should (eq (key-binding (kbd "SPC t")) #'gloom-new-terminal))
+    (should (eq (key-binding (kbd "C-h")) #'gloom-window-left)))
+  (dolist (mode '(mx-machina-mode mx-machina-board-mode eat-mode))
+    (with-temp-buffer
+      (require (if (eq mode 'mx-machina-board-mode) 'mx-machina-board 'mx-machina))
+      (funcall mode)
+      (should-not meow-mode))))
+
+(ert-deftest gloom-machina-sidebar-opens-against-a-real-registry ()
+  (skip-unless (not gloom-sessions))
+  (save-window-excursion
+    (mx-machina)
+    (let ((sidebar (seq-find (lambda (buffer)
+                               (eq (buffer-local-value 'major-mode buffer)
+                                   'mx-machina-sidebar-mode))
+                             (buffer-list))))
+      (should sidebar)
+      (should (get-buffer-window sidebar))
+      (should-not (buffer-local-value 'meow-mode sidebar))))
+  (should (file-exists-p mx-machina-directory)))
+
+(ert-deftest gloom-without-sessions-terminal-splits ()
+  (skip-unless (not gloom-sessions))
+  (save-window-excursion
+    (delete-other-windows)
+    (let* ((origin (selected-window)) opened)
+      (cl-letf (((symbol-function 'ghostel) (lambda (arg) (setq opened arg))))
+        (gloom-terminal-split-right))
+      (should (= 2 (length (window-list))))
+      (should-not (eq origin (selected-window)))
+      (should (eq (window-in-direction 'left) origin))
+      ;; A non-numeric argument makes Ghostel create a new terminal.
+      (should (eq opened t)))))
 
 (ert-deftest gloom-sessions-confine-terminals-and-restore-layouts ()
+  (skip-unless gloom-sessions)
   (let ((origin (+workspace-current-name))
         (buffer (generate-new-buffer "test-terminal")))
     (unwind-protect
@@ -53,13 +325,15 @@
     (should meow-mode)
     (should meow-insert-mode)
     (should ghostel-ignore-cursor-change)
-    (should (eq (key-binding (kbd "C-c s n")) #'sheprd-next-session))
+    (when gloom-sessions
+      (should (eq (key-binding (kbd "C-c s n")) #'sheprd-next-session)))
     (should (eq (key-binding (kbd "C-s")) #'consult-line)))
-  (with-temp-buffer
-    (sheprd-sidebar-mode)
-    (should-not meow-mode)
-    (should (eq (key-binding (kbd "j")) #'sheprd-next-item))
-    (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal)))
+  (when gloom-sessions
+    (with-temp-buffer
+      (sheprd-sidebar-mode)
+      (should-not meow-mode)
+      (should (eq (key-binding (kbd "j")) #'sheprd-next-item))
+      (should (eq (key-binding (kbd "SPC t")) #'sheprd-new-terminal))))
   (with-temp-buffer
     (emacs-lisp-mode)
     (should meow-mode)
@@ -68,6 +342,7 @@
     (should (eq (key-binding (kbd "M-x")) #'execute-extended-command))))
 
 (ert-deftest gloom-workspace-persistence-restores-file-and-layout ()
+  (skip-unless gloom-sessions)
   (let* ((origin (+workspace-current-name))
          (file (make-temp-file "gloom-workspace-" nil ".txt"))
          (state (make-temp-file "gloom-persp-"))
@@ -129,6 +404,7 @@
         (kill-buffer buffer)))))
 
 (ert-deftest gloom-navigation-includes-real-sheprd-terminal-and-sidebar ()
+  (skip-unless gloom-sessions)
   (require 'ghostel)
   (let ((origin (+workspace-current-name))
         (session (format "gloom-navigation-%s" (float-time)))
@@ -261,6 +537,8 @@
     (should (commandp command))))
 
 (ert-deftest gloom-ghostel-native-agent-output ()
+  ;; The integration check loads Sheprd itself; it belongs to sessions only.
+  (skip-unless gloom-sessions)
   (load (expand-file-name "tests/sheprd-integration.el" gloom-doom-directory) nil t)
   (should (eq 'passed (sheprd-ghostel-integration-check))))
 

@@ -14,7 +14,7 @@ protections and exclude the minibuffer."
   (let ((window (window-in-direction direction nil t nil nil 'never)))
     (unless window (user-error "No window %s" direction))
     (select-window window)
-    (sheprd--seen-here)))
+    (when (fboundp 'sheprd--seen-here) (sheprd--seen-here))))
 (defun gloom-window-left () (interactive) (gloom-focus-window 'left))
 (defun gloom-window-down () (interactive) (gloom-focus-window 'below))
 (defun gloom-window-up () (interactive) (gloom-focus-window 'above))
@@ -83,28 +83,49 @@ protections and exclude the minibuffer."
   (define-key meow-normal-state-keymap (number-to-string (1+ digit))
               (intern (format "meow-expand-%d" (1+ digit)))))
 
+(defun gloom-new-terminal ()
+  "Open a new Ghostel terminal, even when one already exists."
+  (interactive)
+  (ghostel t))
+(defun gloom-terminal-split (direction)
+  "Split the selected window toward DIRECTION and open a new terminal there."
+  (select-window (split-window nil nil direction))
+  (gloom-new-terminal))
+(defun gloom-terminal-split-right () (interactive) (gloom-terminal-split 'right))
+(defun gloom-terminal-split-down () (interactive) (gloom-terminal-split 'below))
+
 ;; Meow's leader is C-c: the same commands work in insert state and terminals.
 ;; Keep C-c s reserved for Sheprd; TAB is its additional familiar leader key.
+;; Without sessions (`gloom-sessions' nil) the same keys open plain Ghostel
+;; terminals and switch among all buffers.
+(if gloom-sessions
+    (meow-leader-define-key
+     '("t" . sheprd-new-terminal) '("," . sheprd-split-right)
+     '("<" . sheprd-split-down) '("b" . persp-switch-to-buffer))
+  (meow-leader-define-key
+   '("t" . gloom-new-terminal) '("," . gloom-terminal-split-right)
+   '("<" . gloom-terminal-split-down) '("b" . consult-buffer)))
 (meow-leader-define-key
  '("SPC" . execute-extended-command) '("X" . eval-expression)
- '("t" . sheprd-new-terminal) '("," . sheprd-split-right) '("<" . sheprd-split-down)
  '("v" . consult-line) '("g" . consult-ripgrep) '("G" . magit-status)
  '("w" . save-buffer) '("o" . dired-jump) '("f" . projectile-find-file)
- '("b" . persp-switch-to-buffer) '("c" . comment-line)
+ '("c" . comment-line)
  '("D" . gloom-diagnostics) '("r" . async-shell-command)
  '("m" . makefile-executor-execute-project-target) '("M" . compile)
  '("u" . vundo) '("y" . consult-yank-pop) '("p" . projectile-switch-project)
  '("." . ibuffer) '(";" . scratch-buffer) '("?" . meow-cheatsheet)
  '("/" . meow-keypad-describe-key))
-(define-key mode-specific-map (kbd "TAB") sheprd-command-map)
-(define-key mode-specific-map (kbd "<tab>") sheprd-command-map)
-(defun gloom-sidebar-keys ()
-  (keymap-set sheprd-sidebar-mode-map "SPC" mode-specific-map)
-  (dolist (binding gloom-window-keys)
-    (keymap-set sheprd-sidebar-mode-map (car binding) (cdr binding))))
-(add-hook 'sheprd-sidebar-mode-hook #'gloom-sidebar-keys)
-(gloom-sidebar-keys)
-(keymap-set global-map "C-x b" #'persp-switch-to-buffer)
+(when gloom-sessions
+  (define-key mode-specific-map (kbd "TAB") sheprd-command-map)
+  (define-key mode-specific-map (kbd "<tab>") sheprd-command-map)
+  (defun gloom-sidebar-keys ()
+    (keymap-set sheprd-sidebar-mode-map "SPC" mode-specific-map)
+    (dolist (binding gloom-window-keys)
+      (keymap-set sheprd-sidebar-mode-map (car binding) (cdr binding))))
+  (add-hook 'sheprd-sidebar-mode-hook #'gloom-sidebar-keys)
+  (gloom-sidebar-keys))
+(keymap-set global-map "C-x b"
+            (if gloom-sessions #'persp-switch-to-buffer #'consult-buffer))
 (keymap-set global-map "C-q" #'kill-current-buffer)
 (keymap-set global-map "C-x u" #'vundo)
 (keymap-set global-map "M-." #'xref-find-definitions)
@@ -152,9 +173,17 @@ protections and exclude the minibuffer."
 (setq meow-mode-state-list
       (append '((ghostel-mode . insert) (sheprd-sidebar-mode . motion)
                 (dired-mode . motion)) meow-mode-state-list))
+(defvar gloom-meow-native-modes
+  '(sheprd-sidebar-mode
+    ;; M-x Machina's views bind their own single keys (j/k, RET, n, z, ...),
+    ;; and its EAT terminals switch EAT's input modes themselves.
+    mx-machina-mode mx-machina-sidebar-mode mx-machina-board-mode
+    mx-machina-actions-mode mx-machina-diagnostics-mode
+    mx-machina-transcript-mode eat-mode)
+  "Major modes whose buffers run without Meow, keeping their native keys.")
 (defun gloom-meow-buffer-policy ()
   (when meow-mode
-    (cond ((derived-mode-p 'sheprd-sidebar-mode) (meow-mode -1))
+    (cond ((apply #'derived-mode-p gloom-meow-native-modes) (meow-mode -1))
           ((derived-mode-p 'ghostel-mode)
            ;; Native M-w copies and exits to the shell. Meow y should keep
            ;; normal state so the next navigation key cannot become PTY input.

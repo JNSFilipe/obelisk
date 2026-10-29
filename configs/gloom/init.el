@@ -3,6 +3,11 @@
   (error "This configuration requires Emacs 30 or newer"))
 (load (expand-file-name "packages.el" (file-name-directory load-file-name)) nil t)
 
+(defvar gloom-sessions nil
+  "Non-nil runs persp-mode sessions and the shared Sheprd multiplexer.
+Nil loads neither and uses M-x Machina (machina.el) for coding agents
+instead.  Restart Emacs after changing it; persp-mode cannot be unloaded.")
+
 (setq user-full-name "JNSFilipe"
       user-mail-address "jose.filipe@ieee.org"
       inhibit-startup-screen t
@@ -96,7 +101,8 @@
       projectile-cache-file (expand-file-name "projectile.cache" gloom-state-directory)
       projectile-known-projects-file
       (expand-file-name "projectile-bookmarks.eld" gloom-state-directory)
-      projectile-switch-project-action #'gloom-project-open)
+      projectile-switch-project-action
+      (if gloom-sessions #'gloom-project-open #'projectile-find-file))
 (projectile-mode 1)
 (defun gloom-project-open ()
   "Open the chosen project in its own session."
@@ -107,7 +113,9 @@
     (setq default-directory root)
     (projectile-find-file)))
 
-(load (expand-file-name "workspaces.el" gloom-config-directory) nil t)
+(load (expand-file-name (if gloom-sessions "workspaces.el" "machina.el")
+                        gloom-config-directory)
+      nil t)
 (load (expand-file-name "editing.el" gloom-config-directory) nil t)
 (load (expand-file-name "coding.el" gloom-config-directory) nil t)
 (load (expand-file-name "integrations.el" gloom-config-directory) nil t)
