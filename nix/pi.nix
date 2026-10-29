@@ -36,7 +36,10 @@ in
     ${lib.optionalString darwinConfig.homebrew.onActivation.upgrade ''
       (
         cd ${lib.escapeShellArg config.home.homeDirectory}
-        run /usr/bin/env ${lib.escapeShellArg "PI_CODING_AGENT_DIR=${agentDirectory}"} \
+        # Activation's PATH holds only Nix tools. Pi spawns npm and git by name,
+        # and npm finds node through PATH: use Homebrew's executables.
+        run /usr/bin/env "PATH=/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" \
+          ${lib.escapeShellArg "PI_CODING_AGENT_DIR=${agentDirectory}"} \
           PI_SKIP_VERSION_CHECK=1 /opt/homebrew/bin/pi update --extensions --no-approve
       )
     ''}

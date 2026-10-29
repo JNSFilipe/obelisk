@@ -67,6 +67,7 @@ from pathlib import Path
 Path(os.environ['PI_ACTIVATION_LOG']).write_text(json.dumps({
     'args': sys.argv[1:], 'cwd': os.getcwd(),
     'agent': os.environ.get('PI_CODING_AGENT_DIR'),
+    'path': os.environ.get('PATH', '').split(':')[0],
 }))
 status = int(os.environ.get('PI_ACTIVATION_EXIT', '0'))
 if status == 0:
@@ -119,6 +120,8 @@ sys.exit(status)
                     "args": ["update", "--extensions", "--no-approve"],
                     "cwd": str(home),
                     "agent": str(agent),
+                    # npm and git resolve through PATH; Homebrew's come first.
+                    "path": "/opt/homebrew/bin",
                 }, (host, observed)
                 failure = subprocess.run(
                     ["bash", "-c", script],
