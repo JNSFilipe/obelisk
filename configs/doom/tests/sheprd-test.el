@@ -3,6 +3,33 @@
 (defvar persp-mode nil)
 (load (expand-file-name "../sheprd.el" (file-name-directory load-file-name)) nil t)
 
+;; Never touch a real agent registry.
+(setq sheprd-directory (file-name-as-directory (make-temp-file "sheprd-test-" t)))
+
+(defmacro sheprd-test-registry (&rest body)
+  "Run BODY against an empty registry and no runs."
+  (declare (indent 0))
+  `(let ((sheprd-directory (file-name-as-directory (make-temp-file "sheprd-registry-" t)))
+         (sheprd--db nil) (sheprd--db-file nil)
+         (sheprd--runs (make-hash-table :test #'equal))
+         (sheprd--agent-timer nil))
+     (unwind-protect (progn ,@body)
+       (when (timerp sheprd--agent-timer) (cancel-timer sheprd--agent-timer))
+       (when sheprd--db (sqlite-close sheprd--db))
+       (delete-directory sheprd-directory t))))
+
+(defun sheprd-test-agent (&rest slots)
+  "Insert and return an agent with SLOTS over test defaults."
+  (let ((agent (apply #'sheprd-agent--create
+                      (append slots
+                              (list :id (sheprd--uuid) :name "a1" :session "main"
+                                    :directory temporary-file-directory
+                                    :client 'claude :interface 'ghostel
+                                    :conversation (sheprd--uuid) :status 'stopped
+                                    :created "2026-10-29T00:00:00+0000")))))
+    (sheprd--agent-insert agent)
+    agent))
+
 (defmacro sheprd-test-terminal (&rest body)
   `(with-temp-buffer
      (setq-local major-mode 'ghostel-mode)
@@ -274,58 +301,312 @@
       (kill-buffer buffer))))
 
 
-;;; --- Launching agents -------------------------------------------------------
+;;; --- Creating agents ---------------------------------------------------------
 
-(ert-deftest sheprd-launch-passes-argv-and-directory ()
-  (let ((sheprd-agent-commands '((codex . ("codex" "--arg=a; b")))))
-    (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
-              ((symbol-function 'executable-find) (lambda (_) "/bin/codex"))
-              ((symbol-function 'ghostel-exec)
-               (lambda (buffer program args)
-                 (should (equal program "codex"))
-                 (should (equal args '("--arg=a; b")))
-                 (with-current-buffer buffer
-                   (should (equal default-directory temporary-file-directory))
-                   (setq-local major-mode 'ghostel-mode)))))
-      (save-window-excursion
-        (let ((buffer (sheprd-launch-agent 'codex temporary-file-directory)))
-          (unwind-protect
-              (should (eq 'codex (buffer-local-value 'sheprd--tracked-client buffer)))
-            (kill-buffer buffer)))))))
+(ert-deftest sheprd-new-agent-passes-argv-and-directory ()
+  (sheprd-test-registry
+    (let ((sheprd-agent-commands '((codex . ("codex" "--arg=a; b")))))
+      (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
+                ((symbol-function 'executable-find) (lambda (&rest _) "/bin/codex"))
+                ((symbol-function '+workspace-current-name) (lambda () "main"))
+                ((symbol-function 'sheprd-session-names) (lambda () '("main")))
+                ((symbol-function 'ghostel-exec)
+                 (lambda (buffer program args)
+                   (should (equal program "codex"))
+                   (should (equal (car args) "--arg=a; b"))
+                   ;; Codex reports through a per-run notify program.
+                   (should (equal (nth 1 args) "-c"))
+                   (should (string-prefix-p "notify=" (nth 2 args)))
+                   (should (= 3 (length args)))
+                   (with-current-buffer buffer
+                     (should (equal default-directory temporary-file-directory))
+                     (setq-local major-mode 'ghostel-mode)))))
+        (save-window-excursion
+          (let* ((id (sheprd-new-agent "c1" 'codex temporary-file-directory))
+                 (buffer (sheprd--run-buffer id))
+                 (agent (sheprd-agent id)))
+            (unwind-protect
+                (progn
+                  (should (equal id (buffer-local-value 'sheprd--agent-id buffer)))
+                  (should (eq 'codex (buffer-local-value 'sheprd--tracked-client buffer)))
+                  ;; Codex has no startup signal: live once spawned, no ID yet.
+                  (should (eq 'live (sheprd-agent-status agent)))
+                  (should (sheprd-agent-launched agent))
+                  (should-not (sheprd-agent-conversation agent)))
+              (sheprd--end-run id)
+              (kill-buffer buffer))))))))
 
-(ert-deftest sheprd-launch-missing-executable-leaves-no-buffer ()
-  (let ((before (buffer-list)))
-    (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
-              ((symbol-function 'ghostel-exec) (lambda (&rest _) (ert-fail "Launched")))
-              ((symbol-function 'executable-find) (lambda (_) nil)))
-      (should-error (sheprd-launch-agent 'codex temporary-file-directory)
-                    :type 'user-error))
-    (should (equal before (buffer-list)))))
+(ert-deftest sheprd-new-agent-missing-executable-leaves-nothing ()
+  (sheprd-test-registry
+    (let ((before (buffer-list)))
+      (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
+                ((symbol-function 'ghostel-exec) (lambda (&rest _) (ert-fail "Launched")))
+                ((symbol-function 'executable-find) (lambda (&rest _) nil))
+                ((symbol-function '+workspace-current-name) (lambda () "main")))
+        (should-error (sheprd-new-agent "c1" 'codex temporary-file-directory)
+                      :type 'user-error))
+      (should (equal before (buffer-list)))
+      (should-not (sheprd-agents)))))
 
-(ert-deftest sheprd-launch-claims-the-session-before-display ()
-  (let ((persp-mode t) added)
-    (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
-              ((symbol-function 'executable-find) (lambda (_) "/bin/codex"))
-              ((symbol-function '+workspace-current-name) (lambda () "project"))
-              ((symbol-function '+workspace-get) (lambda (&rest _) 'project-persp))
-              ((symbol-function 'persp-persps) (lambda (&rest _) '(project-persp)))
-              ((symbol-function 'persp-contain-buffer-p) (lambda (&rest _) nil))
-              ((symbol-function 'ghostel-exec) (lambda (&rest _) nil))
-              ((symbol-function 'persp-add-buffer)
-               (lambda (buffer persp switch &rest _)
-                 (should (eq persp 'project-persp))
-                 (should-not switch)
-                 (setq added buffer)))
-              ((symbol-function 'switch-to-buffer)
-               (lambda (buffer &rest _) (should (eq added buffer)))))
-      (let ((buffer (sheprd-launch-agent 'codex temporary-file-directory)))
-        (should (equal "project" (buffer-local-value 'sheprd--session buffer)))
-        (kill-buffer buffer)))))
+(ert-deftest sheprd-new-agent-claims-the-session-before-display ()
+  (sheprd-test-registry
+    (let ((persp-mode t) added)
+      (cl-letf (((symbol-function 'require) (lambda (&rest _) t))
+                ((symbol-function 'executable-find) (lambda (&rest _) "/bin/codex"))
+                ((symbol-function '+workspace-current-name) (lambda () "project"))
+                ((symbol-function 'sheprd-session-names) (lambda () '("project")))
+                ((symbol-function '+workspace-get) (lambda (&rest _) 'project-persp))
+                ((symbol-function 'persp-persps) (lambda (&rest _) '(project-persp)))
+                ((symbol-function 'persp-contain-buffer-p) (lambda (&rest _) nil))
+                ((symbol-function 'ghostel-exec) (lambda (&rest _) nil))
+                ((symbol-function 'persp-add-buffer)
+                 (lambda (buffer persp switch &rest _)
+                   (should (eq persp 'project-persp))
+                   (should-not switch)
+                   (setq added buffer)))
+                ((symbol-function 'switch-to-buffer)
+                 (lambda (buffer &rest _) (should (eq added buffer)))))
+        (let* ((id (sheprd-new-agent "c1" 'codex temporary-file-directory))
+               (buffer (sheprd--run-buffer id)))
+          (should (equal "project" (buffer-local-value 'sheprd--session buffer)))
+          (should (equal "project" (sheprd-agent-session (sheprd-agent id))))
+          (sheprd--end-run id)
+          (kill-buffer buffer))))))
+
+
+;;; --- Registry and observation -----------------------------------------------
+
+(ert-deftest sheprd-registry-round-trips-and-forgets-dead-runs ()
+  (sheprd-test-registry
+    (let* ((agent (sheprd-test-agent :name "fix auth" :client 'pi :status 'live
+                                     :activity 'working :unread t :launched t))
+           (id (sheprd-agent-id agent))
+           (read (sheprd-agent id)))
+      (should (equal "fix auth" (sheprd-agent-name read)))
+      (should (eq 'pi (sheprd-agent-client read)))
+      (should (eq 'ghostel (sheprd-agent-interface read)))
+      (should (sheprd-agent-unread read))
+      (should (sheprd-agent-launched read))
+      (should (equal (list id) (mapcar #'sheprd-agent-id (sheprd-agents "main"))))
+      (should-not (sheprd-agents "other"))
+      ;; A new Emacs (connection) has no runs: live records become stopped.
+      (sqlite-close sheprd--db)
+      (setq sheprd--db nil)
+      (let ((after (sheprd-agent id)))
+        (should (eq 'stopped (sheprd-agent-status after)))
+        (should-not (sheprd-agent-activity after))
+        (should (eq 'stopped (sheprd--agent-state after)))))))
+
+(ert-deftest sheprd-observe-saves-conversation-once-and-rejects-another ()
+  (sheprd-test-registry
+    (let* ((agent (sheprd-test-agent :client 'codex :conversation nil :status 'live))
+           (id (sheprd-agent-id agent)))
+      (puthash id (list :buffer nil) sheprd--runs)
+      (sheprd--observe id :activity 'input :conversation "thread-1")
+      (should (equal "thread-1" (sheprd-agent-conversation (sheprd-agent id))))
+      (sheprd--observe id :conversation "thread-1")
+      (should (eq 'live (sheprd-agent-status (sheprd-agent id))))
+      (sheprd--observe id :conversation "thread-2")
+      (let ((after (sheprd-agent id)))
+        (should (eq 'failed (sheprd-agent-status after)))
+        (should (equal "thread-1" (sheprd-agent-conversation after)))
+        (should (string-match-p "different conversation" (sheprd-agent-error after))))
+      (should-not (gethash id sheprd--runs)))))
+
+(ert-deftest sheprd-observe-marks-unread-only-off-screen ()
+  (sheprd-test-registry
+    (let* ((id (sheprd-agent-id (sheprd-test-agent :status 'live :activity 'working)))
+           (visible nil) notified)
+      (puthash id (list :buffer nil) sheprd--runs)
+      (cl-letf (((symbol-function 'sheprd--agent-visible-p) (lambda (_) visible))
+                ((symbol-function 'sheprd--notify-agent)
+                 (lambda (_agent status) (push status notified))))
+        (setq visible t)
+        (sheprd--observe id :activity 'input)
+        (should-not (sheprd-agent-unread (sheprd-agent id)))
+        (sheprd--observe id :activity 'working)
+        (setq visible nil)
+        (sheprd--observe id :activity 'input)
+        (should (sheprd-agent-unread (sheprd-agent id)))
+        (sheprd--observe id :activity 'approval)
+        (should (equal '(blocked done) notified))))))
+
+(ert-deftest sheprd-observe-ignores-agents-without-a-run ()
+  (sheprd-test-registry
+    (let ((id (sheprd-agent-id (sheprd-test-agent :status 'stopped))))
+      (sheprd--observe id :status 'live :activity 'working)
+      (should (eq 'stopped (sheprd-agent-status (sheprd-agent id)))))))
+
+(ert-deftest sheprd-read-state-clears-unread-after-the-delay ()
+  (sheprd-test-registry
+    (let ((id (sheprd-agent-id (sheprd-test-agent :unread t)))
+          (sheprd-read-delay 0)
+          (sheprd--visible-since (make-hash-table :test #'equal)))
+      (cl-letf (((symbol-function 'sheprd--agent-visible-p) (lambda (_) nil)))
+        (sheprd--update-read-state)
+        (should (sheprd-agent-unread (sheprd-agent id))))
+      (cl-letf (((symbol-function 'sheprd--agent-visible-p) (lambda (_) t)))
+        (sheprd--update-read-state)
+        (should-not (sheprd-agent-unread (sheprd-agent id)))))))
+
+
+;;; --- Client reports ---------------------------------------------------------
+
+(ert-deftest sheprd-claude-hook-events-map-to-states ()
+  (sheprd-test-registry
+    (let* ((agent (sheprd-test-agent :status 'starting))
+           (id (sheprd-agent-id agent))
+           (conversation (sheprd-agent-conversation agent)))
+      (puthash id (list :buffer nil) sheprd--runs)
+      (cl-letf (((symbol-function 'sheprd--agent-visible-p) (lambda (_) t)))
+        (sheprd--claude-event id `((hook_event_name . "SessionStart")
+                                   (session_id . ,conversation)))
+        (should (eq 'input (sheprd--agent-state (sheprd-agent id))))
+        (should (sheprd-agent-launched (sheprd-agent id)))
+        (sheprd--claude-event id '((hook_event_name . "UserPromptSubmit")))
+        (should (eq 'working (sheprd--agent-state (sheprd-agent id))))
+        (sheprd--claude-event id '((hook_event_name . "Notification")
+                                   (message . "Claude needs your permission to use Bash")))
+        (should (eq 'approval (sheprd--agent-state (sheprd-agent id))))
+        (sheprd--claude-event id '((hook_event_name . "PostToolUse")))
+        (should (eq 'working (sheprd--agent-state (sheprd-agent id))))
+        (sheprd--claude-event id '((hook_event_name . "Stop")))
+        (should (eq 'input (sheprd--agent-state (sheprd-agent id))))
+        (sheprd--claude-event id '((hook_event_name . "Notification")
+                                   (message . "Claude is waiting for your input")))
+        (should (eq 'input (sheprd--agent-state (sheprd-agent id))))))))
+
+(ert-deftest sheprd-codex-notifications-capture-the-thread ()
+  (sheprd-test-registry
+    (let ((id (sheprd-agent-id (sheprd-test-agent :client 'codex :conversation nil
+                                                  :status 'live :activity 'working))))
+      (puthash id (list :buffer nil) sheprd--runs)
+      (sheprd--codex-event id '((type . "approval-requested")))
+      (should (eq 'approval (sheprd--agent-state (sheprd-agent id))))
+      (sheprd--codex-event id '((type . "agent-turn-complete") (thread-id . "t-9")))
+      (should (equal "t-9" (sheprd-agent-conversation (sheprd-agent id))))
+      (should (eq 'input (sheprd--agent-state (sheprd-agent id)))))))
+
+(ert-deftest sheprd-events-file-is-read-incrementally ()
+  (sheprd-test-registry
+    (let* ((id "agent") (files (sheprd--run-files id))
+           (events (expand-file-name "events.jsonl" files))
+           (run (list :events events :position 0)))
+      (puthash id run sheprd--runs)
+      (write-region "{\"a\":1}\n{\"b\":\"é\"}\n{\"c\":" nil events t 'silent)
+      (should (equal '(((a . 1)) ((b . "é")))
+                     (sheprd--read-new-events id (gethash id sheprd--runs))))
+      ;; The partial third line is read once complete.
+      (should-not (sheprd--read-new-events id (gethash id sheprd--runs)))
+      (write-region "3}\n" nil events t 'silent)
+      (should (equal '(((c . 3))) (sheprd--read-new-events id (gethash id sheprd--runs)))))))
+
+(ert-deftest sheprd-client-arguments-name-and-resume-conversations ()
+  (sheprd-test-registry
+    (let ((files (sheprd--run-files "x")))
+      (let ((claude (sheprd-agent--create :client 'claude :conversation "c-1")))
+        (should (equal '("--session-id" "c-1")
+                       (last (sheprd--client-arguments claude nil files) 2)))
+        (should (equal '("--resume" "c-1")
+                       (last (sheprd--client-arguments claude t files) 2)))
+        (should (equal "--settings" (car (sheprd--client-arguments claude nil files)))))
+      (let ((pi-agent (sheprd-agent--create :client 'pi :conversation "p-1")))
+        (should (equal '("--session-id" "p-1") (sheprd--client-arguments pi-agent nil files)))
+        (should (equal '("--session-id" "p-1") (sheprd--client-arguments pi-agent t files))))
+      (let ((codex (sheprd-agent--create :client 'codex :conversation "t-1")))
+        (should (equal '("resume" "t-1") (last (sheprd--client-arguments codex t files) 2)))
+        (should (= 2 (length (sheprd--client-arguments codex nil files))))))))
+
+(ert-deftest sheprd-claude-settings-hooks-append-to-the-events-file ()
+  (sheprd-test-registry
+    (let* ((files (sheprd--run-files "x"))
+           (settings (json-parse-string
+                      (with-temp-buffer
+                        (insert-file-contents (sheprd--claude-settings files))
+                        (buffer-string))
+                      :object-type 'alist))
+           (hooks (alist-get 'hooks settings))
+           (command (alist-get 'command (aref (alist-get 'hooks (aref (alist-get 'Stop hooks) 0)) 0)))
+           (events (expand-file-name "events.jsonl" files)))
+      (dolist (event '(SessionStart UserPromptSubmit PreToolUse PostToolUse Notification Stop))
+        (should (alist-get event hooks)))
+      ;; The hook command really appends one line per (multi-line) payload.
+      (with-temp-buffer
+        (insert "{\"hook_event_name\":\n \"Stop\"}")
+        (should (zerop (call-process-region (point-min) (point-max) "sh" nil nil nil "-c" command))))
+      (should (equal '(((hook_event_name . "Stop")))
+                     (sheprd--read-new-events "x" (list :events events :position 0)))))))
+
+(ert-deftest sheprd-codex-notify-program-appends-its-argument ()
+  (sheprd-test-registry
+    (let* ((files (sheprd--run-files "x"))
+           (override (sheprd--codex-notify files))
+           (argv (append (json-parse-string (string-remove-prefix "notify=" override)
+                                            :array-type 'list)
+                         (list "{\"type\":\"agent-turn-complete\",\"thread-id\":\"t\"}"))))
+      (should (zerop (apply #'call-process (car argv) nil nil nil (cdr argv))))
+      (should (equal '(((type . "agent-turn-complete") (thread-id . "t")))
+                     (sheprd--read-new-events
+                      "x" (list :events (expand-file-name "events.jsonl" files) :position 0)))))))
+
+
+;;; --- Sidebar and attention ---------------------------------------------------
+
+(ert-deftest sheprd-rollup-counts-registered-agents ()
+  (sheprd-test-registry
+    (let ((agents (list (sheprd-test-agent :status 'live :activity 'approval)
+                        (sheprd-test-agent :status 'live :activity 'working :unread t)
+                        (sheprd-test-agent :status 'stopped :unread t)
+                        (sheprd-test-agent :session "other" :status 'live :activity 'working))))
+      (should (equal "◍1 ●1 *2"
+                     (substring-no-properties (sheprd--session-rollup nil "main" agents)))))))
+
+(ert-deftest sheprd-sidebar-lists-sessions-agents-and-closed-sessions ()
+  (sheprd-test-registry
+    (sheprd-test-agent :name "fixer" :status 'live :activity 'approval)
+    (sheprd-test-agent :name "elsewhere" :session "gone")
+    (cl-letf (((symbol-function 'sheprd-session-names) (lambda () '("main" "web")))
+              ((symbol-function 'sheprd-current-session) (lambda () "main"))
+              ((symbol-function 'sheprd--agent-entries) (lambda () nil)))
+      (with-temp-buffer
+        (let ((sheprd--toggled-sessions nil))
+          (sheprd--render-sidebar)
+          (let ((text (buffer-string)))
+            (should (string-match-p "▾ 1 main" text))
+            (should (string-match-p "▸ 2 web" text))
+            (should (string-match-p "◍ fixer" text))
+            (should (string-match-p "claude · approval" text))
+            (should (string-match-p "CLOSED" text))
+            (should (string-match-p "gone (1)" text))
+            (should-not (string-match-p "elsewhere" text)))
+          (goto-char (point-min))
+          (search-forward "fixer")
+          (should (sheprd--agent-at-point))
+          (should (equal "main" (sheprd--session-at-point))))))))
+
+(ert-deftest sheprd-attention-cycles-approvals-before-unread ()
+  (sheprd-test-registry
+    (let* ((unread (sheprd-test-agent :name "u" :status 'stopped :unread t))
+           (approval (sheprd-test-agent :name "a" :status 'live :activity 'approval))
+           opened)
+      (sheprd-test-agent :name "busy" :status 'live :activity 'working)
+      (should (equal (list (sheprd-agent-id approval) (sheprd-agent-id unread))
+                     (mapcar #'sheprd-agent-id (sheprd--attention-agents))))
+      (cl-letf (((symbol-function 'sheprd-open-agent)
+                 (lambda (id) (setq opened id sheprd--attention-last id))))
+        (let ((sheprd--attention-last nil))
+          (sheprd-next-attention)
+          (should (equal (sheprd-agent-id approval) opened))
+          (sheprd-next-attention)
+          (should (equal (sheprd-agent-id unread) opened))
+          (sheprd-next-attention)
+          (should (equal (sheprd-agent-id approval) opened)))))))
 
 (ert-deftest sheprd-attention-only-selects-agents-needing-it ()
   (let ((buffer (generate-new-buffer " *attention-test*")) opened)
     (unwind-protect
-        (cl-letf (((symbol-function 'sheprd--agent-entries)
+        (cl-letf (((symbol-function 'sheprd--attention-agents) (lambda () nil))
+                  ((symbol-function 'sheprd--agent-entries)
                    (lambda () (list (list :session "2" :buffer buffer :status 'blocked)
                                     (list :session "main" :buffer buffer :status 'working))))
                   ((symbol-function 'completing-read)
@@ -371,6 +652,23 @@
                      ("q" . sheprd-detach)
                      ("?" . sheprd-help)))
     (should (eq (cdr binding) (lookup-key sheprd-command-map (kbd (car binding)))))))
+
+(ert-deftest sheprd-prefix-map-reaches-agents ()
+  (dolist (binding '(("a" . sheprd-new-agent)
+                     ("A" . sheprd-open-agent)
+                     ("!" . sheprd-next-attention)
+                     ("@" . sheprd-attention)
+                     ("O" . sheprd-board)
+                     ("S" . sheprd-stop-agent)
+                     ("Z" . sheprd-focus-agent)))
+    (should (eq (cdr binding) (lookup-key sheprd-command-map (kbd (car binding))))))
+  (dolist (binding '(("n" . sheprd-new-agent)
+                     ("x" . sheprd-stop-agent)
+                     ("D" . sheprd-sidebar-delete)
+                     ("]" . sheprd-next-attention)
+                     ("TAB" . sheprd-toggle-session-fold)
+                     ("RET" . push-button)))
+    (should (eq (cdr binding) (lookup-key sheprd-sidebar-mode-map (kbd (car binding)))))))
 
 (ert-deftest sheprd-prefix-map-has-no-tab-actions ()
   ;; Tabs were removed on purpose; `sheprd-switch-buffer' covers moving around a

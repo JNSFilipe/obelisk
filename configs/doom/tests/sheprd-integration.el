@@ -42,10 +42,14 @@
             (+workspace-new other-name)
             (push other-name created-sessions)
             (sheprd--switch-session session-name)
-            (let ((sheprd-agent-commands
-                   '((codex . ("/bin/sh" "-c"
-                               "printf 'Working (esc to interrupt)\n'; sleep 1; printf 'Do you want to proceed?\n'; sleep 600")))))
-              (setq buffer (sheprd-launch-agent 'codex temporary-file-directory)))
+            ;; A detected (untracked-by-registry) terminal: Sheprd's text
+            ;; heuristics, sealing and sidebar buttons, not the agent registry.
+            (setq buffer (generate-new-buffer "*sheprd:codex fixture*"))
+            (let ((default-directory temporary-file-directory))
+              (ghostel-exec buffer "/bin/sh"
+                            '("-c" "printf 'Working (esc to interrupt)\n'; sleep 1; printf 'Do you want to proceed?\n'; sleep 600")))
+            (with-current-buffer buffer (setq sheprd--tracked-client 'codex))
+            (sheprd--claim-buffer buffer session-name)
             (let ((deadline (+ (float-time) 5)) info)
               (while (and (< (float-time) deadline)
                           (not (equal info '(codex blocked))))
