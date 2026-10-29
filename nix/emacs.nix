@@ -39,6 +39,9 @@ in
     (pkgs.writeShellScriptBin "gloom-emacs" ''
       exec ${emacs} --init-directory=${homeDirectory}/.config/gloom-emacs "$@"
     '')
+    (pkgs.writeShellScriptBin "gloom" ''
+      exec ${emacs} --init-directory=${homeDirectory}/.config/gloom-emacs "$@"
+    '')
   ];
 
   # Homebrew supplies the app, but launchd has exactly one service owner.

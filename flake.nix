@@ -121,8 +121,13 @@
                 "doom"
                 "vanilla-emacs"
                 "gloom-emacs"
+                "gloom"
                 "home-configuration-reference-manpage"
                 "hm-session-vars.sh"
+              ];
+              # Runtime packages Homebrew lacks (formulae and casks checked), by name.
+              allowedNixOnlyPackages = [
+                "antigravity-acp"
               ];
               allowedSystemPackages = [
                 "darwin-version"
@@ -170,7 +175,10 @@
                   allowed = names: packages: lib.all (p: builtins.elem (lib.getName p) names) packages;
                 in
                 lib.all (
-                  p: builtins.elem p.name allowedHomeArtifacts || lib.getName p == "home-manager"
+                  p:
+                  builtins.elem p.name allowedHomeArtifacts
+                  || builtins.elem (lib.getName p) allowedNixOnlyPackages
+                  || lib.getName p == "home-manager"
                 ) hm.home.packages
                 && allowed allowedSystemPackages cfg.environment.systemPackages
                 && toString cfg.users.users.${userName}.shell == "/opt/homebrew/bin/zsh"
