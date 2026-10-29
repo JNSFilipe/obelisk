@@ -134,6 +134,20 @@ Agents:
 | Override a detected terminal's status | `s` |
 | Unstaged diff of the agent at point | `d` |
 
+The same agent commands are also on a leader prefix with M-x Machina's keys,
+`sheprd-agent-map`: Doom binds it under `SPC a` (beside Pilish's `p`/`t`/`s`)
+and mirrors that prefix on `C-c a`; Gloom binds it to `C-c a`, which is also
+`SPC a`.
+
+| Action | Key after `SPC a` / `C-c a` |
+| --- | --- |
+| Sidebar | `a` |
+| New agent | `n` |
+| Board | `b` |
+| Pick any agent | `d` |
+| Focus an agent | `z` |
+| Next / previous agent needing attention | `]` / `[` |
+
 Navigation and the client:
 
 | Action | Key |

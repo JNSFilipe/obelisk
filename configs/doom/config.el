@@ -320,6 +320,31 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 ;; workspace or terminal bindings are declared here.
 (load! "sheprd")
 
+;; Agents share SPC a with Pilish (configured below); C-c a mirrors the whole
+;; prefix.  The Sheprd keys are M-x Machina's: a sidebar, n new, b board,
+;; d any agent, z focus, ] and [ attention.
+(map! :leader
+      (:prefix ("a" . "agents")
+       :desc "Sheprd sidebar" "a" #'sheprd-focus-sidebar
+       :desc "New agent" "n" #'sheprd-new-agent
+       :desc "Agent board" "b" #'sheprd-board
+       :desc "Pick agent" "d" #'sheprd-open-agent
+       :desc "Focus agent" "z" #'sheprd-focus-agent
+       :desc "Next attention" "]" #'sheprd-next-attention
+       :desc "Previous attention" "[" #'sheprd-previous-attention))
+(map! :map global-map
+      (:prefix ("C-c a" . "agents")
+       :desc "Sheprd sidebar" "a" #'sheprd-focus-sidebar
+       :desc "New agent" "n" #'sheprd-new-agent
+       :desc "Agent board" "b" #'sheprd-board
+       :desc "Pick agent" "d" #'sheprd-open-agent
+       :desc "Focus agent" "z" #'sheprd-focus-agent
+       :desc "Next attention" "]" #'sheprd-next-attention
+       :desc "Previous attention" "[" #'sheprd-previous-attention
+       :desc "Pi session" "p" #'pilish
+       :desc "Toggle Pi session" "t" #'pilish-toggle
+       :desc "Pi sessions" "s" #'pilish-session-browser))
+
 ;; ytube: search YouTube through Vertico and watch inside an xwidget buffer.
 ;; Self-contained like Sheprd; yt-dlp is used for search when installed.
 (load! "ytube")

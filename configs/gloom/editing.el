@@ -89,6 +89,8 @@ protections and exclude the minibuffer."
                  (";" . scratch-buffer) ("?" . gloom-leader-help)
                  ("/" . describe-key)))
   (keymap-set mode-specific-map key command))
+;; Sheprd's agents on C-c a (SPC a), with M-x Machina's keys.
+(keymap-set mode-specific-map "a" sheprd-agent-map)
 (define-key mode-specific-map (kbd "TAB") sheprd-command-map)
 (define-key mode-specific-map (kbd "<tab>") sheprd-command-map)
 (defun gloom-sidebar-keys ()

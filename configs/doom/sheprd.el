@@ -2787,6 +2787,27 @@ would otherwise keep firing the one it had in the previous version."
 
 (sheprd--populate-command-map sheprd-command-map)
 
+(defvar sheprd-agent-map (make-sparse-keymap)
+  "Agent commands alone, for a leader prefix such as SPC a.
+The keys follow M-x Machina's: a sidebar, n new, b board, d any agent,
+z focus, ] and [ attention.  Configurations bind it; Sheprd does not.")
+
+(defun sheprd--populate-agent-map (map)
+  "Fill MAP with the agent bindings, discarding whatever it held before."
+  (setcdr map nil)
+  (pcase-dolist (`(,key ,label ,command)
+                 '(("a" "Sidebar" sheprd-focus-sidebar)
+                   ("n" "New agent" sheprd-new-agent)
+                   ("b" "Agent board" sheprd-board)
+                   ("d" "Pick agent" sheprd-open-agent)
+                   ("z" "Focus agent" sheprd-focus-agent)
+                   ("]" "Next attention" sheprd-next-attention)
+                   ("[" "Previous attention" sheprd-previous-attention)))
+    (define-key map (kbd key) (cons label command)))
+  map)
+
+(sheprd--populate-agent-map sheprd-agent-map)
+
 (defun sheprd-install-keys ()
   "Bind `sheprd-command-map' to the prefix key and to Doom's leader."
   (interactive)

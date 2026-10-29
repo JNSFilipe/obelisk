@@ -670,6 +670,21 @@
                      ("RET" . push-button)))
     (should (eq (cdr binding) (lookup-key sheprd-sidebar-mode-map (kbd (car binding)))))))
 
+(ert-deftest sheprd-agent-map-has-machina-keys ()
+  (dolist (binding '(("a" . sheprd-focus-sidebar)
+                     ("n" . sheprd-new-agent)
+                     ("b" . sheprd-board)
+                     ("d" . sheprd-open-agent)
+                     ("z" . sheprd-focus-agent)
+                     ("]" . sheprd-next-attention)
+                     ("[" . sheprd-previous-attention)))
+    (let ((command (lookup-key sheprd-agent-map (kbd (car binding))))
+          (entry (cdr (assq (aref (kbd (car binding)) 0) (cdr sheprd-agent-map)))))
+      (should (eq (cdr binding) command))
+      (should (commandp command))
+      ;; Labelled for which-key: (LABEL . COMMAND).
+      (should (stringp (car-safe entry))))))
+
 (ert-deftest sheprd-prefix-map-has-no-tab-actions ()
   ;; Tabs were removed on purpose; `sheprd-switch-buffer' covers moving around a
   ;; session.  M-digits in particular must not linger as dead keys.

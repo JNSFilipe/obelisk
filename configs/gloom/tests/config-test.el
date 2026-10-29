@@ -101,6 +101,17 @@
       (delete-file file)
       (delete-file state))))
 
+(ert-deftest gloom-sheprd-agent-keys-on-the-leader ()
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (dolist (prefix '("SPC a" "C-c a"))
+      (dolist (binding '(("a" . sheprd-focus-sidebar) ("n" . sheprd-new-agent)
+                         ("b" . sheprd-board) ("d" . sheprd-open-agent)
+                         ("z" . sheprd-focus-agent) ("]" . sheprd-next-attention)
+                         ("[" . sheprd-previous-attention)))
+        (let ((command (key-binding (kbd (concat prefix " " (car binding))))))
+          (should (eq (cdr binding) (if (consp command) (cdr command) command))))))))
+
 (ert-deftest gloom-ghostel-evil-states ()
   (require 'ghostel)
   (save-window-excursion
