@@ -201,6 +201,29 @@ With the sidebar focused (`prefix f`):
 The board (`O`) lists every agent by session in Working, Waiting, Ready and
 Stopped columns; `RET` opens one.
 
+## Layouts
+
+Three layouts arrange the current session's editing area; the sidebar stays.
+Each one toggles: applying it saves the session's layout, applying it again
+restores that, and switching to another layout keeps the original to return
+to. The saved layout belongs to the session (and frame), so every session
+toggles its own. Layouts only use buffers the current session owns, fetching
+them even when they are not on screen.
+
+| Layout | Key after `SPC l` / `C-c l` | Arrangement |
+| --- | --- | --- |
+| Zoom | `z` (also `prefix z`) | The active buffer alone |
+| LLM1 | `1` | The agent on top; the bottom third holds a terminal, or the prompt (input) buffer of a Pilish agent |
+| LLM2 | `2` | As LLM1, the bottom third split: terminal or prompt on the left, the session's video on the right |
+
+The agent is the one in the active pane, else the session's most recently
+used agent, else the active buffer. The terminal is the session's most
+recent terminal that is not an agent; if there is none, one starts in the
+agent's directory. The video is the session's most recent ytube player
+(`sheprd-layout-media-predicate`); without one, a placeholder explains how
+to start one. Focus goes to the Pilish prompt, otherwise to the agent.
+`sheprd-layout-bottom-fraction` sets the bottom row's height.
+
 ## Mouse
 
 The sidebar is mouse-native like Herdr's: every session and agent is a button, so

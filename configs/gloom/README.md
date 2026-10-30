@@ -68,6 +68,7 @@ including Ghostel terminal requests for blinking.
 | t / , / < | New terminal / split right / split down |
 | s / TAB | Sheprd sessions, panes and agents |
 | a | Agents: a sidebar, n new, b board, d pick, z focus, ] / [ attention |
+| l | Layouts: z zoom, 1 agent + terminal/prompt, 2 + video; each toggles back |
 | f / p / b | Project file / project session / current session's buffers |
 | o | Dired at the current file/directory |
 | v / g / G | Search buffer / ripgrep project / Magit |

@@ -91,6 +91,8 @@ protections and exclude the minibuffer."
   (keymap-set mode-specific-map key command))
 ;; Sheprd's agents on C-c a (SPC a), with M-x Machina's keys.
 (keymap-set mode-specific-map "a" sheprd-agent-map)
+;; Sheprd layouts on C-c l (SPC l): z zoom, 1 LLM1, 2 LLM2.
+(keymap-set mode-specific-map "l" sheprd-layout-map)
 (define-key mode-specific-map (kbd "TAB") sheprd-command-map)
 (define-key mode-specific-map (kbd "<tab>") sheprd-command-map)
 (defun gloom-sidebar-keys ()

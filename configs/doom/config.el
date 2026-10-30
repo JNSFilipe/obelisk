@@ -320,6 +320,20 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 ;; workspace or terminal bindings are declared here.
 (load! "sheprd")
 
+;; Sheprd layouts on SPC l, mirrored on C-c l: z zoom, 1 agent + terminal (or
+;; Pilish prompt), 2 the same plus the session's video.  Each toggles back,
+;; per session; the sidebar stays.
+(map! :leader
+      (:prefix ("l" . "layouts")
+       :desc "Zoom" "z" #'sheprd-layout-zoom
+       :desc "LLM1: agent + terminal" "1" #'sheprd-layout-llm1
+       :desc "LLM2: agent + terminal + video" "2" #'sheprd-layout-llm2))
+(map! :map global-map
+      (:prefix ("C-c l" . "layouts")
+       :desc "Zoom" "z" #'sheprd-layout-zoom
+       :desc "LLM1: agent + terminal" "1" #'sheprd-layout-llm1
+       :desc "LLM2: agent + terminal + video" "2" #'sheprd-layout-llm2))
+
 ;; Agents share SPC a with Pilish (configured below); C-c a mirrors the whole
 ;; prefix.  The Sheprd keys are M-x Machina's: a sidebar, n new, b board,
 ;; d any agent, z focus, ] and [ attention.

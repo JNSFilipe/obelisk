@@ -619,6 +619,175 @@
       (kill-buffer buffer))))
 
 
+;;; --- Layouts ---------------------------------------------------------------
+
+(defvar sheprd-test-session "s1")
+
+(defmacro sheprd-test-layout (&rest body)
+  "Run BODY in one window, sessions faked by `sheprd-test-session'."
+  (declare (indent 0))
+  `(save-window-excursion
+     (let ((sheprd--layouts (make-hash-table :test #'equal))
+           (sheprd--runs (make-hash-table :test #'equal))
+           (sheprd-test-session "s1")
+           (persp-mode nil)
+           (buffers nil))
+       (cl-letf (((symbol-function 'sheprd-current-session) (lambda () sheprd-test-session)))
+         (delete-other-windows)
+         (unwind-protect (progn ,@body)
+           (dolist (buffer buffers) (when (buffer-live-p buffer) (kill-buffer buffer))))))))
+
+(defun sheprd-test-buffer (name session &rest locals)
+  "Return a new buffer NAME owned by SESSION with buffer-local LOCALS."
+  (let ((buffer (generate-new-buffer name)))
+    (with-current-buffer buffer
+      (setq sheprd--session session)
+      (cl-loop for (variable value) on locals by #'cddr
+               do (set (make-local-variable variable) value)))
+    buffer))
+
+(defun sheprd-test-shown ()
+  "Return the buffers shown in this frame's panes, top-left first."
+  (mapcar #'window-buffer
+          (cl-remove-if-not #'sheprd--pane-p
+                            (window-list nil 'never (frame-first-window)))))
+
+(ert-deftest sheprd-layout-zoom-toggles-back ()
+  (sheprd-test-layout
+    (let ((a (sheprd-test-buffer "a" "s1")) (b (sheprd-test-buffer "b" "s1")))
+      (setq buffers (list a b))
+      (switch-to-buffer a)
+      (set-window-buffer (split-window-right) b)
+      (should-error (let ((sheprd--layouts (make-hash-table :test #'equal)))
+                      (save-window-excursion (delete-other-windows) (sheprd-layout-zoom)))
+                    :type 'user-error)
+      (sheprd-layout-zoom)
+      (should (equal (list a) (sheprd-test-shown)))
+      (should (eq 'zoom (plist-get (sheprd--layout-state) :kind)))
+      (sheprd-layout-zoom)
+      (should (equal (list a b) (sheprd-test-shown)))
+      (should-not (sheprd--layout-state)))))
+
+(ert-deftest sheprd-layout-state-belongs-to-each-session ()
+  (sheprd-test-layout
+    (let ((a (sheprd-test-buffer "a" "s1")) (b (sheprd-test-buffer "b" "s1")))
+      (setq buffers (list a b))
+      (switch-to-buffer a)
+      (set-window-buffer (split-window-right) b)
+      (sheprd-layout-zoom)
+      (setq sheprd-test-session "s2")
+      ;; Another session has no active layout to toggle back.
+      (should-not (sheprd--layout-state))
+      (setq sheprd-test-session "s1")
+      (should (eq 'zoom (plist-get (sheprd--layout-state) :kind))))))
+
+(ert-deftest sheprd-layout-llm1-agent-above-session-terminal-below ()
+  (sheprd-test-layout
+    (let* ((chat (sheprd-test-buffer "chat" "s1" 'major-mode 'ghostel-mode
+                                     'sheprd--agent-id "agent"))
+           (shell (sheprd-test-buffer "shell" "s1" 'major-mode 'ghostel-mode))
+           (foreign (sheprd-test-buffer "foreign" "s2" 'major-mode 'ghostel-mode))
+           (notes (sheprd-test-buffer "notes" "s1")))
+      (setq buffers (list chat shell foreign notes))
+      (puthash "agent" (list :buffer chat) sheprd--runs)
+      ;; The other session's terminal is the most recent; it must not be used.
+      (switch-to-buffer shell) (switch-to-buffer foreign) (switch-to-buffer notes)
+      (switch-to-buffer chat)
+      (set-window-buffer (split-window-right) notes)
+      (sheprd-layout-llm1)
+      (should (equal (list chat shell) (sheprd-test-shown)))
+      (should (eq chat (window-buffer (selected-window))))
+      (let ((bottom (get-buffer-window shell)))
+        (should (eq bottom (window-in-direction 'below (get-buffer-window chat))))
+        (should (<= (abs (- (window-total-height bottom)
+                            (round (* (frame-height) sheprd-layout-bottom-fraction))))
+                    2)))
+      (sheprd-layout-llm1)
+      (should (equal (list chat notes) (sheprd-test-shown))))))
+
+(ert-deftest sheprd-layout-llm1-uses-the-pilish-prompt ()
+  (sheprd-test-layout
+    (let* ((input (sheprd-test-buffer "input" "s1" 'major-mode 'pilish-input-mode
+                                      'sheprd--agent-id "pi"))
+           (chat (sheprd-test-buffer "chat" "s1" 'major-mode 'pilish-chat-mode
+                                     'sheprd--agent-id "pi" 'pilish--input-buffer input))
+           (shell (sheprd-test-buffer "shell" "s1" 'major-mode 'ghostel-mode)))
+      (setq buffers (list input chat shell))
+      (puthash "pi" (list :buffer chat) sheprd--runs)
+      ;; Run from the prompt: the chat is still the agent's main panel.
+      (switch-to-buffer input)
+      (sheprd-layout-llm1)
+      (should (equal (list chat input) (sheprd-test-shown)))
+      (should (eq input (window-buffer (selected-window)))))))
+
+(ert-deftest sheprd-layout-llm1-starts-a-terminal-when-none ()
+  (sheprd-test-layout
+    (let* ((chat (sheprd-test-buffer "chat" "s1" 'major-mode 'ghostel-mode
+                                     'sheprd--agent-id "agent"
+                                     'default-directory "/tmp/agent-dir/"))
+           started)
+      (setq buffers (list chat))
+      (puthash "agent" (list :buffer chat) sheprd--runs)
+      (switch-to-buffer chat)
+      (cl-letf (((symbol-function 'sheprd--spawn-terminal)
+                 (lambda (directory)
+                   (setq started directory)
+                   (let ((buffer (sheprd-test-buffer "new-shell" "s1")))
+                     (push buffer buffers)
+                     (switch-to-buffer buffer)))))
+        (sheprd-layout-llm1))
+      (should (equal "/tmp/agent-dir/" started))
+      (should (equal "new-shell" (buffer-name (cadr (sheprd-test-shown))))))))
+
+(ert-deftest sheprd-layout-llm2-adds-session-media-or-a-placeholder ()
+  (sheprd-test-layout
+    (let* ((chat (sheprd-test-buffer "chat" "s1" 'major-mode 'ghostel-mode
+                                     'sheprd--agent-id "agent"))
+           (shell (sheprd-test-buffer "shell" "s1" 'major-mode 'ghostel-mode))
+           (video (sheprd-test-buffer "video" "s2" 'ytube-player-mode t)))
+      (setq buffers (list chat shell video))
+      (puthash "agent" (list :buffer chat) sheprd--runs)
+      (switch-to-buffer chat)
+      ;; The only video belongs to another session: placeholder.
+      (sheprd-layout-llm2)
+      (let ((shown (sheprd-test-shown)))
+        (should (equal (list chat shell) (seq-take shown 2)))
+        (should (string-match-p "sheprd media" (buffer-name (nth 2 shown))))
+        (should (string-match-p "No video" (with-current-buffer (nth 2 shown) (buffer-string))))
+        (should (eq (window-in-direction 'right (get-buffer-window shell))
+                    (get-buffer-window (nth 2 shown))))
+        (push (nth 2 shown) buffers))
+      (sheprd-layout-llm2)
+      (with-current-buffer video (setq sheprd--session "s1"))
+      (sheprd-layout-llm2)
+      (should (eq video (nth 2 (sheprd-test-shown)))))))
+
+(ert-deftest sheprd-layout-switching-keeps-the-original ()
+  (sheprd-test-layout
+    (let ((chat (sheprd-test-buffer "chat" "s1" 'major-mode 'ghostel-mode
+                                    'sheprd--agent-id "agent"))
+          (shell (sheprd-test-buffer "shell" "s1" 'major-mode 'ghostel-mode))
+          (notes (sheprd-test-buffer "notes" "s1")))
+      (setq buffers (list chat shell notes))
+      (puthash "agent" (list :buffer chat) sheprd--runs)
+      (switch-to-buffer notes)
+      (set-window-buffer (split-window-below) chat)
+      (sheprd-layout-llm1)
+      (sheprd-layout-zoom)
+      (should (eq 'zoom (plist-get (sheprd--layout-state) :kind)))
+      ;; Toggling the newer layout off returns to the original, not to llm1.
+      (sheprd-layout-zoom)
+      (should (equal (list notes chat) (sheprd-test-shown))))))
+
+(ert-deftest sheprd-layout-map-binds-z-1-2 ()
+  (dolist (binding '(("z" . sheprd-layout-zoom)
+                     ("1" . sheprd-layout-llm1)
+                     ("2" . sheprd-layout-llm2)))
+    (should (eq (cdr binding) (lookup-key sheprd-layout-map (kbd (car binding))))))
+  (should (eq (lookup-key sheprd-command-map (kbd "z")) #'sheprd-zoom))
+  (should (eq (indirect-function #'sheprd-zoom) (indirect-function #'sheprd-layout-zoom))))
+
+
 ;;; --- Keymaps and lifecycle --------------------------------------------------
 
 (ert-deftest sheprd-prefix-map-numbers-select-sessions ()

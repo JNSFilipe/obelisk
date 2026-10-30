@@ -261,6 +261,9 @@ It runs only for statuses listed in `sheprd-notify-statuses'."
   "Session left by the most recent session switch.")
 (defvar sheprd--notification-target nil
   "Buffer of the agent that raised the most recent notification.")
+(defvar sheprd--layouts (make-hash-table :test #'equal)
+  "(FRAME . SESSION) -> plist (:kind LAYOUT :saved WINDOW-STATE).
+The layout each session returns to when its active layout is toggled off.")
 
 (defvar-local sheprd--session nil
   "Name of the session that owns this buffer.
@@ -483,6 +486,10 @@ give this key a different interface from the one `C-x b' offers."
     (when (sheprd--registry-available-p)
       (sqlite-execute (sheprd--db) "UPDATE agents SET session=? WHERE session=?"
                       (list new-name old)))
+    (dolist (key (hash-table-keys sheprd--layouts))
+      (when (equal (cdr key) old)
+        (puthash (cons (car key) new-name) (gethash key sheprd--layouts) sheprd--layouts)
+        (remhash key sheprd--layouts)))
     (when (equal sheprd--previous-session old)
       (setq sheprd--previous-session new-name))
     (sheprd--schedule-refresh)))
@@ -516,6 +523,8 @@ opening an agent reopens, unless you choose to delete them."
       (when (sheprd--sealed-buffer-p buffer)
         (let ((kill-buffer-query-functions nil))
           (kill-buffer buffer))))
+    (dolist (key (hash-table-keys sheprd--layouts))
+      (when (equal (cdr key) name) (remhash key sheprd--layouts)))
     (when-let* ((persp (sheprd--session-persp name)))
       (+workspace-delete persp))
     (when (equal name sheprd--previous-session)
@@ -747,22 +756,6 @@ session the other half is still driving."
         (kill-buffer buffer)))
     (when (and (window-live-p window) (> (length (sheprd--panes)) 1))
       (delete-window window))
-    (sheprd--schedule-refresh)))
-
-(defun sheprd-zoom ()
-  "Toggle zoom of the selected pane, Herdr style."
-  (interactive)
-  (let ((saved (frame-parameter nil 'sheprd-zoom)))
-    (if saved
-        (progn
-          (set-frame-parameter nil 'sheprd-zoom nil)
-          (sheprd--apply-layout saved))
-      (unless (sheprd--pane-p (selected-window))
-        (user-error "Not in a pane"))
-      (when (= (length (sheprd--panes)) 1)
-        (user-error "Only one pane to zoom"))
-      (set-frame-parameter nil 'sheprd-zoom (sheprd--capture-layout))
-      (delete-other-windows))
     (sheprd--schedule-refresh)))
 
 (defun sheprd-rename-pane (name)
@@ -2049,17 +2042,17 @@ INTERFACE is `ghostel' (a terminal, the default) or `pilish' (Pi only)."
 
 (defun sheprd-focus-agent (id)
   "Show agent ID alone in the frame; run again to restore the layout."
-  (interactive (list (unless (frame-parameter nil 'sheprd-zoom)
+  (interactive (list (unless (sheprd--layout-state)
                        (sheprd--agent-arg "Focus agent: "))))
-  (if (frame-parameter nil 'sheprd-zoom)
-      (sheprd-zoom)
+  (if (sheprd--layout-state)
+      (sheprd--layout-restore)
     (let ((buffer (sheprd-open-agent id)))
-      ;; Save the session's layout as zoom does, then keep only the agent
-      ;; (and a Pilish input window, which showing the agent adds back).
-      (set-frame-parameter nil 'sheprd-zoom (sheprd--capture-layout))
-      (select-window (or (get-buffer-window buffer) (sheprd--main-window)))
-      (delete-other-windows)
-      (sheprd--show-agent-buffer buffer))))
+      (sheprd--layout-apply
+       'zoom (lambda ()
+               (select-window (or (get-buffer-window buffer) (sheprd--main-window)))
+               (delete-other-windows)
+               ;; A Pilish chat gets its input back below it.
+               (sheprd--show-agent-buffer buffer))))))
 
 
 ;;; ---------------------------------------------------------------------------
@@ -2155,6 +2148,216 @@ INTERFACE is `ghostel' (a terminal, the default) or `pilish' (Pi only)."
   (define-key map (kbd "TAB") #'sheprd-next-item)
   (define-key map (kbd "<backtab>") #'sheprd-previous-item)
   (define-key map (kbd "RET") #'push-button))
+
+
+;;; ---------------------------------------------------------------------------
+;;; Layouts
+;;
+;; Named layouts for the current session's editing area; the sidebar stays.
+;; Applying one saves the session's previous layout, applying it again
+;; restores that, and switching to another keeps the original to return to.
+;; The saved layout belongs to a session and frame, so each perspective
+;; toggles its own.  Layouts only fetch buffers the current session owns.
+;;
+;;   zoom  the active buffer alone
+;;   llm1  the session's agent above; below, a third of the height for its
+;;         terminal, or the prompt (input) buffer of a Pilish agent
+;;   llm2  as llm1, the bottom split between that and a media (video) buffer
+
+(defcustom sheprd-layout-bottom-fraction (/ 1.0 3)
+  "Fraction of the editing area's height given to an LLM layout's bottom row."
+  :type 'number)
+
+(defcustom sheprd-layout-media-predicate #'sheprd--ytube-player-p
+  "Function returning non-nil for buffers an LLM2 layout shows as media."
+  :type 'function)
+
+(defcustom sheprd-layout-media-placeholder
+  "No video in this session.\n\nM-x ytube-search plays one here."
+  "Text shown in an LLM2 layout's media slot when the session has none."
+  :type 'string)
+
+(defvar ytube-player-mode)
+
+(defun sheprd--ytube-player-p (buffer)
+  "Return non-nil when BUFFER is a ytube video player."
+  (buffer-local-value 'ytube-player-mode buffer))
+
+(defun sheprd--layout-key ()
+  "Return the layout key of the selected frame's current session."
+  (cons (selected-frame) (sheprd-current-session)))
+
+(defun sheprd--layout-state ()
+  "Return the active layout of this frame's current session, or nil."
+  (gethash (sheprd--layout-key) sheprd--layouts))
+
+(defun sheprd--layout-restore ()
+  "Restore the layout saved before this session's active layout."
+  (when-let* ((state (sheprd--layout-state)))
+    (remhash (sheprd--layout-key) sheprd--layouts)
+    (sheprd--apply-layout (plist-get state :saved))
+    (sheprd--schedule-refresh)))
+
+(defun sheprd--layout-apply (kind builder)
+  "Make layout KIND by calling BUILDER, saving the layout to return to.
+A layout already active keeps the layout saved before it.  If BUILDER
+fails, the editing area is put back as it was."
+  (let* ((state (sheprd--layout-state))
+         (before (sheprd--capture-layout))
+         (saved (or (plist-get state :saved) before)))
+    (condition-case err
+        (funcall builder)
+      (error (sheprd--apply-layout before)
+             (signal (car err) (cdr err))))
+    (puthash (sheprd--layout-key) (list :kind kind :saved saved) sheprd--layouts)
+    (sheprd--schedule-refresh)))
+
+(defun sheprd--layout-toggle (kind builder)
+  "Apply layout KIND with BUILDER, or restore when KIND is already active."
+  (if (eq (plist-get (sheprd--layout-state) :kind) kind)
+      (sheprd--layout-restore)
+    (sheprd--layout-apply kind builder)))
+
+(defun sheprd--active-pane ()
+  "Return the selected pane, or the most recently used one."
+  (let ((window (selected-window)))
+    (if (sheprd--pane-p window)
+        window
+      (or (cl-find-if #'sheprd--pane-p
+                      (list (get-mru-window nil t t) (get-mru-window nil nil t)))
+          (sheprd--main-window)))))
+
+(defun sheprd--session-owns-p (buffer)
+  "Return non-nil when BUFFER belongs to the current session."
+  (and (buffer-live-p buffer)
+       (if (bound-and-true-p persp-mode)
+           (memq buffer (sheprd--session-buffers))
+         (let ((owner (buffer-local-value 'sheprd--session buffer)))
+           (or (null owner) (equal owner (sheprd-current-session)))))))
+
+(defun sheprd--session-buffers-by-recency (predicate)
+  "Return the current session's buffers satisfying PREDICATE, most recent first."
+  (cl-remove-if-not (lambda (buffer)
+                      (and (sheprd--session-owns-p buffer) (funcall predicate buffer)))
+                    (buffer-list)))
+
+(defun sheprd--agent-chat-buffer (buffer)
+  "Return the chat buffer of the agent BUFFER belongs to, or nil."
+  (when-let* ((id (and (buffer-live-p buffer)
+                       (buffer-local-value 'sheprd--agent-id buffer))))
+    (or (sheprd--run-buffer id)
+        (cl-find-if-not (lambda (candidate)
+                          (provided-mode-derived-p
+                           (buffer-local-value 'major-mode candidate) 'pilish-input-mode))
+                        (sheprd--agent-buffers id)))))
+
+(defun sheprd--layout-chat-buffer ()
+  "Return the buffer an LLM layout's main panel shows.
+The agent of the active pane, else the session's most recently used agent
+(registered first, then detected terminals), else the active buffer."
+  (let ((active (window-buffer (sheprd--active-pane))))
+    (or (sheprd--agent-chat-buffer active)
+        (sheprd--agent-chat-buffer
+         (car (sheprd--session-buffers-by-recency
+               (lambda (buffer) (buffer-local-value 'sheprd--agent-id buffer)))))
+        (car (sheprd--session-buffers-by-recency
+              (lambda (buffer)
+                (and (sheprd--terminal-buffer-p buffer)
+                     (ignore-errors (sheprd--agent-info buffer))))))
+        active)))
+
+(defun sheprd--layout-terminal (chat)
+  "Return the session's most recent plain terminal other than CHAT, or nil."
+  (car (sheprd--session-buffers-by-recency
+        (lambda (buffer)
+          (and (sheprd--terminal-buffer-p buffer)
+               (not (eq buffer chat))
+               (not (buffer-local-value 'sheprd--agent-id buffer)))))))
+
+(defun sheprd--layout-media ()
+  "Return the session's most recent media buffer, or a placeholder."
+  (or (car (sheprd--session-buffers-by-recency
+            (lambda (buffer) (ignore-errors (funcall sheprd-layout-media-predicate buffer)))))
+      (let ((buffer (get-buffer-create
+                     (format " *sheprd media: %s*" (sheprd-current-session)))))
+        (with-current-buffer buffer
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert sheprd-layout-media-placeholder))
+          (set-buffer-modified-p nil)
+          (special-mode))
+        (sheprd--claim-buffer buffer)
+        buffer)))
+
+(defun sheprd--layout-llm (with-media)
+  "Lay out the session's agent above and its terminal or prompt below.
+WITH-MEDIA splits the bottom row with the session's media buffer."
+  (let* ((chat (sheprd--layout-chat-buffer))
+         (pilish (provided-mode-derived-p (buffer-local-value 'major-mode chat)
+                                          'pilish-chat-mode))
+         (input (and pilish (buffer-local-value 'pilish--input-buffer chat)))
+         (terminal (unless pilish (sheprd--layout-terminal chat)))
+         (media (and with-media (sheprd--layout-media)))
+         (directory (buffer-local-value 'default-directory chat)))
+    (select-window (sheprd--active-pane))
+    (delete-other-windows)
+    (switch-to-buffer chat)
+    (let* ((top (selected-window))
+           (bottom (split-window top (- (max window-min-height
+                                             (round (* (window-total-height top)
+                                                       sheprd-layout-bottom-fraction))))
+                                 'below)))
+      (when media
+        (set-window-buffer (split-window bottom nil 'right) media))
+      (select-window bottom)
+      (cond
+       ((buffer-live-p input) (switch-to-buffer input))
+       (terminal (switch-to-buffer terminal))
+       ;; No terminal in this session yet: start one where the agent works.
+       (t (sheprd--spawn-terminal directory)))
+      ;; Type where the conversation is driven: Pilish's prompt, else the agent.
+      (unless (buffer-live-p input) (select-window top)))))
+
+(defun sheprd-layout-zoom ()
+  "Show the active buffer alone; again restores the previous layout."
+  (interactive)
+  (sheprd--layout-toggle
+   'zoom (lambda ()
+           (let ((pane (sheprd--active-pane)))
+             (when (and (= (length (sheprd--panes)) 1) (not (sheprd--layout-state)))
+               (user-error "Only one pane to zoom"))
+             (select-window pane)
+             (delete-other-windows)))))
+
+(defalias 'sheprd-zoom #'sheprd-layout-zoom
+  "Toggle zoom of the selected pane, Herdr style.")
+
+(defun sheprd-layout-llm1 ()
+  "Agent above, its terminal (or Pilish prompt) on the bottom third.
+Again restores the previous layout."
+  (interactive)
+  (sheprd--layout-toggle 'llm1 (lambda () (sheprd--layout-llm nil))))
+
+(defun sheprd-layout-llm2 ()
+  "As `sheprd-layout-llm1', the bottom third split with the session's video.
+Again restores the previous layout."
+  (interactive)
+  (sheprd--layout-toggle 'llm2 (lambda () (sheprd--layout-llm t))))
+
+(defvar sheprd-layout-map (make-sparse-keymap)
+  "Layout commands, for a leader prefix such as SPC l: z zoom, 1 LLM1, 2 LLM2.")
+
+(defun sheprd--populate-layout-map (map)
+  "Fill MAP with the layout bindings, discarding whatever it held before."
+  (setcdr map nil)
+  (pcase-dolist (`(,key ,label ,command)
+                 '(("z" "Zoom" sheprd-layout-zoom)
+                   ("1" "LLM1: agent + terminal" sheprd-layout-llm1)
+                   ("2" "LLM2: agent + terminal + video" sheprd-layout-llm2)))
+    (define-key map (kbd key) (cons label command)))
+  map)
+
+(sheprd--populate-layout-map sheprd-layout-map)
 
 
 ;;; ---------------------------------------------------------------------------
@@ -2653,7 +2856,7 @@ processes alive."
      ("S-TAB" . "cycle to the previous pane")
      (";" . "last pane")
      ("x" . "close pane")
-     ("z" . "toggle zoom")
+     ("z" . "toggle zoom (per session)")
      ("r" . "resize mode")
      ("P" . "rename pane")
      ("e" . "edit scrollback")
@@ -2892,7 +3095,9 @@ z focus, ] and [ attention.  Configurations bind it; Sheprd does not.")
     (set-frame-parameter frame 'sheprd-sidebar nil)))
 
 (defun sheprd--delete-frame (frame)
-  "Release the private sidebar buffer belonging to FRAME."
+  "Release the sidebar buffer and saved layouts belonging to FRAME."
+  (dolist (key (hash-table-keys sheprd--layouts))
+    (when (eq (car key) frame) (remhash key sheprd--layouts)))
   (when-let* ((buffer (frame-parameter frame 'sheprd-sidebar)))
     (when (buffer-live-p buffer) (kill-buffer buffer))))
 
