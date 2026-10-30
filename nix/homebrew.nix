@@ -261,6 +261,7 @@ in
       "purge" # cache and junk cleanup app (not macOS's /usr/sbin/purge)
       "rustdesk" # The free TeamViewer/AnyDesk solution
       "betterdisplay" # For creating virtual displays and stuf
+      "raspberry-pi-imager" # Flash OS images to microSD cards (both Macs)
     ]
     ++ personalOnly [
       # ── Personal accounts / leisure / home hardware ────────────────────────
@@ -279,7 +280,6 @@ in
       "nvidia-geforce-now"
       "adguard"
       "hp-easy-start"
-      "raspberry-pi-imager"
     ]
     ++ workOnly [
       # Nothing work-only yet.  VPN clients, MDM agents and the like go here.
