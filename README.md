@@ -292,6 +292,7 @@ extension/skill packages for every machine:
 - `npm:@heyhuynhgiabuu/pi-task` (including its bundled `task` skill)
 - `git:github.com/JNSFilipe/jig` (all 11 Jig skills)
 - `npm:pi-claude-bridge`
+- `npm:resume-from` (continue a session in another agent or profile)
 
 It also declares the default model, `claude-bridge/claude-opus-5-5` with `high`
 thinking. Each of `defaultProvider`, `defaultModel`, and `defaultThinkingLevel`

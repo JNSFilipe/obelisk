@@ -19,6 +19,7 @@ PACKAGES = [
     "npm:@heyhuynhgiabuu/pi-task",
     "git:github.com/JNSFilipe/jig",
     "npm:pi-claude-bridge",
+    "npm:resume-from",
 ]
 DEFAULTS = {
     "defaultProvider": "claude-bridge",

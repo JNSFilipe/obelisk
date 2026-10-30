@@ -14,6 +14,7 @@ let
     "npm:@heyhuynhgiabuu/pi-task"
     "git:github.com/JNSFilipe/jig"
     "npm:pi-claude-bridge"
+    "npm:resume-from"
   ];
   # Applied only when unset, so choices made in Pi survive activation.
   defaults = {
