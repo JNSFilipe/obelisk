@@ -20,6 +20,7 @@ in
     taps = [
       "d12frosted/emacs-plus"
       "netbirdio/tap"
+      "neomacs-core/tap"
     ];
 
     onActivation = {
@@ -196,6 +197,7 @@ in
 
       # ── Editors ────────────────────────────────────────────────────────────
       "d12frosted/emacs-plus/emacs-plus-app"
+      "neomacs-core/tap/neomacs" # Emacs-compatible, GPU-accelerated renderer
       "zed"
       "datagrip"
       "antigravity-cli"
@@ -264,6 +266,7 @@ in
       "rustdesk" # The free TeamViewer/AnyDesk solution
       "betterdisplay" # For creating virtual displays and stuf
       "raspberry-pi-imager" # Flash OS images to microSD cards (both Macs)
+      "porting-kit" # Wine wrapper for running Windows apps and games
     ]
     ++ personalOnly [
       # ── Personal accounts / leisure / home hardware ────────────────────────
@@ -284,7 +287,6 @@ in
       "hp-easy-start"
     ]
     ++ workOnly [
-      "porting-kit"
       "visual-studio-code"
     ];
   };

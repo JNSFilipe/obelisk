@@ -230,7 +230,7 @@ What differs is deliberately small:
 - **Homebrew packages.** `nix/homebrew.nix` has a shared list plus
   `personalOnly` and `workOnly` groups selected by the host's profile. Today
   only personal apps are split out (leisure, home hardware, personal accounts);
-  every CLI tool is shared, and the work-only group is still empty.
+  every CLI tool is shared, and the work-only group holds only VS Code.
 - **Machine-specific settings.** `nix/hosts/<host>.nix` is the place for macOS
   defaults, launchd agents or paths that exist on one machine only.
   `system.stateVersion` lives there because it is per-install by definition.
