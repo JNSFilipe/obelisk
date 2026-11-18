@@ -15,6 +15,7 @@ in
   imports = [
     ./packages.nix
     ./emacs.nix
+    ./fish.nix
     ./nushell.nix
     ./pi.nix
   ];
@@ -54,6 +55,7 @@ in
     ".config/zed".source = link "zed";
 
     # ── Terminals ──────────────────────────────────────────────────────────
+    ".config/rex".source = link "rex";
     ".config/wezterm".source = link "wezterm";
     # ── Window management ──────────────────────────────────────────────────
     ".config/herdr/config.toml".source = link "herdr/config.toml";

@@ -44,6 +44,7 @@ in
   programs.nushell = {
     enable = true;
     package = null; # Homebrew owns the runtime; keep declarative config here.
+    loadSessionVariables = false; # Restated explicitly below.
 
     extraEnv = ''
       ^/bin/sh ${refreshIntegrations} ${lib.hm.nushell.toNushell { } integrationDir}

@@ -110,6 +110,7 @@ def main():
         )
         atuin_config = Path(env["ATUIN_CONFIG_DIR"])
         atuin_config.mkdir(parents=True)
+        (home / ".local/share/atuin").mkdir(parents=True)
         (atuin_config / "config.toml").write_text(
             "auto_sync = false\n[daemon]\nenabled = false\n"
         )
@@ -211,6 +212,52 @@ print 'zsh-ok'
             assert data["cd"] == "__zoxide_z" and data["y"] == "custom", data
         print(
             "PASS Nushell: cold/warm init, Homebrew tools, unique bindings, completer, cd/y"
+        )
+
+        fish_dir = home / ".config/fish"
+        (fish_dir / "conf.d").mkdir(parents=True, exist_ok=True)
+        fish_files = (
+            "fish/config.fish",
+            "fish/conf.d/plugin-autopair.fish",
+            "fish/conf.d/plugin-done.fish",
+            "fish/conf.d/plugin-pure.fish",
+        )
+        for rel in fish_files:
+            text = run(
+                ["nix", "eval", "--raw", f'{prefix}.xdg.configFile."{rel}".text']
+            ).stdout.replace(str(Path.home()), str(home))
+            dest = home / ".config" / rel
+            dest.write_text(text)
+            run([str(BREW / "fish"), "-n", str(dest)], env=env)
+        fish_test = r"""
+functions -q _atuin_search; or exit 20
+string match -q "*_atuin_search*" (bind ctrl-r 2>/dev/null; or bind \cr 2>/dev/null); or exit 21
+functions -q __zoxide_z; and functions -q cd; or exit 22
+functions -q y; and functions -q activate; or exit 23
+functions -q _pure_prompt; and functions -q _autopair_backspace; or exit 24
+functions -q __history_previous_command; and functions -q fish_greeting; or exit 25
+test "$FZF_CTRL_R_COMMAND" = ""; or exit 26
+test "$__done_min_cmd_duration" = "10000"; or exit 27
+test (command -s atuin) = "/opt/homebrew/bin/atuin"; or exit 28
+test (command -s zoxide) = "/opt/homebrew/bin/zoxide"; or exit 29
+# Atuin disowns `prepare-search-index` in fish; wait for `$last_pid` so it
+# does not race with the Atuin database snapshot test or tempdir cleanup.
+if test -n "$last_pid"
+    for idx in (seq 100)
+        kill -0 $last_pid 2>/dev/null; or break
+        sleep 0.05
+    end
+end
+echo fish-ok
+"""
+        fish_result = run(
+            [str(BREW / "fish"), "--private", "-i", "-c", fish_test],
+            env=env,
+        )
+        assert "fish-ok" in fish_result.stdout, fish_result.stdout
+        assert not fish_result.stderr.strip(), fish_result.stderr
+        print(
+            "PASS Fish: syntax, Pure/autopair/done plugins, bang-bang, Atuin, zoxide, Yazi, fzf"
         )
 
         tmux_config = root / "tmux.conf"

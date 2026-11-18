@@ -187,12 +187,14 @@ nix/
   homebrew.nix             Default package source: brew formulae + casks
   home.nix                 User: zsh, programs, config symlinks
   packages.nix             nixpkgs escape hatch (things brew does not ship)
+  fish.nix                 Fish, alongside zsh (zsh stays the login shell)
   nushell.nix              Nushell, alongside zsh (zsh stays the login shell)
   hosts/
     gauss.nix              Personal Mac: machine-specific settings only
     thorp.nix              Work Mac: machine-specific settings only
 configs/
   tmux.conf                tmux settings (loaded via programs.tmux)
+  fish/                    Fish interactive config (loaded via nix/fish.nix)
   nushell/                 Nushell prompt and commands (loaded via programs.nushell)
   omniwm/                  OmniWM tiling window manager settings
   doom/                    Doom Emacs user config
@@ -201,6 +203,7 @@ configs/
   nvim/                    Neovim
   zed/                     Zed
   kitty/                   Kitty theme files
+  rex/                     Rex terminal multiplexer config
   wezterm/                 WezTerm terminal
   scripts/                 Shell scripts (zzz, ttt, fzflauncher, ...)
   wallpapers/              Desktop backgrounds
@@ -249,9 +252,9 @@ break the machine that is not in front of you.
 | Shell / tool config | `nix/home.nix` `programs.*` or generated files | Configuration only; never a reason to install a second binary |
 | App configs (no module) | `configs/` | Symlinked live into `~/.config/` |
 
-Pi (`pi-coding-agent` formula), Zen Browser (`zen` cask), Claude Code
-(`claude-code` cask), OmniWM, Purge, and `tailscale-app` are common to
-all machines, not personal/work-only packages. The flake check enforces this
+Pi (`pi-coding-agent` formula), Zen Browser (`zen` cask), Brave Browser
+(`brave-browser` cask), Claude Code (`claude-code` cask), OmniWM, Purge, and
+`tailscale-app` are common to all machines, not personal/work-only packages. The flake check enforces this
 shared baseline and excludes the conflicting `claude-code@latest` cask.
 
 This policy includes shells, plugins, fonts, and packages normally pulled in by

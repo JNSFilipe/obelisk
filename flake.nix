@@ -136,6 +136,8 @@
                 "atuin"
                 "bash"
                 "carapace"
+                "fastfetch"
+                "fish"
                 "fzf"
                 "fzf-tab"
                 "git"
@@ -156,6 +158,7 @@
                 "zsh-autosuggestions"
               ];
               requiredCasks = [
+                "brave-browser"
                 "claude-code"
                 "kitty"
                 "omniwm"

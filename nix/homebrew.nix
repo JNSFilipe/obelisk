@@ -46,6 +46,7 @@ in
       # ── Shells, integrations and interactive tools ──────────────────────────
       "zsh"
       "bash"
+      "fish"
       "nushell"
       "atuin"
       "zoxide"
@@ -54,6 +55,7 @@ in
       "tmux"
       "tuios"
       "yazi"
+      "fastfetch"
       "zsh-autocomplete"
       "zsh-autosuggestions"
       "fzf-tab"
@@ -198,7 +200,6 @@ in
       "datagrip"
       "antigravity-cli"
       "sublime-text"
-      # "visual-studio-code"
 
       # ── Version control ────────────────────────────────────────────────────
       "github" # GitHub Desktop
@@ -209,8 +210,9 @@ in
       # "dockdoor"
 
       # ── Browsers ───────────────────────────────────────────────────────────
-      # Zen is the only declared browser; Safari ships with macOS.
+      # Zen and Brave are declared on both Macs; Safari ships with macOS.
       "zen" # Firefox-based; its profile is the one being synced between Macs
+      "brave-browser"
 
       # ── AI coding assistants (CLIs distributed only as casks) ──────────────
       "claude-code"
@@ -282,7 +284,8 @@ in
       "hp-easy-start"
     ]
     ++ workOnly [
-      # Nothing work-only yet.  VPN clients, MDM agents and the like go here.
+      "porting-kit"
+      "visual-studio-code"
     ];
   };
 }
