@@ -206,6 +206,13 @@
     "com.apple.mouse.scaling" = 1.5;
   };
 
+  # Rex: list the keys that can follow the leader (configs/rex/init.lua).
+  # Same setting as Settings > Show Key Sequence Hints; restart Rex after a
+  # switch if it was already running.
+  system.defaults.CustomUserPreferences."com.superlogical.rex" = {
+    "Workspace.showsKeySequenceHints" = true;
+  };
+
   # ── Keyboard ───────────────────────────────────────────────────────────────
   # Applied with `hidutil` by the activation script, which the
   # org.nixos.activate-system daemon re-runs at boot, so it survives restarts.
